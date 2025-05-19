@@ -1,0 +1,9 @@
+#import "{{.PluginClassName}}.h"
+
+extern void enforce_binding();
+
+@implementation {{.PluginClassName}}
++ (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
+  enforce_binding();
+}
+@end

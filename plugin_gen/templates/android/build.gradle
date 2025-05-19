@@ -1,0 +1,43 @@
+// The Android Gradle Plugin builds the native code with the Android NDK.
+
+group = "{{.PackageName}}"
+version = "1.0"
+
+apply plugin: "com.android.library"
+
+android {
+    if (project.android.hasProperty("namespace")) {
+        namespace = "{{.PackageName}}"
+    }
+
+    compileSdk = project.hasProperty('flutter') ? flutter.compileSdkVersion : 34
+    ndkVersion = project.hasProperty('flutter') ? flutter.ndkVersion : android.ndkVersion
+
+    defaultConfig {
+        minSdk = project.hasProperty('flutter') ? flutter.minSdkVersion : 21
+    }
+    
+    // Add custom task to compile Go library
+    tasks.register('compileGoLibrary', Exec) {
+        def ndkDir = android.ndkDirectory
+        def minSdkVersion = android.defaultConfig.minSdkVersion.apiLevel
+        
+        workingDir projectDir
+        
+        // Execute build.ps1 on Windows, build.sh on other platforms
+        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+            commandLine 'powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', 'build.ps1', ndkDir, minSdkVersion
+        } else {
+            commandLine 'sh', './build.sh', ndkDir, minSdkVersion
+        }
+    }
+    
+    // Ensure pre-build task depends on Go library compilation
+    preBuild.dependsOn compileGoLibrary
+    
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}

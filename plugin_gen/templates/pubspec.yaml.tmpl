@@ -1,0 +1,28 @@
+name: {{.ProjectName}}
+description: "A Flutter Gopher-generated plugin for binding Flutter and Go interactions"
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ^3.4.0
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ffi: ^2.1.0
+  flutter_gopher: ^0.0.1
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        ffiPlugin: true
+      ios:
+        pluginClass: {{.PluginClassName}}
+      linux:
+        ffiPlugin: true
+      macos:
+        ffiPlugin: true
+      windows:
+        ffiPlugin: true
