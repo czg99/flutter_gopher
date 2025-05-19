@@ -8,7 +8,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "fg",
+	Use:   "fgo",
 	Short: "Flutter Gopher - A tool for Flutter and Go integration",
 	Long:  "Flutter Gopher is a comprehensive tool for creating Flutter plugins with Go backends and generating FFI bindings between Flutter and Dart.",
 	CompletionOptions: cobra.CompletionOptions{

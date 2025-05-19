@@ -22,7 +22,7 @@ Flutter Gopher 是一个命令行工具，用于创建 Flutter 插件与 Golang 
 ### 安装步骤
 
 ```bash
-go install github.com/czg99/flutter_gopher/cmd/fg@latest
+go install github.com/czg99/flutter_gopher/cmd/fgo@latest
 ```
 
 ## 📋 使用方法
@@ -32,7 +32,7 @@ Flutter Gopher 提供了两个主要命令：
 ### 1. 创建新的 Flutter 插件项目
 
 ```bash
-fg create -n <项目名称> -o <输出目录> [--example]
+fgo create -n <项目名称> -o <输出目录> [--example]
 ```
 
 **参数说明：**
@@ -42,15 +42,15 @@ fg create -n <项目名称> -o <输出目录> [--example]
 
 **示例：**
 ```bash
-fg create -n my_api -o ./my_api
-fg create -n payment_service --example
+fgo create -n my_api -o ./my_api
+fgo create -n payment_service --example
 ```
 
 ### 2. 生成 Go 和 Dart FFI 绑定代码
 
 ```bash
-cd <fg创建的项目>
-fg generate
+cd <fgo创建的项目>
+fgo generate
 ```
 
 ## 📁 项目结构
@@ -115,7 +115,7 @@ Flutter Gopher 支持在 Go 和 Dart 之间转换以下数据类型：
 #### 1. 创建插件项目：
 
 ```bash
-fg create -n calculator -o ./calculator --example
+fgo create -n calculator -o ./calculator --example
 ```
 
 #### 2. 在 `src/api` 目录中实现计算器 API：
@@ -151,7 +151,7 @@ func CalculateWithPrecision(values []float64) (result float64, err error) {
 
 ```bash
 cd calculator
-fg generate
+fgo generate
 ```
 
 #### 4. 在 Flutter 应用中使用该插件：

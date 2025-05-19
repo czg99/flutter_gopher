@@ -25,7 +25,7 @@ This command parses Go source files and generates the corresponding FFI code
 for both Go and Dart to enable Flutter-Go interoperability.
 
 Example usage:
-  fg generate -s src/api -g output_go.go -d output_dart.dart`,
+  fgo generate -s src/api -g output_go.go -d output_dart.dart`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := validateAndProcess(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)

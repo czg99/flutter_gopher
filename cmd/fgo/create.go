@@ -31,8 +31,8 @@ The generated plugin includes:
   - Bridge code for communication between Flutter and Go
 
 Example usage:
-  fg create -n my_api
-  fg create -n my_api -o ./output --example`,
+  fgo create -n my_api
+  fgo create -n my_api -o ./output --example`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := validateAndGeneratePlugin(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
@@ -103,7 +103,7 @@ func validateAndGeneratePlugin() error {
 
 	fmt.Println("\n📝 Next steps:")
 	fmt.Println("  1. Implement your Go API in the 'src/api' directory")
-	fmt.Println("  2. Run 'fg generate' to regenerate bridge code after API changes")
+	fmt.Println("  2. Run 'fgo generate' to regenerate bridge code after API changes")
 	fmt.Println("  3. Use the plugin in your Flutter app with 'flutter pub add <plugin_name> --path <plugin_path>'")
 
 	return nil

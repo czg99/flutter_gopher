@@ -22,7 +22,7 @@ Flutter Gopher is a command-line tool for creating seamless integration between 
 ### Installation Steps
 
 ```bash
-go install github.com/czg99/flutter_gopher/cmd/fg@latest
+go install github.com/czg99/flutter_gopher/cmd/fgo@latest
 ```
 
 ## 📋 Usage
@@ -32,7 +32,7 @@ Flutter Gopher provides two main commands:
 ### 1. Create a new Flutter plugin project
 
 ```bash
-fg create -n <project_name> -o <output_directory> [--example]
+fgo create -n <project_name> -o <output_directory> [--example]
 ```
 
 **Parameters:**
@@ -42,15 +42,15 @@ fg create -n <project_name> -o <output_directory> [--example]
 
 **Examples:**
 ```bash
-fg create -n my_api -o ./my_api
-fg create -n payment_service --example
+fgo create -n my_api -o ./my_api
+fgo create -n payment_service --example
 ```
 
 ### 2. Generate Go and Dart FFI binding code
 
 ```bash
-cd <fg_created_project>
-fg generate
+cd <fgo_created_project>
+fgo generate
 ```
 
 ## 📁 Project Structure
@@ -115,7 +115,7 @@ Flutter Gopher supports converting the following data types between Go and Dart:
 #### 1. Create a plugin project:
 
 ```bash
-fg create -n calculator -o ./calculator --example
+fgo create -n calculator -o ./calculator --example
 ```
 
 #### 2. Implement calculator API in the `src/api` directory:
@@ -151,7 +151,7 @@ func CalculateWithPrecision(values []float64) (result float64, err error) {
 
 ```bash
 cd calculator
-fg generate
+fgo generate
 ```
 
 #### 4. Use the plugin in a Flutter application:
