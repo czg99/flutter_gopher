@@ -2,7 +2,7 @@
 
 [English](https://github.com/czg99/flutter_gopher/blob/main/dart/README.md) | [中文](https://github.com/czg99/flutter_gopher/blob/main/dart/README_zh.md)
 
-Flutter Gopher Dart 库是 Flutter Gopher 工具生成的 Flutter 插件中的核心组件，提供了 Flutter 应用与 Golang 后端之间的 FFI 绑定支持。
+Flutter Gopher Dart 库是 Flutter Gopher 工具生成的 Flutter 插件中的依赖组件，提供了 Flutter 与 Golang 原生代码的 FFI 绑定支持。
 
 ## 功能特点
 

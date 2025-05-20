@@ -2,7 +2,7 @@
 
 [English](https://github.com/czg99/flutter_gopher/blob/main/README.md) | [中文](https://github.com/czg99/flutter_gopher/blob/main/README_zh.md)
 
-Flutter Gopher 是一个命令行工具，用于创建 Flutter 插件与 Golang 后端的无缝集成。自动生成两者之间的 FFI 绑定代码，使得Dart调用Go原生代码变得非常简单。
+Flutter Gopher 用于桥接 Flutter 与 Golang 原生代码。快速创建基于 Golang 原生的 Flutter 插件，并自动生成 FFI 绑定代码。
 
 ## ✨ 功能特点
 

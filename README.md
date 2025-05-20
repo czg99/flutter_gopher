@@ -2,7 +2,7 @@
 
 [English](https://github.com/czg99/flutter_gopher/blob/main/README.md) | [中文](https://github.com/czg99/flutter_gopher/blob/main/README_zh.md)
 
-Flutter Gopher is a command-line tool for creating seamless integration between Flutter plugins and Golang backends. It automatically generates FFI binding code between them, making it very simple for Dart to call Go native code.
+Flutter Gopher is used to bridge Flutter with native Golang code. It allows for rapid creation of Flutter plugins based on native Golang and automatically generates the FFI binding code.
 
 ## ✨ Features
 
