@@ -16,7 +16,12 @@ abstract interface class {{$bridge.DartClassName}} {
     {{- if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}
     {{- end -}}
   );
-  Future<{{$fn.DartResultType}}> {{$fn.DartType}}Async(
+  Future<{{$fn.DartResultType}}> {{$fn.DartType}}DartAsync(
+    {{- range $i, $param := $fn.Params.Fields}}
+    {{- if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}
+    {{- end -}}
+  );
+  Future<{{$fn.DartResultType}}> {{$fn.DartType}}GoAsync(
     {{- range $i, $param := $fn.Params.Fields}}
     {{- if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}
     {{- end -}}
@@ -25,28 +30,41 @@ abstract interface class {{$bridge.DartClassName}} {
 }
 
 final _lib = FgLoader('{{$bridge.LibName}}');
+{{- range $fn := $bridge.Funcs}}
+final {{$fn.Results.DartCType}} Function({{$fn.Params.DartCType}}) {{$fn.DartCType}} = _lib
+    .lookup<ffi.NativeFunction<{{$fn.Results.DartCType}} Function({{$fn.Params.DartCType}})>>('{{$fn.CType}}')
+    .asFunction();
+final void Function({{$fn.Params.DartCType}}) {{$fn.DartCType}}GoAsync = _lib
+    .lookup<ffi.NativeFunction<ffi.Void Function({{$fn.Params.DartCType}})>>('{{$fn.CType}}_async')
+    .asFunction();
+{{- end}}
+late final ffi.Pointer<ffi.Void> Function() _fgResultLoop = _lib
+    .lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function()>>('fg_result_loop')
+    .asFunction();
+
 final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
-  {{- range $fn := $bridge.Funcs}}
-  late final {{$fn.Results.DartCType}} Function({{$fn.Params.DartCType}}) {{$fn.DartCType}};
-  {{- end}}
 
   _{{$bridge.DartClassName}}() {
-    {{- range $fn := $bridge.Funcs}}
-    {{$fn.DartCType}} = _lib.lookup<ffi.NativeFunction<{{$fn.Results.DartCType}} Function({{$fn.Params.DartCType}})>>('{{$fn.CType}}').asFunction();
-    {{- end}}
+    FgLoop.once('{{$bridge.LibName}}', (_) {
+      final result = _fgResultLoop();
+      if (result == ffi.nullptr) return true;
+      final portId = result.cast<ffi.Int64>()[0];
+      FgAsync.sendGoResult(portId, result);
+      return true;
+    });
   }
 
 {{range $fn := $bridge.Funcs}}
-  @override
-  {{$fn.DartResultType}} {{$fn.DartType}}(
+  {{$fn.Params.DartCType}} _{{$fn.DartType}}CParams(
     {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}{{end -}}
   ) {
     final dart_params = {{$fn.Params.DartType}}(
       {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}: {{$param.DartName}}{{end -}}
     );
-    final c_params = _mapFrom{{$fn.Params.MapName}}(dart_params);
-    final c_result = {{$fn.DartCType}}(c_params);
+    return _mapFrom{{$fn.Params.MapName}}(dart_params);
+  }
 
+  {{$fn.DartResultType}} _{{$fn.DartType}}Result({{$fn.Results.DartCType}} c_result) {
     if (c_result.fg_panic != ffi.nullptr) {
       final err = _mapToError(c_result.fg_panic);
       throw FgPanic('{{$bridge.LibName}}', '{{$fn.DartType}}', err!);
@@ -69,24 +87,45 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
   }
 
   @override
-  Future<{{$fn.DartResultType}}> {{$fn.DartType}}Async(
+  {{$fn.DartResultType}} {{$fn.DartType}}(
     {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}{{end -}}
   ) {
-    return fgAsync((Map<String, dynamic> params) {
-        final api = params['api'] as _{{$bridge.DartClassName}};
-        {{- range $i, $param := $fn.Params.Fields}}
-        final {{$param.DartName}} = params['{{$param.DartName}}'] as {{$param.DartType}};
-        {{- end}}
-        return api.{{$fn.DartType}}(
-          {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
-        );
-      }, {
-        {{- range $i, $param := $fn.Params.Fields}}
-        '{{$param.DartName}}': {{$param.DartName}},
-        {{- end}}
-        'api': this,
-      }
+    final c_params = _{{$fn.DartType}}CParams(
+      {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
     );
+    final c_result = {{$fn.DartCType}}(c_params);
+    return _{{$fn.DartType}}Result(c_result);
+  }
+
+  @override
+  Future<{{$fn.DartResultType}}> {{$fn.DartType}}DartAsync(
+    {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}{{end -}}
+  ) {
+    final c_params = _{{$fn.DartType}}CParams(
+      {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
+    );
+    return FgAsync.dart((params) {
+      final c_result = {{$fn.DartCType}}(c_params);
+      return _{{$fn.DartType}}Result(c_result);
+    }, c_params);
+  }
+
+  @override
+  Future<{{$fn.DartResultType}}> {{$fn.DartType}}GoAsync(
+    {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartType}} {{$param.DartName}}{{end -}}
+  ) async {
+    final c_params = _{{$fn.DartType}}CParams(
+      {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
+    );
+    final data = await FgAsync.go((params, portId) {
+      params.fg_port_id = portId;
+      {{$fn.DartCType}}GoAsync(params);
+    }, c_params);
+
+    final c_result = data.cast<{{$fn.Results.DartCType}}>()[0];
+    final result = _{{$fn.DartType}}Result(c_result);
+    calloc.free(data);
+    return result;
   }
 {{end -}}
 }
@@ -130,6 +169,10 @@ final class {{$obj.DartType}} {
 }
 
 final class {{$obj.DartCType}} extends ffi.Struct {
+{{- if or .isParams .isResults}}
+  @ffi.Int64()
+  external int fg_port_id;
+{{- end}}
 {{- range $field := $obj.Fields}}
   {{- if eq $field.MapName ""}}
     {{- "\n  "}}@{{$field.DartCType}}()
@@ -137,10 +180,6 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- else}}
     {{- "\n  "}}external {{$field.DartCType}} {{$field.CName}};
   {{- end}}
-{{- end}}
-{{- if .isParams}}
-  @ffi.Int64()
-  external int fg_port_id;
 {{- end}}
 {{- if .isResults}}
   external ffi.Pointer<ffi.Void> fg_panic;
