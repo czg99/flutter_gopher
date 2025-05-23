@@ -2,26 +2,26 @@ import 'dart:io' as io;
 import 'dart:ffi' as ffi;
 import 'exception.dart';
 
-/// A class responsible for loading native libraries for Flutter Gopher
+/// Flutter Gopher 原生库加载器
 class FgLoader {
   final String libName;
   late final ffi.DynamicLibrary _library;
 
-  /// Creates a new FgLoader instance and loads the specified library
+  /// 创建新的 FgLoader 实例并加载指定的库
   ///
-  /// [libName] is the base name of the library without platform-specific prefixes or extensions
+  /// [libName] 是库的基本名称，不包含平台特定的前缀或扩展名
   FgLoader(this.libName) {
     _loadLibrary();
   }
 
-  /// Determines the appropriate library file name based on the current platform
+  /// 根据当前平台确定适当的库文件名
   String _libraryFileName() {
-    // Check if running on web (WASM)
+    // 检查是否在 Web 环境运行（WASM）
     if (identical(0, 0.0)) {
       return '$libName.wasm';
     }
 
-    // Platform-specific library naming
+    // 根据平台返回对应的库文件名
     if (io.Platform.isAndroid || io.Platform.isLinux) {
       return 'lib$libName.so';
     } else if (io.Platform.isWindows) {
@@ -34,7 +34,7 @@ class FgLoader {
     }
   }
 
-  /// Loads the native library based on the current platform
+  /// 根据当前平台加载原生库
   void _loadLibrary() {
     try {
       if (io.Platform.isIOS) {
@@ -49,11 +49,11 @@ class FgLoader {
     }
   }
 
-  /// Looks up a symbol in the loaded library
+  /// 在加载的库中查找符号
   ///
-  /// [symbolName] is the name of the symbol to look up
-  /// Returns a pointer to the symbol
-  /// Throws a [FgError] if the symbol cannot be found
+  /// [symbolName] 是要查找的符号名称
+  /// 返回指向该符号的指针
+  /// 如果找不到符号，则抛出 [FgError]
   ffi.Pointer<T> lookup<T extends ffi.NativeType>(String symbolName) {
     try {
       return _library.lookup<T>(symbolName);

@@ -1,54 +1,106 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:isolate';
+import 'dart:ui';
 
-/// Executes a computation function in a separate isolate.
+/// 提供 Flutter 和 Go 之间的异步通信功能
 ///
-/// [computation] is the function to be executed in the isolate.
-/// [params] contains the parameters to be passed to the computation function.
-/// Returns a [Future] that completes with the result of the computation.
-Future<T> fgAsync<T>(
-  T Function(Map<String, dynamic> params) computation,
-  Map<String, dynamic> params,
-) async {
-  final completer = Completer<T>();
-  final receivePort = ReceivePort();
+/// 包含在 Dart 隔离区执行代码和与 Go 代码通信的方法
+class FgAsync {
+  /// 监听接收端口并处理结果
+  static void _listen<T>(ReceivePort receivePort, Completer<T> completer,
+      [int? portId]) {
+    receivePort.listen((message) {
+      if (portId != null) {
+        IsolateNameServer.removePortNameMapping(portId.toString());
+      }
+      receivePort.close();
+      if (message is Exception || message is Error) {
+        completer.completeError(message);
+      } else {
+        completer.complete(message as T);
+      }
+    });
+  }
 
-  // Create message for the isolate
-  final message = {
-    'sendPort': receivePort.sendPort,
-    'computation': computation,
-    'params': params,
-  };
+  /// 创建并设置接收端口和完成器
+  static (ReceivePort, Completer<T>) _setupCommunication<T>() {
+    final receivePort = ReceivePort();
+    final completer = Completer<T>();
+    return (receivePort, completer);
+  }
 
-  // Setup listener for isolate response
-  receivePort.listen((message) {
-    receivePort.close();
-    if (message is Exception) {
-      completer.completeError(message);
-    } else {
-      completer.complete(message as T);
+  /// 在 Dart 隔离区中执行计算
+  static Future<R> dart<P, R>(
+    R Function(P params) computation,
+    P params,
+  ) async {
+    final (receivePort, completer) = _setupCommunication<R>();
+    final message = {
+      'sendPort': receivePort.sendPort,
+      'computation': computation,
+      'params': params,
+    };
+
+    _listen(receivePort, completer);
+    try {
+      await Isolate.spawn(_isolateEntryPoint, message);
+    } catch (e) {
+      receivePort.close();
+      throw Exception('Error starting isolate: ${e.toString()}');
     }
-  });
 
-  // Execute computation in isolate
-  await Isolate.spawn(_isolateEntryPoint, message);
+    return await completer.future;
+  }
 
-  return await completer.future;
-}
+  /// 隔离区入口点函数
+  static void _isolateEntryPoint(Map<String, dynamic> message) {
+    final sendPort = message['sendPort'] as SendPort;
+    final computation = message['computation'] as Function;
+    final params = message['params'];
 
-/// Entry point function for the isolate.
-///
-/// Executes the computation function with the provided parameters
-/// and sends the result back through the send port.
-void _isolateEntryPoint(Map<String, dynamic> message) {
-  final sendPort = message['sendPort'] as SendPort;
-  final computation = message['computation'] as Function;
-  final params = message['params'] as Map<String, dynamic>;
+    try {
+      final result = computation(params);
+      sendPort.send(result);
+    } catch (e) {
+      sendPort.send(e);
+    }
+  }
 
-  try {
-    final result = computation(params);
-    sendPort.send(result);
-  } catch (e) {
-    sendPort.send(e);
+  /// 执行 Go 代码并等待结果
+  static Future<Pointer<Void>> go<P, R>(
+    void Function(P params, int portId) computation,
+    P params,
+  ) async {
+    final (receivePort, completer) = _setupCommunication<Pointer<Void>>();
+    final sendPort = receivePort.sendPort;
+    final portId = sendPort.nativePort;
+    final success =
+        IsolateNameServer.registerPortWithName(sendPort, portId.toString());
+    if (!success) {
+      receivePort.close();
+      throw Exception('Failed to register port id: $portId');
+    }
+
+    _listen(receivePort, completer, portId);
+    try {
+      computation(params, portId);
+    } catch (e) {
+      receivePort.close();
+      IsolateNameServer.removePortNameMapping(portId.toString());
+      throw Exception('Error executing computation: ${e.toString()}');
+    }
+
+    return await completer.future;
+  }
+
+  /// 发送 Go 函数结果到 Dart
+  static bool sendGoResult(int portId, Pointer<Void> result) {
+    final sendPort = IsolateNameServer.lookupPortByName(portId.toString());
+    if (sendPort != null) {
+      sendPort.send(result);
+      return true;
+    }
+    return false;
   }
 }

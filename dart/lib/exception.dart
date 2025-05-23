@@ -1,27 +1,25 @@
-/// Base class for all Flutter Gopher exceptions.
-///
-/// This abstract class serves as the foundation for the exception hierarchy
-/// in the Flutter Gopher library. All specific exceptions should extend this class.
+/// 提供统一的异常处理机制，包括可恢复的错误和不可恢复的严重错误
+/// 所有 Flutter Gopher 异常的基类
 abstract class FgException implements Exception {
-  /// The name of the library where the exception occurred
+  /// 异常发生的库名称
   final String libName;
 
-  /// The name of the function where the exception occurred
+  /// 异常发生的函数名称
   final String funcName;
 
-  /// Descriptive message about the exception
+  /// 异常的描述信息
   final String message;
 
-  /// Creates a new FgException with the specified context information
+  /// 创建一个包含指定上下文信息的 FgException
   const FgException(this.libName, this.funcName, this.message);
 
   @override
   String toString();
 }
 
-/// Represents a recoverable error in library
+/// 表示库中的可恢复错误
 final class FgError extends FgException {
-  /// Creates a new recoverable error with the specified context information
+  /// 创建一个包含指定上下文信息的可恢复错误
   const FgError(super.libName, super.funcName, super.message);
 
   @override
@@ -29,9 +27,9 @@ final class FgError extends FgException {
       'FgError {lib: $libName, func: $funcName, message: $message}';
 }
 
-/// Represents a critical, non-recoverable error in library
+/// 表示库中的严重且不可恢复的错误
 final class FgPanic extends FgException {
-  /// Creates a new non-recoverable error with the specified context information
+  /// 创建一个包含指定上下文信息的不可恢复错误
   const FgPanic(super.libName, super.funcName, super.message);
 
   @override
