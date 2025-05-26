@@ -69,12 +69,11 @@ class FgAsync {
 
   /// 执行 Go 代码并等待结果
   static Future<Pointer<Void>> go<P, R>(
-    void Function(P params, int portId) computation,
-    P params,
-  ) async {
+      void Function(P params, int portId) computation, P params,
+      [int? customPortId]) async {
     final (receivePort, completer) = _setupCommunication<Pointer<Void>>();
     final sendPort = receivePort.sendPort;
-    final portId = sendPort.nativePort;
+    final portId = customPortId ?? sendPort.nativePort;
     final success =
         IsolateNameServer.registerPortWithName(sendPort, portId.toString());
     if (!success) {
