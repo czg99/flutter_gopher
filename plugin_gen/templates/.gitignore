@@ -27,3 +27,9 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+
+.last_build_time
+android/libs
+ios/*.xcframework
+windows/*.dll
+macos/*.dylib
