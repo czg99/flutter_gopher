@@ -26,6 +26,11 @@ struct {{$obj.CType}};
 {{- end}}
 
 typedef struct {
+	int64_t fg_port_id;
+	void* data;
+} fg_result;
+
+typedef struct {
 	void* data;
 	bool* valid;
 	int len;
@@ -34,7 +39,7 @@ typedef struct {
 {{- define "generateCStruct"}}
 {{- $obj := .obj}}
 typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
-	{{- if or .isParams .isResults}}
+	{{- if or .isParams}}
 	int64_t fg_port_id;
 	{{- end}}
 	{{- range $field := $obj.Fields}}
@@ -61,7 +66,7 @@ typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
     #define DLLEXPORT
 #endif
 
-extern DLLEXPORT void* fg_result_loop();
+extern DLLEXPORT fg_result fg_result_loop();
 extern DLLEXPORT int64_t fg_next_port_id();
 {{- range $fn := $bridge.Funcs}}
 extern DLLEXPORT {{$fn.Results.CType}} {{$fn.CType}}({{$fn.Params.CType}} params);
@@ -85,15 +90,15 @@ type {{$.GoType}} struct {
 {{template "generateGoStruct" $fn.Results}}
 {{- end}}
 
-var resultChan = make(chan unsafe.Pointer)
+var resultChan = make(chan C.fg_result)
 
 //export fg_result_loop 
-func fg_result_loop() unsafe.Pointer {
+func fg_result_loop() C.fg_result {
 	select {
 	case result := <- resultChan:
 		return result
 	case <- time.After(time.Second):
-		return nil
+		return C.fg_result{}
 	}
 }
 
@@ -129,7 +134,6 @@ func {{$fn.CType}}(params {{$fn.Params.GoCType}}) (result {{$fn.Results.GoCType}
 	}
 	result = mapFrom{{$fn.Results.MapName}}(go_result)
 	{{- end}}
-	result.fg_port_id = params.fg_port_id
 	return
 }
 
@@ -137,7 +141,7 @@ func {{$fn.CType}}(params {{$fn.Params.GoCType}}) (result {{$fn.Results.GoCType}
 func {{$fn.CType}}_async(params {{$fn.Params.GoCType}}) {
 	go func() {
 		result := {{$fn.CType}}(params)
-		resultChan <- unsafe.Pointer(cValueToPtr(result))
+		resultChan <- C.fg_result{fg_port_id: params.fg_port_id, data: unsafe.Pointer(cValueToPtr(result))}
 	}()
 }
 {{end}}

@@ -38,8 +38,8 @@ final void Function({{$fn.Params.DartCType}}) {{$fn.DartCType}}GoAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function({{$fn.Params.DartCType}})>>('{{$fn.CType}}_async')
     .asFunction();
 {{- end}}
-final ffi.Pointer<ffi.Void> Function() _fgResultLoop = _lib
-    .lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function()>>('fg_result_loop')
+final _fgResult Function() _fgResultLoop = _lib
+    .lookup<ffi.NativeFunction<_fgResult Function()>>('fg_result_loop')
     .asFunction();
 final int Function() _fgNextPortId = _lib
     .lookup<ffi.NativeFunction<ffi.Int64 Function()>>('fg_next_port_id')
@@ -50,9 +50,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
   _{{$bridge.DartClassName}}() {
     FgLoop.once('{{$bridge.LibName}}', (_) {
       final result = _fgResultLoop();
-      if (result == ffi.nullptr) return true;
-      final portId = result.cast<ffi.Int64>()[0];
-      FgAsync.sendGoResult(portId, result);
+      FgAsync.sendGoResult(result.portId, result.data);
       return true;
     });
   }
@@ -133,6 +131,12 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
 {{end -}}
 }
 
+final class _fgResult extends ffi.Struct {
+  @ffi.Int64()
+  external int portId;
+  external ffi.Pointer<ffi.Void> data;
+}
+
 final class _fgArray extends ffi.Struct {
   external ffi.Pointer<ffi.Void> data;
   external ffi.Pointer<ffi.Bool> valid;
@@ -172,7 +176,7 @@ final class {{$obj.DartType}} {
 }
 
 final class {{$obj.DartCType}} extends ffi.Struct {
-{{- if or .isParams .isResults}}
+{{- if or .isParams}}
   @ffi.Int64()
   external int fg_port_id;
 {{- end}}
