@@ -7,6 +7,7 @@ import (
 	"unsafe"
 	"reflect"
 	"time"
+	"sync"
 	"sync/atomic"
 	{{- if gt (len $bridge.Funcs) 0}}
 	"fmt"
@@ -102,11 +103,28 @@ func fg_result_loop() C.fg_result {
 	}
 }
 
-var nextPortId int64 = 10000
+const minPortId int64 = 0xFF
+const maxPortId int64 = 0xFFFFFFFFFFFF
+var portMutex sync.Mutex
+var nextPortId int64 = minPortId - 1
 
 //export fg_next_port_id
 func fg_next_port_id() int64 {
-	return atomic.AddInt64(&nextPortId, 1)
+	next := atomic.AddInt64(&nextPortId, 1)
+
+	if next > maxPortId {
+		portMutex.Lock()
+		defer portMutex.Unlock()
+
+		current := atomic.LoadInt64(&nextPortId)
+		if current > maxPortId {
+			atomic.StoreInt64(&nextPortId, minPortId)
+			return minPortId
+		} else {
+			return atomic.AddInt64(&nextPortId, 1)
+		}
+	}
+	return next
 }
 
 {{range $fn := $bridge.Funcs}}
