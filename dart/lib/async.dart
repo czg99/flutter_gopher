@@ -95,11 +95,10 @@ class FgAsync {
 
   /// 发送 Go 函数结果到 Dart
   static bool sendGoResult(int portId, Pointer<Void> result) {
+    if (portId == 0 || result == nullptr) return false;
     final sendPort = IsolateNameServer.lookupPortByName(portId.toString());
-    if (sendPort != null) {
-      sendPort.send(result);
-      return true;
-    }
-    return false;
+    if (sendPort == null) return false;
+    sendPort.send(result);
+    return true;
   }
 }
