@@ -13,13 +13,8 @@ Flutter Gopher Dart 库是 Flutter Gopher 工具生成的 Flutter 插件中的�
 
 ## 安装
 
-此库通常由 Flutter Gopher 工具自动集成到生成的 Flutter 插件中，无需手动安装。如果需要单独使用，可以在 `pubspec.yaml` 中添加依赖：
+此库由 Flutter Gopher 工具自动集成到生成的 Flutter 插件中，无需手动安装。
 
-```yaml
-dependencies:
-  flutter_gopher: ^0.0.1
-```
-
-## Flutter Gopher 项目
+## Flutter Gopher 工具项目
 
 Flutter Gopher 工具项目地址：[https://github.com/czg99/flutter_gopher](https://github.com/czg99/flutter_gopher)
