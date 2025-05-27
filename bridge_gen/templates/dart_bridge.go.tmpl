@@ -38,8 +38,11 @@ final void Function({{$fn.Params.DartCType}}) {{$fn.DartCType}}GoAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function({{$fn.Params.DartCType}})>>('{{$fn.CType}}_async')
     .asFunction();
 {{- end}}
-late final ffi.Pointer<ffi.Void> Function() _fgResultLoop = _lib
+final ffi.Pointer<ffi.Void> Function() _fgResultLoop = _lib
     .lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function()>>('fg_result_loop')
+    .asFunction();
+final int Function() _fgNextPortId = _lib
+    .lookup<ffi.NativeFunction<ffi.Int64 Function()>>('fg_next_port_id')
     .asFunction();
 
 final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
@@ -120,7 +123,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
     final data = await FgAsync.go((params, portId) {
       params.fg_port_id = portId;
       {{$fn.DartCType}}GoAsync(params);
-    }, c_params);
+    }, c_params, _fgNextPortId());
 
     final c_result = data.cast<{{$fn.Results.DartCType}}>()[0];
     final result = _{{$fn.DartType}}Result(c_result);
@@ -197,7 +200,8 @@ final class {{$obj.DartCType}} extends ffi.Struct {
 {{- end}}
 
 {{- define "generateMap"}}
-{{- $obj := .}}
+{{- $obj := .obj}}
+{{- if not .isParams}}
 {{$obj.DartType}} _mapTo{{$obj.MapName}}({{$obj.DartCType}} from) {
   final result = {{$obj.DartType}}();
   {{- range $i, $field := $obj.Fields}}
@@ -211,7 +215,9 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- end}}
   return result;
 }
+{{- end}}
 
+{{- if not .isResults}}
 {{$obj.DartCType}} _mapFrom{{$obj.MapName}}({{$obj.DartType}} from) {
   final result = ffi.Struct.create<{{$obj.DartCType}}>();
   {{- range $field := $obj.Fields}}
@@ -230,14 +236,15 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   return result;
 }
 {{- end}}
+{{- end}}
 
 {{- range $obj := $bridge.Structs}}
-{{template "generateMap" $obj}}
+{{template "generateMap" makeMap "obj" $obj}}
 {{- end}}
 
 {{- range $fn := $bridge.Funcs}}
-{{template "generateMap" $fn.Params}}
-{{template "generateMap" $fn.Results}}
+{{template "generateMap" makeMap "obj" $fn.Params "isParams" true}}
+{{template "generateMap" makeMap "obj" $fn.Results "isResults" true}}
 {{- end}}
 
 {{range $obj := $bridge.Ptrs}}

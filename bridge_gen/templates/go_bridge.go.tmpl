@@ -6,9 +6,10 @@ import (
 	"errors"
 	"unsafe"
 	"reflect"
+	"time"
+	"sync/atomic"
 	{{- if gt (len $bridge.Funcs) 0}}
 	"fmt"
-	"time"
 	"runtime/debug"
 	{{- end}}
 
@@ -18,7 +19,7 @@ import (
 /*
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h> 
+#include <stdbool.h>
 
 {{range $obj := $bridge.Structs}}
 struct {{$obj.CType}};
@@ -61,6 +62,7 @@ typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
 #endif
 
 extern DLLEXPORT void* fg_result_loop();
+extern DLLEXPORT int64_t fg_next_port_id();
 {{- range $fn := $bridge.Funcs}}
 extern DLLEXPORT {{$fn.Results.CType}} {{$fn.CType}}({{$fn.Params.CType}} params);
 {{- end}}
@@ -93,7 +95,13 @@ func fg_result_loop() unsafe.Pointer {
 	case <- time.After(time.Second):
 		return nil
 	}
-	return nil
+}
+
+var nextPortId int64 = 10000
+
+//export fg_next_port_id
+func fg_next_port_id() int64 {
+	return atomic.AddInt64(&nextPortId, 1)
 }
 
 {{range $fn := $bridge.Funcs}}
@@ -135,8 +143,9 @@ func {{$fn.CType}}_async(params {{$fn.Params.GoCType}}) {
 {{end}}
 
 {{- define "generateMap"}}
-{{- $obj := .}}
+{{- $obj := .obj}}
 {{- $fields := $obj.Fields}}
+{{- if not .isResults}}
 func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	{{- range $field := $fields}}
 		{{- if $field.IsSlice }}
@@ -171,7 +180,9 @@ func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	{{- end}}
 	return
 }
+{{end}}
 
+{{- if not .isParams}}
 func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
 	{{- range $field := $fields}}
 		{{- if $field.IsSlice }}
@@ -214,14 +225,15 @@ func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
 	return
 }
 {{end}}
+{{end}}
 
 {{- range $obj := $bridge.Structs}}
-{{template "generateMap" $obj}}
+{{template "generateMap" makeMap "obj" $obj}}
 {{- end}}
 
 {{- range $fn := $bridge.Funcs}}
-{{template "generateMap" $fn.Params}}
-{{template "generateMap" $fn.Results}}
+{{template "generateMap" makeMap "obj" $fn.Params "isParams" true}}
+{{template "generateMap" makeMap "obj" $fn.Results "isResults" true}}
 {{- end}}
 
 func mapToError(from unsafe.Pointer) error {
@@ -375,6 +387,7 @@ func mapToFgArray[T any, C_T any](from []T, converter func(T) C_T, isNil func(T)
 func enforce_binding() {
 	var ptr uintptr
 	ptr ^= uintptr(unsafe.Pointer(C.fg_result_loop))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_next_port_id))
 	{{- range $fn := $bridge.Funcs}}
 	ptr ^= uintptr(unsafe.Pointer(C.{{$fn.CType}}))
 	{{- end}}
