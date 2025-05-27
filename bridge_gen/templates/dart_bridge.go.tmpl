@@ -65,10 +65,10 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
     return _mapFrom{{$fn.Params.MapName}}(dart_params);
   }
 
-  {{$fn.DartResultType}} _{{$fn.DartType}}Result({{$fn.Results.DartCType}} c_result) {
+  {{$fn.DartResultType}} _{{$fn.DartType}}Result(String funcName, {{$fn.Results.DartCType}} c_result) {
     if (c_result.fg_panic != ffi.nullptr) {
       final err = _mapToError(c_result.fg_panic);
-      throw FgPanic('{{$bridge.LibName}}', '{{$fn.DartType}}', err!);
+      throw FgPanic('{{$bridge.LibName}}', funcName, err!);
     }
 
     {{- if gt (len $fn.Results.Fields) 0}}
@@ -76,7 +76,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
     {{- end}}
     {{- if ne $fn.DartErrorName ""}}
     if (dart_result.{{$fn.DartErrorName}} != null) {
-      throw FgError('{{$bridge.LibName}}', '{{$fn.DartType}}', dart_result.{{$fn.DartErrorName}}!);
+      throw FgError('{{$bridge.LibName}}', funcName, dart_result.{{$fn.DartErrorName}}!);
     }
     {{- end}}
 
@@ -95,7 +95,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
       {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
     );
     final c_result = {{$fn.DartCType}}(c_params);
-    return _{{$fn.DartType}}Result(c_result);
+    return _{{$fn.DartType}}Result('{{$fn.DartType}}', c_result);
   }
 
   @override
@@ -107,7 +107,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
     );
     return FgAsync.dart((params) {
       final c_result = {{$fn.DartCType}}(c_params);
-      return _{{$fn.DartType}}Result(c_result);
+      return _{{$fn.DartType}}Result('{{$fn.DartType}}DartAsync', c_result);
     }, c_params);
   }
 
@@ -123,8 +123,12 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
       {{$fn.DartCType}}GoAsync(params);
     }, c_params, _fgNextPortId());
 
+    if (data == ffi.nullptr) {
+      throw FgPanic('{{$bridge.LibName}}', '{{$fn.DartType}}GoAsync', 'result is null');
+    }
+
     final c_result = data.cast<{{$fn.Results.DartCType}}>()[0];
-    final result = _{{$fn.DartType}}Result(c_result);
+    final result = _{{$fn.DartType}}Result('{{$fn.DartType}}GoAsync', c_result);
     calloc.free(data);
     return result;
   }
