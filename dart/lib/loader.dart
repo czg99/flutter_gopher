@@ -1,11 +1,10 @@
-import 'dart:io' as io;
-import 'dart:ffi' as ffi;
-import 'exception.dart';
+import 'dart:io';
+import 'dart:ffi';
 
 /// Flutter Gopher 原生库加载器
 class FgLoader {
   final String libName;
-  late final ffi.DynamicLibrary _library;
+  late final DynamicLibrary _library;
 
   /// 创建新的 FgLoader 实例并加载指定的库
   ///
@@ -22,30 +21,28 @@ class FgLoader {
     }
 
     // 根据平台返回对应的库文件名
-    if (io.Platform.isAndroid || io.Platform.isLinux) {
+    if (Platform.isAndroid || Platform.isLinux) {
       return 'lib$libName.so';
-    } else if (io.Platform.isWindows) {
+    } else if (Platform.isWindows) {
       return '$libName.dll';
-    } else if (io.Platform.isMacOS) {
+    } else if (Platform.isMacOS) {
       return 'lib$libName.dylib';
     } else {
-      throw FgError('FgLoader', 'libraryFileName',
-          'Unsupported platform: ${io.Platform.operatingSystem}');
+      throw StateError('Unsupported platform: ${Platform.operatingSystem}');
     }
   }
 
   /// 根据当前平台加载原生库
   void _loadLibrary() {
     try {
-      if (io.Platform.isIOS) {
-        _library = ffi.DynamicLibrary.executable();
+      if (Platform.isIOS) {
+        _library = DynamicLibrary.executable();
       } else {
         final libFileName = _libraryFileName();
-        _library = ffi.DynamicLibrary.open(libFileName);
+        _library = DynamicLibrary.open(libFileName);
       }
     } catch (e) {
-      throw FgError(
-          'FgLoader', 'loadLibrary', 'Failed to load native library: $e');
+      throw StateError('Failed to load native library: $e');
     }
   }
 
@@ -54,12 +51,11 @@ class FgLoader {
   /// [symbolName] 是要查找的符号名称
   /// 返回指向该符号的指针
   /// 如果找不到符号，则抛出 [FgError]
-  ffi.Pointer<T> lookup<T extends ffi.NativeType>(String symbolName) {
+  Pointer<T> lookup<T extends NativeType>(String symbolName) {
     try {
       return _library.lookup<T>(symbolName);
     } catch (e) {
-      throw FgError('FgLoader', 'lookup',
-          'Failed to lookup symbol: $symbolName. Error: $e');
+      throw StateError('Failed to lookup symbol: $symbolName. Error: $e');
     }
   }
 }
