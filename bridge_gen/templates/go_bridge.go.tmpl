@@ -27,7 +27,11 @@ struct {{$obj.CType}};
 {{- end}}
 
 typedef struct {
-	int64_t fg_port_id;
+	int64_t port_id;
+} fg_chan;
+
+typedef struct {
+	int64_t port_id;
 	void* data;
 } fg_result;
 
@@ -41,7 +45,7 @@ typedef struct {
 {{- $obj := .obj}}
 typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
 	{{- if or .isParams}}
-	int64_t fg_port_id;
+	int64_t port_id;
 	{{- end}}
 	{{- range $field := $obj.Fields}}
 	{{$field.CType}} {{$field.CName}};
@@ -159,7 +163,7 @@ func {{$fn.CType}}(params {{$fn.Params.GoCType}}) (result {{$fn.Results.GoCType}
 func {{$fn.CType}}_async(params {{$fn.Params.GoCType}}) {
 	go func() {
 		result := {{$fn.CType}}(params)
-		resultChan <- C.fg_result{fg_port_id: params.fg_port_id, data: unsafe.Pointer(cValueToPtr(result))}
+		resultChan <- C.fg_result{port_id: params.port_id, data: unsafe.Pointer(cValueToPtr(result))}
 	}()
 }
 {{end}}
@@ -170,7 +174,28 @@ func {{$fn.CType}}_async(params {{$fn.Params.GoCType}}) {
 {{- if not .isResults}}
 func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	{{- range $field := $fields}}
-		{{- if $field.IsSlice }}
+		{{- if $field.IsChan }}
+			{{- "\n	"}}result.{{$field.CName}} = mapToChan(from.a, 
+			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) {{$field.InnerMost.GoCType}} {
+				{{- if $field.Type.IsInnerPtr}}
+				{{- "\n			"}}value := valueFromPtr(g)
+				{{- else}}
+				{{- "\n			"}}value := g
+				{{- end}}
+				{{- if eq $field.InnerMost.MapName ""}}
+				{{- "\n			"}}return {{$field.InnerMost.GoCType}}(value)
+				{{- else}}
+				{{- "\n			"}}return mapFrom{{$field.InnerMost.MapName}}(value)
+				{{- end}}
+			{{- "\n		"}}},
+			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) bool {
+				{{- if $field.Type.IsInnerPtr}}
+				{{- "\n			"}}return g == nil
+				{{- else}}
+				{{- "\n			"}}return false
+				{{- end}}
+			{{- "\n		"}}})
+		{{- else if $field.IsSlice }}
 			{{- "\n	"}}result.{{$field.GoName}} = mapFromFgArray(from.{{$field.CName}},
 			{{- "\n		"}}func(c {{$field.InnerMost.GoCType}}) {{$field.Type.Inner.GoType}} {
 				{{- if eq $field.InnerMost.MapName ""}}
@@ -207,7 +232,28 @@ func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 {{- if not .isParams}}
 func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
 	{{- range $field := $fields}}
-		{{- if $field.IsSlice }}
+		{{- if $field.IsChan }}
+			{{- "\n	"}}result.{{$field.CName}} = mapFromChan(from.{{$field.GoName}},
+			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) {{$field.InnerMost.GoCType}} {
+				{{- if $field.Type.IsInnerPtr}}
+				{{- "\n			"}}value := valueFromPtr(g)
+				{{- else}}
+				{{- "\n			"}}value := g
+				{{- end}}
+				{{- if eq $field.InnerMost.MapName ""}}
+				{{- "\n			"}}return {{$field.InnerMost.GoCType}}(value)
+				{{- else}}
+				{{- "\n			"}}return mapFrom{{$field.InnerMost.MapName}}(value)
+				{{- end}}
+			{{- "\n		"}}},
+			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) bool {
+				{{- if $field.Type.IsInnerPtr}}
+				{{- "\n			"}}return g == nil
+				{{- else}}
+				{{- "\n			"}}return false
+				{{- end}}
+			{{- "\n		"}}})
+		{{- else if $field.IsSlice }}
 			{{- "\n	"}}result.{{$field.CName}} = mapToFgArray(from.{{$field.GoName}}, 
 			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) {{$field.InnerMost.GoCType}} {
 				{{- if $field.Type.IsInnerPtr}}
@@ -403,6 +449,35 @@ func mapToFgArray[T any, C_T any](from []T, converter func(T) C_T, isNil func(T)
 		}
 	}
 	return C.fg_array{data: data, valid: (*C.bool)(valid), len: length}
+}
+
+func mapToChan[T any, CT any](port C.fg_chan, convert func(T) CT, isNil func(T) bool) chan T {
+	c := make(chan T)
+	chanLoop(port.port_id, c, convert, isNil)
+	return c
+}
+
+func mapFromChan[T any, CT any](c <-chan T, convert func(T) CT, isNil func(T) bool) C.fg_chan {
+	portId := C.int64_t(fg_next_port_id())
+	chanLoop(portId, c, convert, isNil)
+	return C.fg_chan{port_id: portId}
+}
+
+func chanLoop[T any, CT any](portId C.int64_t, c <-chan T, convert func(T) CT, isNil func(T) bool) {
+	go func() {
+		for {
+			result, ok := <-c
+			if !ok {
+				break
+			}
+			if isNil(result) {
+				resultChan <- C.fg_result{port_id: portId}
+				continue
+			}
+			c_result := convert(result)
+			resultChan <- C.fg_result{port_id: portId, data: unsafe.Pointer(cValueToPtr(c_result))}
+		}
+	}()
 }
 
 //export enforce_binding

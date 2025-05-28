@@ -318,7 +318,14 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 				Fields: results,
 			},
 		}, nil
-
+	case *ast.ChanType:
+		inner, err := p.parseTypeExpr("", e.Value)
+		if err != nil {
+			return nil, err
+		}
+		return &models.GoChanType{
+			Inner: inner,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported type expression: %v (%T)", expr, expr)
 	}

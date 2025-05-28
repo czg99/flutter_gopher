@@ -79,6 +79,7 @@ type BridgeGenerator struct {
 	Funcs         []*models.GoFuncType   // Go functions to be bridged
 	Slices        []*models.GoField      // Generated wrapper structs for slice types
 	Ptrs          []*models.GoField      // Generated wrapper structs for pointer types
+	Chans         []*models.GoField      // Generated wrapper structs for channel types
 
 	generatedCode []byte // The final generated code
 	templatePath  string // Path to the template file
@@ -159,8 +160,8 @@ func (g *BridgeGenerator) processPackageData(pkg *models.Package) {
 	// Process function types
 	g.processFunctionTypes(pkg)
 
-	// Process slice and pointer types
-	g.processSliceAndPointerTypes()
+	// Process special types
+	g.processSpecialTypes()
 
 	// Set package information
 	g.PkgPath = pkg.PkgPath
@@ -232,18 +233,15 @@ func isErrorType(t models.GoType) bool {
 	return t.GoType() == "error"
 }
 
-// processSliceAndPointerTypes creates wrapper structs for slice and pointer types.
-// These wrapper structs are used to pass slices and pointers between Go and Dart.
-func (g *BridgeGenerator) processSliceAndPointerTypes() {
-	sliceMap := make(map[string]*models.GoField)
-	ptrMap := make(map[string]*models.GoField)
-
-	// Process all struct fields and function parameters/results to find slice and pointer types
-	g.collectSpecialTypes(sliceMap, ptrMap)
+// processSpecialTypes processes slice and pointer and channel types.
+func (g *BridgeGenerator) processSpecialTypes() {
+	// Collect all special types from structs and functions
+	sliceMap, ptrMap, chanMap := g.collectSpecialTypes()
 
 	// Convert maps to slices for template processing
 	g.Slices = mapToSlice(sliceMap)
 	g.Ptrs = mapToSlice(ptrMap)
+	g.Chans = mapToSlice(chanMap)
 }
 
 // mapToSlice converts a map of fields to a slice.
@@ -258,21 +256,30 @@ func mapToSlice(fieldMap map[string]*models.GoField) []*models.GoField {
 
 // collectSpecialTypes finds all slice and pointer types in structs and functions.
 // It creates wrapper structs for each unique type.
-func (g *BridgeGenerator) collectSpecialTypes(sliceMap map[string]*models.GoField, ptrMap map[string]*models.GoField) {
+func (g *BridgeGenerator) collectSpecialTypes() (sliceMap, ptrMap, chanMap map[string]*models.GoField) {
+	sliceMap = make(map[string]*models.GoField)
+	ptrMap = make(map[string]*models.GoField)
+	chanMap = make(map[string]*models.GoField)
+
 	// Helper function to process fields and find special types
 	processFields := func(fields []*models.GoField) {
 		for _, field := range fields {
+			key := field.MapName()
 			if field.IsSlice() {
-				key := field.MapName()
 				if _, exists := sliceMap[key]; !exists {
 					sliceMap[key] = field
 				}
 			}
 
 			if field.IsPtr() {
-				key := field.MapName()
 				if _, exists := ptrMap[key]; !exists {
 					ptrMap[key] = field
+				}
+			}
+
+			if field.IsChan() {
+				if _, exists := chanMap[key]; !exists {
+					chanMap[key] = field
 				}
 			}
 		}
@@ -288,6 +295,7 @@ func (g *BridgeGenerator) collectSpecialTypes(sliceMap map[string]*models.GoFiel
 		processFields(funcType.Params.Fields)
 		processFields(funcType.Results.Fields)
 	}
+	return
 }
 
 // removeExcessiveEmptyLines removes excessive empty lines from generated code

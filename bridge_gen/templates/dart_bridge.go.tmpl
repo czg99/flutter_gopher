@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:ffi' as ffi;
 import 'package:ffi/ffi.dart';
 import 'package:flutter_gopher/flutter_gopher.dart';
+export 'package:flutter_gopher/chan.dart';
 
 typedef Error = String?;
 
@@ -50,7 +51,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
   _{{$bridge.DartClassName}}() {
     FgLoop.once('{{$bridge.LibName}}', (_) {
       final result = _fgResultLoop();
-      FgAsync.sendGoResult(result.portId, result.data);
+      FgAsync.sendGoResult(result.port_id, result.data);
       return true;
     });
   }
@@ -119,7 +120,7 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
       {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
     );
     final data = await FgAsync.go((params, portId) {
-      params.fg_port_id = portId;
+      params.port_id = portId;
       {{$fn.DartCType}}GoAsync(params);
     }, c_params, _fgNextPortId());
 
@@ -135,9 +136,14 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
 {{end -}}
 }
 
+final class _fgChan extends ffi.Struct {
+  @ffi.Int64()
+  external int port_id;
+}
+
 final class _fgResult extends ffi.Struct {
   @ffi.Int64()
-  external int portId;
+  external int port_id;
   external ffi.Pointer<ffi.Void> data;
 }
 
@@ -182,7 +188,7 @@ final class {{$obj.DartType}} {
 final class {{$obj.DartCType}} extends ffi.Struct {
 {{- if or .isParams}}
   @ffi.Int64()
-  external int fg_port_id;
+  external int port_id;
 {{- end}}
 {{- range $field := $obj.Fields}}
   {{- if eq $field.MapName ""}}
@@ -254,6 +260,47 @@ final class {{$obj.DartCType}} extends ffi.Struct {
 {{template "generateMap" makeMap "obj" $fn.Params "isParams" true}}
 {{template "generateMap" makeMap "obj" $fn.Results "isResults" true}}
 {{- end}}
+
+{{range $obj := $bridge.Chans}}
+{{$obj.DartType}} _mapTo{{$obj.MapName}}(_fgChan from) {
+  final result = {{$obj.DartType}}();
+  result.setPortId(from.port_id);
+  result.setPointerToDart((p) {
+    if (p != ffi.nullptr) {
+      final cValue = p.cast<{{$obj.InnerMost.DartCType}}>();
+      {{- if eq $obj.InnerMost.MapName ""}}
+      final dartValue = cValue[0];
+      {{- else}}
+      final dartValue = _mapTo{{$obj.InnerMost.MapName}}(cValue[0]);
+      {{- end}}
+      calloc.free(p);
+      return dartValue;
+    }
+    return {{$obj.Type.Inner.DartDefault}};
+  });
+  return result;
+}
+
+_fgChan _mapFrom{{$obj.MapName}}({{$obj.DartType}} from) {
+  from.setPortId(_fgNextPortId());
+  from.setPointerToDart((p) {
+    if (p != ffi.nullptr) {
+      final cValue = p.cast<{{$obj.InnerMost.DartCType}}>();
+      {{- if eq $obj.InnerMost.MapName ""}}
+      final dartValue = cValue[0];
+      {{- else}}
+      final dartValue = _mapTo{{$obj.InnerMost.MapName}}(cValue[0]);
+      {{- end}}
+      calloc.free(p);
+      return dartValue;
+    }
+    return {{$obj.Type.Inner.DartDefault}};
+  });
+  final result = ffi.Struct.create<_fgChan>();
+  result.port_id = from.portId;
+  return result;
+}
+{{end}}
 
 {{range $obj := $bridge.Ptrs}}
 {{$obj.DartType}} _mapTo{{$obj.MapName}}({{$obj.DartCType}} from) {

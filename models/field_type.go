@@ -17,6 +17,11 @@ func (f *GoField) IsPtr() bool {
 	return ok
 }
 
+func (f *GoField) IsChan() bool {
+	_, ok := f.Type.(*GoChanType)
+	return ok
+}
+
 func (f *GoField) InnerMost() GoType {
 	var most func(t GoType) GoType
 	most = func(t GoType) GoType {
@@ -25,6 +30,10 @@ func (f *GoField) InnerMost() GoType {
 		}
 
 		if s, ok := t.(*GoSliceType); ok {
+			return most(s.Inner)
+		}
+
+		if s, ok := t.(*GoChanType); ok {
 			return most(s.Inner)
 		}
 		return t
