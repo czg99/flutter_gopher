@@ -330,22 +330,20 @@ _fgChan _mapFrom{{$obj.MapName}}({{$obj.DartType}} from) {
   
   final valid = from.valid;
   final data = from.data.cast<{{$obj.InnerMost.DartCType}}>();
-  final result = {{$obj.DartType}}.empty(growable: true);;
-  for (var i = 0; i < from.len; i++) {
+  final result = List.generate(from.len, (i) {
     {{- if $obj.Type.IsInnerPtr}}
     final isValid = valid != ffi.nullptr ? valid[i] : true;
     if (!isValid) {
-      result.add(null);
-      continue;
+      return null;
     }
     {{- end}}
     final cValue = data[i];
     {{- if eq $obj.InnerMost.MapName ""}}
-    result.add(cValue);
+    return cValue;
     {{- else}}
-    result.add(_mapTo{{$obj.InnerMost.MapName}}(cValue));
+    return _mapTo{{$obj.InnerMost.MapName}}(cValue);
     {{- end}}
-  }
+  });
 
   calloc.free(data);
   if (valid != ffi.nullptr) {
