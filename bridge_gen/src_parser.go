@@ -247,6 +247,11 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		if basicType := models.BasicTypeMap[e.Name]; basicType != nil {
 			return basicType, nil
 		}
+
+		if e.Name == "any" {
+			return nil, fmt.Errorf("unsupported type: any")
+		}
+
 		return &models.GoIdentType{
 			Name: e.Name,
 		}, nil
