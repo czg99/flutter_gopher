@@ -14,9 +14,6 @@ class FgChan<T> {
   /// 指针到Dart对象的转换函数
   T Function(Pointer<Void>)? _pointerToDart;
 
-  /// 通道关闭时的回调函数
-  void Function()? _onClose;
-
   /// 端口ID，用于在IsolateNameServer中注册
   int? _portId;
 
@@ -87,19 +84,12 @@ class FgChan<T> {
     _pointerToDart = converter;
   }
 
-  /// 设置通道关闭时的回调函数，不要手动调用
-  void setOnClose(void Function() callback) {
-    _onClose = callback;
-  }
-
-  /// 关闭通道并清理资源
+  /// 关闭Dart通道并清理资源
   void close() {
     if (_portId != null) {
       IsolateNameServer.removePortNameMapping(_portId.toString());
       _portId = null;
     }
-
-    _onClose?.call();
     _receivePort?.close();
     _receivePort = null;
   }
