@@ -10,4 +10,5 @@ type GoType interface {
 	DartCType() string
 	DartDefault() string
 	MapName() string
+	NeedMap() bool
 }

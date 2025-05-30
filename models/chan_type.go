@@ -1,14 +1,7 @@
 package models
 
-import "github.com/iancoleman/strcase"
-
 type GoChanType struct {
 	Inner GoType
-}
-
-func (t *GoChanType) IsInnerPtr() bool {
-	_, ok := t.Inner.(*GoPointerType)
-	return ok
 }
 
 func (t *GoChanType) String() string {
@@ -40,8 +33,9 @@ func (t *GoChanType) DartDefault() string {
 }
 
 func (t *GoChanType) MapName() string {
-	if t.IsInnerPtr() {
-		return strcase.ToCamel("Null" + t.Inner.DartType() + "Chan")
-	}
-	return strcase.ToCamel(t.Inner.DartType() + "Chan")
+	return t.Inner.MapName() + "Chan"
+}
+
+func (t *GoChanType) NeedMap() bool {
+	return true
 }

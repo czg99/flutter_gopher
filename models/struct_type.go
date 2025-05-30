@@ -38,3 +38,7 @@ func (t *GoStructType) DartDefault() string {
 func (t *GoStructType) MapName() string {
 	return t.Type.MapName()
 }
+
+func (t *GoStructType) NeedMap() bool {
+	return true
+}

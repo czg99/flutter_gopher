@@ -50,3 +50,7 @@ func (t *GoFuncType) DartResultType() string {
 func (t *GoFuncType) MapName() string {
 	return ""
 }
+
+func (t *GoFuncType) NeedMap() bool {
+	return false
+}

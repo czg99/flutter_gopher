@@ -1,7 +1,5 @@
 package models
 
-import "github.com/iancoleman/strcase"
-
 type GoPointerType struct {
 	Inner GoType
 }
@@ -35,5 +33,9 @@ func (t *GoPointerType) DartDefault() string {
 }
 
 func (t *GoPointerType) MapName() string {
-	return strcase.ToCamel("Null" + t.Inner.DartType())
+	return "Null" + t.Inner.MapName()
+}
+
+func (t *GoPointerType) NeedMap() bool {
+	return true
 }

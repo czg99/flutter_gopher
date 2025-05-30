@@ -37,3 +37,7 @@ func (t *GoIdentType) DartDefault() string {
 func (t *GoIdentType) MapName() string {
 	return strcase.ToCamel(t.Name)
 }
+
+func (t *GoIdentType) NeedMap() bool {
+	return true
+}

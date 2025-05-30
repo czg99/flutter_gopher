@@ -7,21 +7,6 @@ type GoField struct {
 	Type GoType
 }
 
-func (f *GoField) IsSlice() bool {
-	_, ok := f.Type.(*GoSliceType)
-	return ok
-}
-
-func (f *GoField) IsPtr() bool {
-	_, ok := f.Type.(*GoPointerType)
-	return ok
-}
-
-func (f *GoField) IsChan() bool {
-	_, ok := f.Type.(*GoChanType)
-	return ok
-}
-
 func (f *GoField) InnerMost() GoType {
 	var most func(t GoType) GoType
 	most = func(t GoType) GoType {
@@ -84,4 +69,8 @@ func (f *GoField) DartDefault() string {
 
 func (f *GoField) MapName() string {
 	return f.Type.MapName()
+}
+
+func (f *GoField) NeedMap() bool {
+	return f.Type.NeedMap()
 }

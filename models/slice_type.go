@@ -1,14 +1,7 @@
 package models
 
-import "github.com/iancoleman/strcase"
-
 type GoSliceType struct {
 	Inner GoType
-}
-
-func (t *GoSliceType) IsInnerPtr() bool {
-	_, ok := t.Inner.(*GoPointerType)
-	return ok
 }
 
 func (t *GoSliceType) String() string {
@@ -40,8 +33,9 @@ func (t *GoSliceType) DartDefault() string {
 }
 
 func (t *GoSliceType) MapName() string {
-	if t.IsInnerPtr() {
-		return strcase.ToCamel("Null" + t.Inner.DartType() + "List")
-	}
-	return strcase.ToCamel(t.Inner.DartType() + "List")
+	return t.Inner.MapName() + "List"
+}
+
+func (t *GoSliceType) NeedMap() bool {
+	return true
 }
