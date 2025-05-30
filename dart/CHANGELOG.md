@@ -9,3 +9,7 @@
 ## 0.0.3
 
 * FgAsync.go provides asynchronous support for custom port id.
+
+## 0.1.0
+
+* Add the FgChan class to support listening to data from a Go channel.

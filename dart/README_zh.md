@@ -8,6 +8,7 @@ Flutter Gopher Dart 库是 Flutter Gopher 工具生成的 Flutter 插件中的�
 
 - 提供动态库加载机制，支持多平台（iOS、Android、Windows、macOS、Linux）
 - 实现异步调用支持，使 Go 函数可以在 Dart 中异步执行
+- 实现通道监听机制，使 Dart 可以实时监听 Go 的通道数据
 - 提供统一的错误处理机制
 - 简化 FFI 绑定代码的使用
 

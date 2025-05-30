@@ -8,6 +8,7 @@ The Flutter Gopher Dart library is a dependency of the Flutter plugins generated
 
 - Provides dynamic library loading mechanism, supporting multiple platforms (iOS, Android, Windows, macOS, Linux)
 - Implements asynchronous call support, allowing Go functions to be executed asynchronously in Dart
+- Implement a channel listening mechanism to enable Dart to listen to data from Go channels in real time
 - Provides unified error handling mechanism
 - Simplifies the use of FFI binding code
 
