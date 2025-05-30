@@ -76,37 +76,37 @@ my_api/
 
 Flutter Gopher supports converting the following data types between Go and Dart:
 
-| Go Type | Dart Type | Description |
-|---------|-----------|-------------|
-| `bool` | `bool` | Boolean value |
-| `int8`, `int16`, `int32` | `int` | Signed integers |
-| `uint8`, `uint16`, `uint32` | `int` | Unsigned integers |
-| `int64`, `uint64` | `int` | 64-bit integers |
-| `int`, `uint` | `int` | Platform-dependent integers |
-| `float32` | `double` | 32-bit floating point |
-| `float64` | `double` | 64-bit floating point |
-| `string` | `String` | String |
-| `struct` | Go struct | Dart class |
-| `[]T` | `List<T>` | Slice/Array |
-| `[]*T` | `List<T?>` | Pointer slice/Nullable element list |
-| `*T` | `T?` | Pointer converted to nullable type |
-| `error` | `String?` | Error converted to nullable string |
-| `func(...)` | `Future<...>` | Async function support |
+| Go Type                                       | Dart Type     | Description                        |
+| --------------------------------------------- | ------------- | ---------------------------------- |
+| `bool`                                        | `bool`        | Boolean value                      |
+| `int8`, `int16`, `int32`, `int64`, `int`      | `int`         | Signed integer                     |
+| `uint8`, `uint16`, `uint32`, `uint64`, `uint` | `int`         | Unsigned integer                   |
+| `float32`                                     | `double`      | 32-bit floating-point number       |
+| `float64`                                     | `double`      | 64-bit floating-point number       |
+| `string`                                      | `String`      | String                             |
+| `struct`                                      | `Class`       | Struct/Class                       |
+| `[]T`                                         | `List<T>`     | Slice/Array                        |
+| `chan T`                                      | `FgChan<T>`   | One-way channel from Go to Dart    |
+| `*T`                                          | `T?`          | Pointer converted to nullable type |
+| `error`                                       | `String?`     | Error converted to nullable string |
+| `func(...)`                                   | `Future<...>` | Asynchronous function support      |
+
 
 ### Type Conversion Rules
 
-1. **Basic Types**: Go's basic numeric types are automatically mapped to Dart's `int` or `double`
-2. **Structs**: Go structs generate corresponding Dart classes, with field names converted to camelCase
-3. **Slices**: Go slices are converted to Dart `List`, preserving element types
-4. **Error Handling**: Errors returned by Go functions are converted to nullable `String` in Dart
-5. **Async Support**: All Go functions generate both synchronous and asynchronous (returning `Future`) versions of Dart methods
+1. **Structs**: Go structs are converted into corresponding Dart classes, with field names transformed to camelCase.
+2. **Slices**: Go slices are converted into Dart `List`s, preserving the element type.
+3. **Pointers**: Go pointer types are converted into nullable types in Dart.
+4. **Channels**: Go channel types are converted into Dart's `FgChan<T>`. You can use the `listen` method to receive data from the channel.
+5. **Asynchronous Support**: Each Go function generates both synchronous and asynchronous Dart methods.
+6. **Error Handling**: The `error` returned by Go functions is thrown as an exception on the Dart side and should be caught using `try-catch`.
 
 ## 🔄 Development Workflow
 
-1. Use the `create` command to create a new plugin project
-2. Implement Go API in the `src/api` directory
-3. Use the `generate` command to regenerate FFI binding code
-4. Use the plugin in your Flutter application
+1. Use the `fgo create` command to create a new plugin project.
+2. Implement the Go API in the `src/api` directory at the root of the plugin project.
+3. Run the `fgo generate` command in the root directory of the plugin project to regenerate the FFI binding code.
+4. Add the plugin as a dependency in your Flutter project.
 
 ## 🌟 Example
 
@@ -124,27 +124,10 @@ fgo create -n calculator -o ./calculator --example
 // src/api/calculator.go
 package api
 
-import "errors"
-
-// Add returns the sum of two numbers
 func Add(a, b int) int {
     return a + b
 }
 
-// Multiply returns the product of two numbers
-func Multiply(a, b float64) float64 {
-    return a * b
-}
-
-// CalculateWithPrecision calculates with specified precision
-func CalculateWithPrecision(values []float64) (result float64, err error) {
-    if len(values) == 0 {
-        return 0, errors.New("empty array")
-    }
-    
-    // Implement calculation logic
-    return values[0], nil
-}
 ```
 
 #### 3. Generate FFI binding code:
@@ -163,30 +146,13 @@ void main() async {
   // Use synchronous API
   final api = Calculator();
   final sum = api.add(5, 3);
-  print('5 + 3 = $sum'); // Output: 5 + 3 = 8
-  
-  final product = api.multiply(2.5, 3.0);
-  print('2.5 * 3.0 = $product'); // Output: 2.5 * 3.0 = 7.5
+  print('5 + 3 = $sum');
   
   // Use asynchronous API
-  try {
-    final result = await api.calculateWithPrecisionAsync([1.1, 2.2, 3.3]);
-    print('Calculation result: $result');
-  } catch (e) {
-    print('Calculation error: $e');
-  }
+  final sumAsync = await api.addGoAsync(5, 3);
+  print('5 + 3 = $sumAsync');
 }
 ```
-
-## 🔍 Advanced Usage
-
-### Error Handling
-
-All errors returned by Go functions are thrown as exceptions in Dart and can be caught using try-catch.
-
-### Concurrency Handling
-
-Go's concurrency features can be used through Dart's `Future` and `async/await` pattern.
 
 ## 📝 Contribution Guidelines
 
