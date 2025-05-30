@@ -5,7 +5,6 @@ package main
 import (
 	"errors"
 	"unsafe"
-	"reflect"
 	"time"
 	"sync"
 	"sync/atomic"
@@ -37,8 +36,7 @@ typedef struct {
 
 typedef struct {
 	void* data;
-	bool* valid;
-	int len;
+	int length;
 } fg_array;
 
 {{- define "generateCStruct"}}
@@ -51,7 +49,7 @@ typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
 	{{$field.CType}} {{$field.CName}};
 	{{- end}}
 	{{- if .isResults}}
-	void* fg_panic;
+	void* panic_err;
 	{{- end}}
 } {{$obj.CType}};
 {{- end}}
@@ -136,7 +134,7 @@ func fg_next_port_id() int64 {
 func {{$fn.CType}}(params {{$fn.Params.GoCType}}) (result {{$fn.Results.GoCType}}) {
 	defer func() {
 		if r := recover(); r != nil {
-			result.fg_panic = mapFromString(fmt.Sprintf("panic: %v\n%s\n", r, string(debug.Stack())))
+			result.panic_err = mapFromString(fmt.Sprintf("panic: %v\n%s\n", r, string(debug.Stack())))
 		}
 	}()
 
@@ -174,56 +172,11 @@ func {{$fn.CType}}_async(params {{$fn.Params.GoCType}}) {
 {{- if not .isResults}}
 func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	{{- range $field := $fields}}
-		{{- if $field.IsChan }}
-			{{- "\n	"}}result.{{$field.CName}} = mapToChan(from.a, 
-			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) {{$field.InnerMost.GoCType}} {
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}value := valueFromPtr(g)
-				{{- else}}
-				{{- "\n			"}}value := g
-				{{- end}}
-				{{- if eq $field.InnerMost.MapName ""}}
-				{{- "\n			"}}return {{$field.InnerMost.GoCType}}(value)
-				{{- else}}
-				{{- "\n			"}}return mapFrom{{$field.InnerMost.MapName}}(value)
-				{{- end}}
-			{{- "\n		"}}},
-			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) bool {
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}return g == nil
-				{{- else}}
-				{{- "\n			"}}return false
-				{{- end}}
-			{{- "\n		"}}})
-		{{- else if $field.IsSlice }}
-			{{- "\n	"}}result.{{$field.GoName}} = mapFromFgArray(from.{{$field.CName}},
-			{{- "\n		"}}func(c {{$field.InnerMost.GoCType}}) {{$field.Type.Inner.GoType}} {
-				{{- if eq $field.InnerMost.MapName ""}}
-				{{- "\n			"}}value := {{$field.InnerMost.GoType}}(c)
-				{{- else}}
-				{{- "\n			"}}value := mapTo{{$field.InnerMost.MapName}}(c)
-				{{- end}}
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}return valueToPtr(value)
-				{{- else}}
-				{{- "\n			"}}return value
-				{{- end}}
-			{{- "\n		"}}})
-		{{- else if $field.IsPtr }}
-		{{- "\n	"}}if from.{{$field.CName}} != nil {
-			{{- if eq $field.InnerMost.MapName ""}}
-			{{- "\n		"}}result.{{$field.GoName}} = valueToPtr({{$field.InnerMost.GoType}}(cValueFromPtr(from.{{$field.CName}})))
-			{{- else}}
-			{{- "\n		"}}result.{{$field.GoName}} = valueToPtr(mapTo{{$field.InnerMost.MapName}}(cValueFromPtr(from.{{$field.CName}})))
-			{{- end}}
-		{{- "\n	"}}}
-		{{- else}}
-			{{- if eq $field.MapName ""}}
-			{{- "\n	"}}result.{{$field.GoName}} = {{$field.GoType}}(from.{{$field.CName}})
-			{{- else}}
-			{{- "\n	"}}result.{{$field.GoName}} = mapTo{{$field.MapName}}(from.{{$field.CName}})
-			{{- end}}
-		{{- end}}
+	{{- if not $field.NeedMap}}
+	result.{{$field.GoName}} = {{$field.GoType}}(from.{{$field.CName}})
+	{{- else}}
+	result.{{$field.GoName}} = mapTo{{$field.MapName}}(from.{{$field.CName}})
+	{{- end}}
 	{{- end}}
 	return
 }
@@ -232,63 +185,11 @@ func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 {{- if not .isParams}}
 func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
 	{{- range $field := $fields}}
-		{{- if $field.IsChan }}
-			{{- "\n	"}}result.{{$field.CName}} = mapFromChan(from.{{$field.GoName}},
-			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) {{$field.InnerMost.GoCType}} {
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}value := valueFromPtr(g)
-				{{- else}}
-				{{- "\n			"}}value := g
-				{{- end}}
-				{{- if eq $field.InnerMost.MapName ""}}
-				{{- "\n			"}}return {{$field.InnerMost.GoCType}}(value)
-				{{- else}}
-				{{- "\n			"}}return mapFrom{{$field.InnerMost.MapName}}(value)
-				{{- end}}
-			{{- "\n		"}}},
-			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) bool {
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}return g == nil
-				{{- else}}
-				{{- "\n			"}}return false
-				{{- end}}
-			{{- "\n		"}}})
-		{{- else if $field.IsSlice }}
-			{{- "\n	"}}result.{{$field.CName}} = mapToFgArray(from.{{$field.GoName}}, 
-			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) {{$field.InnerMost.GoCType}} {
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}value := valueFromPtr(g)
-				{{- else}}
-				{{- "\n			"}}value := g
-				{{- end}}
-				{{- if eq $field.InnerMost.MapName ""}}
-				{{- "\n			"}}return {{$field.InnerMost.GoCType}}(value)
-				{{- else}}
-				{{- "\n			"}}return mapFrom{{$field.InnerMost.MapName}}(value)
-				{{- end}}
-			{{- "\n		"}}},
-			{{- "\n		"}}func(g {{$field.Type.Inner.GoType}}) bool {
-				{{- if $field.Type.IsInnerPtr}}
-				{{- "\n			"}}return g == nil
-				{{- else}}
-				{{- "\n			"}}return false
-				{{- end}}
-			{{- "\n		"}}})
-		{{- else if $field.IsPtr}}
-		{{- "\n	"}}if from.{{$field.GoName}} != nil {
-			{{- if eq $field.InnerMost.MapName ""}}
-			{{- "\n		"}}result.{{$field.CName}} = cValueToPtr({{$field.InnerMost.GoCType}}(valueFromPtr(from.{{$field.GoName}})))
-			{{- else}}
-			{{- "\n		"}}result.{{$field.CName}} = cValueToPtr(mapFrom{{$field.InnerMost.MapName}}(valueFromPtr(from.{{$field.GoName}})))
-			{{- end}}
-		{{- "\n	"}}}
-		{{- else}}
-			{{- if eq $field.MapName ""}}
-			{{- "\n	"}}result.{{$field.CName}} = {{$field.GoCType}}(from.{{$field.GoName}})
-			{{- else}}
-			{{- "\n	"}}result.{{$field.CName}} = mapFrom{{$field.MapName}}(from.{{$field.GoName}})
-			{{- end}}
-		{{- end}}
+	{{- if not $field.NeedMap}}
+	result.{{$field.CName}} = {{$field.GoCType}}(from.{{$field.GoName}})
+	{{- else}}
+	result.{{$field.CName}} = mapFrom{{$field.MapName}}(from.{{$field.GoName}})
+	{{- end}}
 	{{- end}}
 	return
 }
@@ -303,6 +204,93 @@ func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
 {{template "generateMap" makeMap "obj" $fn.Params "isParams" true}}
 {{template "generateMap" makeMap "obj" $fn.Results "isResults" true}}
 {{- end}}
+
+{{range $obj := $bridge.Ptrs}}
+func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) {{$obj.GoType}} {
+	if from == nil {
+		return nil
+	}
+	{{- if not $obj.Inner.NeedMap}}
+	return goValueToPtr(({{$obj.Inner.GoType}})(cValueFromPtr(from)))
+	{{- else}}
+	return goValueToPtr(mapTo{{$obj.Inner.MapName}}(cValueFromPtr(from)))
+	{{- end}}
+}
+
+func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) {{$obj.GoCType}} {
+	if from == nil {
+		return nil
+	}
+	{{- if not $obj.Inner.NeedMap}}
+	return cValueToPtr(({{$obj.Inner.GoCType}})(goValueFromPtr(from)))
+	{{- else}}
+	return cValueToPtr(mapFrom{{$obj.Inner.MapName}}(goValueFromPtr(from)))
+	{{- end}}
+}
+{{end}}
+
+{{range $obj := $bridge.Slices}}
+func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) {{$obj.GoType}} {
+	if from.length <= 0 {
+		return nil
+	}
+
+	var sizeType {{$obj.Inner.GoCType}}
+	size := unsafe.Sizeof(sizeType)
+	result := make({{$obj.GoType}}, from.length)
+	for i := 0; i < int(from.length); i++ {
+		cvalue := *(*{{$obj.Inner.GoCType}})(unsafe.Pointer(uintptr(from.data) + uintptr(i)*size))
+		{{- if not $obj.Inner.NeedMap}}
+		result[i] = ({{$obj.Inner.GoType}})(cvalue)
+		{{- else}}
+		result[i] = mapTo{{$obj.Inner.MapName}}(cvalue)
+		{{- end}}
+	}
+	C.free(from.data)
+	return result
+}
+
+func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) {{$obj.GoCType}} {
+	if len(from) == 0 {
+		return {{$obj.GoCType}}{}
+	}
+
+	var sizeType {{$obj.Inner.GoCType}}
+	size := unsafe.Sizeof(sizeType)
+	data := C.malloc(C.size_t(size * uintptr(len(from))))
+	for i := 0; i < len(from); i++ {
+		cvaluePtr := (*{{$obj.Inner.GoCType}})(unsafe.Pointer(uintptr(data) + uintptr(i)*size))
+		{{- if not $obj.Inner.NeedMap}}
+		*cvaluePtr = ({{$obj.Inner.GoCType}})(from[i])
+		{{- else}}
+		*cvaluePtr = mapFrom{{$obj.Inner.MapName}}(from[i])
+		{{- end}}
+	}
+	return {{$obj.GoCType}}{data: data, length: C.int(len(from))}
+}
+{{end}}
+
+{{range $obj := $bridge.Chans}}
+func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) {{$obj.GoType}} {
+	return mapToChan(from, func(value {{$obj.Inner.GoType}}) {{$obj.Inner.GoCType}} {
+		{{- if not $obj.Inner.NeedMap}}
+		return ({{$obj.Inner.GoCType}})(value)
+		{{- else}}
+		return mapFrom{{$obj.Inner.MapName}}(value)
+		{{- end}}
+	})
+}
+
+func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) {{$obj.GoCType}} {
+	return mapFromChan(from, func(value {{$obj.Inner.GoType}}) {{$obj.Inner.GoCType}} {
+		{{- if not $obj.Inner.NeedMap}}
+		return ({{$obj.Inner.GoCType}})(value)
+		{{- else}}
+		return mapFrom{{$obj.Inner.MapName}}(value)
+		{{- end}}
+	})
+}
+{{end}}
 
 func mapToError(from unsafe.Pointer) error {
 	if from == nil {
@@ -321,6 +309,9 @@ func mapFromError(from error) unsafe.Pointer {
 }
 
 func mapToString(from unsafe.Pointer) string {
+	if from == nil {
+		return ""
+	}
 	result := C.GoString((*C.char)(from))
 	C.free(from)
 	return result
@@ -343,11 +334,11 @@ func cValueFromPtr[T any](ptr *T) T {
 	return value
 }
 
-func valueToPtr[T any](value T) *T {
+func goValueToPtr[T any](value T) *T {
 	return &value
 }
 
-func valueFromPtr[T any](ptr *T) T {
+func goValueFromPtr[T any](ptr *T) T {
 	if ptr == nil {
 		var zero T
 		return zero
@@ -355,124 +346,24 @@ func valueFromPtr[T any](ptr *T) T {
 	return *ptr
 }
 
-func valuesToPtrs[T any](values []T) []*T {
-	if len(values) == 0 {
-		return nil
-	}
-
-	result := make([]*T, 0, len(values))
-	for _, v := range values {
-		result = append(result, &v)
-	}
-	return result
-}
-
-func valuesFromPtrs[T any](ptrs []*T) []T {
-	if len(ptrs) == 0 {
-		return nil
-	}
-
-	result := make([]T, len(ptrs))
-	for i, ptr := range ptrs {
-		if ptr != nil {
-			result[i] = *ptr
-		}
-	}
-	return result
-}
-
-func mapFromFgArray[T any, C_T any](from C.fg_array, converter func(C_T) T) []T {
-	if from.len <= 0 {
-		return nil
-	}
-	length := int(from.len)
-	result := make([]T, length)
-
-	var cValue C_T
-	size := unsafe.Sizeof(cValue)
-	data := from.data
-	valid := from.valid
-
-	for i := 0; i < length; i++ {
-		valuePtr := (*C_T)(unsafe.Pointer(uintptr(data) + uintptr(i)*size))
-		isValid := true
-		if valid != nil {
-			isValid = bool(*(*C.bool)(unsafe.Pointer(uintptr(unsafe.Pointer(valid)) + uintptr(i)*unsafe.Sizeof(C.bool(false)))))
-		}
-		
-		if isValid {
-			result[i] = converter(*valuePtr)
-		} else {
-			var zero T
-			result[i] = zero
-		}
-	}
-
-	C.free(data)
-	if valid != nil {
-		C.free(unsafe.Pointer(valid))
-	}
-	return result
-}
-
-func mapToFgArray[T any, C_T any](from []T, converter func(T) C_T, isNil func(T) bool) C.fg_array {
-	if len(from) == 0 {
-		return C.fg_array{data: nil, valid: nil, len: 0}
-	}
-
-	isPointerType := reflect.TypeOf(from[0]).Kind() == reflect.Ptr
-
-	var cValue C_T
-	size := unsafe.Sizeof(cValue)
-	data := C.malloc(C.size_t(size * uintptr(len(from))))
-	length := C.int(len(from))
-
-	var valid unsafe.Pointer = nil
-	if isPointerType {
-		valid = C.malloc(C.size_t(unsafe.Sizeof(C.bool(false)) * uintptr(len(from))))
-	}
-
-	for i, v := range from {
-		valuePtr := (*C_T)(unsafe.Pointer(uintptr(data) + uintptr(i)*size))
-		isValid := !isNil(v)
-
-		if isPointerType {
-			validPtr := (*C.bool)(unsafe.Pointer(uintptr(valid) + uintptr(i)*unsafe.Sizeof(C.bool(false))))
-			*validPtr = C.bool(isValid)
-		}
-		
-		if isValid {
-			*valuePtr = converter(v)
-		} else {
-			var zero C_T
-			*valuePtr = zero
-		}
-	}
-	return C.fg_array{data: data, valid: (*C.bool)(valid), len: length}
-}
-
-func mapToChan[T any, CT any](port C.fg_chan, convert func(T) CT, isNil func(T) bool) chan T {
+func mapToChan[T any, CT any](port C.fg_chan, convert func(T) CT) chan T {
 	c := make(chan T)
-	chanLoop(port.port_id, c, convert, isNil)
+	chanLoop(port.port_id, c, convert)
 	return c
 }
 
-func mapFromChan[T any, CT any](c <-chan T, convert func(T) CT, isNil func(T) bool) C.fg_chan {
+func mapFromChan[T any, CT any](c <-chan T, convert func(T) CT) C.fg_chan {
 	portId := C.int64_t(fg_next_port_id())
-	chanLoop(portId, c, convert, isNil)
+	chanLoop(portId, c, convert)
 	return C.fg_chan{port_id: portId}
 }
 
-func chanLoop[T any, CT any](portId C.int64_t, c <-chan T, convert func(T) CT, isNil func(T) bool) {
+func chanLoop[T any, CT any](portId C.int64_t, c <-chan T, convert func(T) CT) {
 	go func() {
 		for {
 			result, ok := <-c
 			if !ok {
 				break
-			}
-			if isNil(result) {
-				resultChan <- C.fg_result{port_id: portId}
-				continue
 			}
 			c_result := convert(result)
 			resultChan <- C.fg_result{port_id: portId, data: unsafe.Pointer(cValueToPtr(c_result))}
