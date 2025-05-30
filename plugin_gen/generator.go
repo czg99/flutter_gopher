@@ -17,18 +17,16 @@ import (
 //go:embed templates/*
 var templateFiles embed.FS
 
-// PluginGenerator holds configuration for Flutter plugin generation.
-// It contains naming conventions and identifiers used across generated files.
+// PluginGenerator 保存用于 Flutter 插件生成的配置信息
 type PluginGenerator struct {
-	ProjectName     string // Snake case project name (e.g. "my_api")
-	PackageName     string // Java package name (e.g. "com.flutter_gopher.myapi")
-	PluginClassName string // Native plugin class name (e.g. "MyApiPlugin")
-	DartClassName   string // Dart API class name (e.g. "MyApi")
-	LibName         string // Library name for imports (e.g. "myapi")
+	ProjectName     string // 蛇形命名的项目名（例如 "my_api"）
+	PackageName     string // 插件包名（例如 "com.flutter_gopher.myapi"）
+	PluginClassName string // 原生插件类名（例如 "MyApiPlugin"）
+	DartClassName   string // Dart API 类名（例如 "MyApi"）
+	LibName         string // 用于导入的库名（例如 "myapi"）
 }
 
-// NewPluginGenerator creates a new plugin generator with standardized naming
-// based on the provided project name.
+// NewPluginGenerator 根据提供的项目名创建一个新的插件生成器
 func NewPluginGenerator(projectName string) *PluginGenerator {
 	snake := strcase.ToSnake(projectName)
 	flatName := strings.ToLower(strcase.ToLowerCamel(projectName))
@@ -41,21 +39,21 @@ func NewPluginGenerator(projectName string) *PluginGenerator {
 	}
 }
 
-// Generate creates a new Flutter plugin project in the specified destination directory.
-// If example is true, it also creates an example Flutter app that uses the plugin.
+// Generate 在指定的目标目录下创建一个新的 Flutter 插件项目
+// 如果 example 为 true，则还会创建一个使用该插件的 example 应用
 func (g *PluginGenerator) Generate(destDir string, example bool) error {
-	// Ensure target directory exists
+	// 确保目标目录存在
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 
-	// Walk through embedded template files
+	// 遍历嵌入的模板文件
 	err := fs.WalkDir(templateFiles, "templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip example files
+		// 跳过 example 文件
 		if strings.Contains(path, "example") {
 			return nil
 		}
@@ -67,7 +65,7 @@ func (g *PluginGenerator) Generate(destDir string, example bool) error {
 		return fmt.Errorf("failed to process template files: %w", err)
 	}
 
-	// Create example Flutter app if requested
+	// 如果需要则创建 example 应用
 	if example {
 		if err := g.createFlutterExample(destDir); err != nil {
 			return fmt.Errorf("failed to create flutter example: %w", err)
@@ -77,11 +75,9 @@ func (g *PluginGenerator) Generate(destDir string, example bool) error {
 	return nil
 }
 
-// processTemplateFile processes a single template file or directory.
-// For directories, it creates the corresponding directory in the destination.
-// For files, it processes templates, replaces placeholders, and writes to destination.
+// processTemplateFile 处理模板文件或目录
 func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) error {
-	// Get path relative to templates directory
+	// 获取相对于 templates 目录的路径
 	var relPath string
 	relPath, err := filepath.Rel("templates", path)
 	if err != nil {
@@ -89,7 +85,7 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 	}
 
 	if isDir {
-		// Create directory in destination
+		// 在目标位置创建目录
 		if relPath != "." {
 			destPath := filepath.Join(destDir, relPath)
 			if err = os.MkdirAll(destPath, 0755); err != nil {
@@ -100,16 +96,16 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		return nil
 	}
 
-	// Process file
+	// 处理文件
 	destPath := filepath.Join(destDir, relPath)
 
-	// Read template file content
+	// 读取模板文件内容
 	content, err := templateFiles.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read template file %s: %w", relPath, err)
 	}
 
-	// Process template files (containing template variables)
+	// 处理包含模板变量的文件
 	if bytes.Contains(content, []byte("{{.")) {
 		var tmpl *template.Template
 		tmpl, err = template.New(filepath.Base(relPath)).Parse(string(content))
@@ -125,10 +121,10 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		content = buffer.Bytes()
 	}
 
-	// Remove .tmpl extension from destination path
+	// 去除目标路径中的 .tmpl 后缀
 	destPath = strings.TrimSuffix(destPath, ".tmpl")
 
-	// Replace placeholder filenames with actual names
+	// 替换占位符文件名为实际名称
 	fileName := filepath.Base(destPath)
 	dir := filepath.Dir(destPath)
 	if strings.HasPrefix(fileName, "PluginClassName") {
@@ -137,7 +133,7 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		fileName = strings.Replace(fileName, "ProjectName", g.ProjectName, 1)
 	}
 
-	// Write processed content to destination file
+	// 写入处理后的内容到目标文件
 	destPath = filepath.Join(dir, fileName)
 	err = os.WriteFile(destPath, content, 0644)
 	if err != nil {
@@ -146,10 +142,9 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 	return nil
 }
 
-// createFlutterExample creates a Flutter example app that demonstrates
-// how to use the generated plugin.
+// createFlutterExample 创建一个 example 应用
 func (g *PluginGenerator) createFlutterExample(destDir string) error {
-	// Create example directory
+	// 创建 example 目录
 	exampleDir := filepath.Join(destDir, "example")
 	if err := os.RemoveAll(exampleDir); err != nil {
 		return fmt.Errorf("failed to remove example directory: %w", err)
@@ -159,7 +154,7 @@ func (g *PluginGenerator) createFlutterExample(destDir string) error {
 		return fmt.Errorf("failed to recreate example directory: %w", err)
 	}
 
-	// Execute flutter create command to create example project
+	// 执行 flutter create 命令创建示例项目
 	cmd := exec.Command("flutter", "create", ".")
 	cmd.Dir = exampleDir
 	cmd.Stdout = os.Stdout
@@ -170,7 +165,7 @@ func (g *PluginGenerator) createFlutterExample(destDir string) error {
 		return fmt.Errorf("failed to create flutter example project: %w", err)
 	}
 
-	// Add dependency to the main plugin project
+	// 添加主插件项目依赖
 	cmd = exec.Command("flutter", "pub", "add", g.ProjectName, "--path", "..")
 	cmd.Dir = exampleDir
 	cmd.Stdout = os.Stdout
@@ -181,7 +176,7 @@ func (g *PluginGenerator) createFlutterExample(destDir string) error {
 		return fmt.Errorf("failed to add project dependency: %w", err)
 	}
 
-	// Copy example files from templates
+	// 从模板复制 example 文件
 	err := fs.WalkDir(templateFiles, "templates/example", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err

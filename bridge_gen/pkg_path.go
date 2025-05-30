@@ -7,29 +7,27 @@ import (
 	"strings"
 )
 
-// ParsePkgPath returns the package path of the given file path.
-// It finds the nearest go.mod file and extracts the module name,
-// then calculates the relative package path from the module root.
-// Returns:
-//   - module: the Go module name from go.mod
-//   - pkgPath: the full package import path
-//   - err: any error encountered during the process
+// ParsePkgPath 返回给定文件路径的包路径，查找最近的go.mod文件并提取模块名称
+// 返回:
+//   - module: 来自go.mod的Go模块名称
+//   - pkgPath: 完整的包导入路径
+//   - err: 过程中遇到的任何错误
 func ParsePkgPath(path string) (module, pkgPath string, err error) {
-	// Convert to absolute path
+	// 转换为绝对路径
 	path, err = filepath.Abs(path)
 	if err != nil {
 		err = fmt.Errorf("failed to get absolute path: %w", err)
 		return
 	}
 
-	// Check if path exists
+	// 检查路径是否存在
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		err = fmt.Errorf("failed to stat path: %w", err)
 		return
 	}
 
-	// Determine directory to search from
+	// 确定要搜索的目录
 	var dirToSearch string
 	if fileInfo.IsDir() {
 		dirToSearch = path
@@ -37,33 +35,33 @@ func ParsePkgPath(path string) (module, pkgPath string, err error) {
 		dirToSearch = filepath.Dir(path)
 	}
 
-	// Search for go.mod file in current and parent directories
+	// 在当前目录和父目录中搜索go.mod文件
 	currentDir := dirToSearch
 	for {
 		goModPath := filepath.Join(currentDir, "go.mod")
 		if _, statErr := os.Stat(goModPath); statErr == nil {
-			// Found go.mod, read its content
+			// 找到go.mod，读取其内容
 			data, readErr := os.ReadFile(goModPath)
 			if readErr != nil {
 				err = fmt.Errorf("failed to read go.mod file: %w", readErr)
 				return
 			}
 
-			// Extract module name
+			// 提取模块名称
 			lines := strings.Split(string(data), "\n")
 			for _, line := range lines {
 				trimmedLine := strings.TrimSpace(line)
 				if strings.HasPrefix(trimmedLine, "module ") {
 					module = strings.TrimSpace(strings.TrimPrefix(trimmedLine, "module "))
 
-					// Calculate relative path from module root to target directory
+					// 计算从模块根目录到目标目录的相对路径
 					relPath, relErr := filepath.Rel(currentDir, dirToSearch)
 					if relErr == nil && relPath != "." {
 						pkgPath = filepath.ToSlash(filepath.Join(module, relPath))
 						return
 					}
 
-					// If target is the module root itself
+					// 如果目标就是模块根目录本身
 					pkgPath = module
 					return
 				}
@@ -73,10 +71,10 @@ func ParsePkgPath(path string) (module, pkgPath string, err error) {
 			return
 		}
 
-		// Move to parent directory
+		// 移动到父目录
 		parentDir := filepath.Dir(currentDir)
 		if parentDir == currentDir {
-			// Reached filesystem root without finding go.mod
+			// 到达文件系统根目录仍未找到go.mod
 			err = fmt.Errorf("no go.mod file found in directory hierarchy")
 			break
 		}

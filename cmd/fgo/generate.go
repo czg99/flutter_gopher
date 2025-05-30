@@ -15,7 +15,7 @@ var (
 	dartOutPath string
 )
 
-// generateCmd represents the bridge generation command
+// generateCmd 桥接代码生成命令
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate Go and Dart FFI code from Go source files",
@@ -34,20 +34,20 @@ Example usage:
 	},
 }
 
-// validateAndProcess handles the validation of inputs and processing of the source files
+// validateAndProcess 处理输入验证和源文件处理
 func validateAndProcess() error {
-	// Use default source path if not specified
+	// 如果未指定源路径，则使用默认路径
 	if srcPath == "" {
 		srcPath = "src/api"
 	}
 
-	// Resolve absolute path for better error messages
+	// 解析绝对路径
 	absPath, err := filepath.Abs(srcPath)
 	if err != nil {
 		return fmt.Errorf("failed to resolve source path: %v", err)
 	}
 
-	// Check if source path exists
+	// 检查源路径是否存在
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
 		return fmt.Errorf("source path does not exist: %s", absPath)
 	} else if err != nil {
@@ -63,7 +63,6 @@ func validateAndProcess() error {
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	// Define command line flags
 	generateCmd.Flags().StringVarP(&srcPath, "src", "s", "src/api", "Source path containing Go API files to parse")
 	generateCmd.Flags().StringVarP(&goOutPath, "go_out", "g", "", "Output path for generated Go FFI code")
 	generateCmd.Flags().StringVarP(&dartOutPath, "dart_out", "d", "", "Output path for generated Dart FFI code")

@@ -16,7 +16,7 @@ var (
 	withExample bool
 )
 
-// createCmd represents the Flutter plugin creation command
+// createCmd 创建Flutter插件的命令
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new Flutter plugin with Go backend",
@@ -41,25 +41,25 @@ Example usage:
 	},
 }
 
-// validateAndGeneratePlugin handles the validation of inputs and generation of the plugin
+// validateAndGeneratePlugin 处理输入验证和插件生成
 func validateAndGeneratePlugin() error {
-	// Validate project name
+	// 验证项目名称
 	if projectName == "" {
 		return fmt.Errorf("project name is required (use -n or --name flag)")
 	}
 
-	// Set default output directory if not specified
+	// 如果未指定输出目录则设置默认值
 	if outputDir == "" {
 		outputDir = projectName
 	}
 
-	// Ensure output directory exists
+	// 确保输出目录存在
 	outputPath, err := filepath.Abs(outputDir)
 	if err != nil {
 		return fmt.Errorf("failed to resolve output path: %v", err)
 	}
 
-	// Create output directory if it doesn't exist
+	// 如果输出目录不存在则创建
 	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
 		fmt.Printf("Creating output directory: %s\n", outputPath)
 		if err = os.MkdirAll(outputPath, 0755); err != nil {
@@ -69,29 +69,28 @@ func validateAndGeneratePlugin() error {
 		return fmt.Errorf("error accessing output directory: %v", err)
 	}
 
-	// Create plugin generator
+	// 初始化插件生成器
 	fmt.Printf("Initializing plugin generator for '%s'...\n", projectName)
 	generator := plugingen.NewPluginGenerator(projectName)
 
-	// Generate plugin project
+	// 生成插件项目结构
 	fmt.Printf("Generating plugin project structure...\n")
 	if err := generator.Generate(outputPath, withExample); err != nil {
 		return fmt.Errorf("failed to generate plugin project: %v", err)
 	}
 
-	// Generate bridge code
 	fmt.Printf("Generating Go-Dart bridge code...\n")
-	// Change to the output directory
+
+	// 切换到输出目录
 	if err := os.Chdir(outputPath); err != nil {
 		return fmt.Errorf("failed to change directory: %v", err)
 	}
 
-	// Generate bridge code from the API directory
+	// 从API目录生成桥接代码
 	if err := bridgegen.GenerateBridgeCode("src/api", "", ""); err != nil {
 		return fmt.Errorf("failed to generate bridge code: %v", err)
 	}
 
-	// Success message
 	fmt.Println("\n✅ Plugin project created successfully!")
 	fmt.Printf("📁 Location: %s\n", outputPath)
 	fmt.Printf("📦 Plugin name: %s\n", projectName)
@@ -112,11 +111,10 @@ func validateAndGeneratePlugin() error {
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// Define command line flags
 	createCmd.Flags().StringVarP(&projectName, "name", "n", "", "Plugin project name (required)")
 	createCmd.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory for the generated plugin project")
 	createCmd.Flags().BoolVar(&withExample, "example", false, "Generate example Flutter app that demonstrates the plugin usage")
 
-	// Mark required flags
+	// 标记必填标志
 	createCmd.MarkFlagRequired("name")
 }

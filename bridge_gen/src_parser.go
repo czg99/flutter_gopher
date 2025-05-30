@@ -14,18 +14,16 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-// GoSrcParser implements the Parser interface for Go code
+// GoSrcParser 实现了 Go 代码的 Parser 接口
 type GoSrcParser struct {
-	// Collected AST nodes
 	typeNodes []*ast.TypeSpec
 	funcNodes []*ast.FuncDecl
 
-	// Result data
 	structs []*models.GoStructType
 	funcs   []*models.GoFuncType
 }
 
-// NewGoSrcParser creates a new instance of GoParser
+// NewGoSrcParser 创建一个新的 GoParser 实例
 func NewGoSrcParser() *GoSrcParser {
 	return &GoSrcParser{
 		typeNodes: make([]*ast.TypeSpec, 0),
@@ -35,38 +33,37 @@ func NewGoSrcParser() *GoSrcParser {
 	}
 }
 
-// Parse implements the Parser interface for GoParser
+// Parse 实现了 GoParser 的 Parser 接口
 func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
-	// Validate path
+	// 验证路径
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to access path: %w", err)
 	}
 
-	// Load packages
+	// 加载包
 	pkgs, err := p.loadPackages(path, fileInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get package path
+	// 获取包路径
 	module, pkgPath, err := ParsePkgPath(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse all files
+	// 开始解析
 	log.Println("Starting package parsing")
 	if err := p.parsePackages(pkgs); err != nil {
 		return nil, err
 	}
 
-	// Process collected nodes
+	// 处理收集的节点
 	if err := p.processNodes(); err != nil {
 		return nil, err
 	}
 
-	// Return results
 	return &models.Package{
 		Module:  module,
 		PkgPath: pkgPath,
@@ -75,15 +72,14 @@ func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
 	}, nil
 }
 
-// loadPackages loads Go packages from the specified path
+// loadPackages 从指定路径加载 Go 包
 func (p *GoSrcParser) loadPackages(path string, fileInfo os.FileInfo) ([]*packages.Package, error) {
-	// Configure package loading
+	// 配置包加载
 	config := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports |
 			packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedTypesSizes,
 	}
 
-	// Load packages
 	var pkgs []*packages.Package
 	var err error
 
@@ -105,7 +101,7 @@ func (p *GoSrcParser) loadPackages(path string, fileInfo os.FileInfo) ([]*packag
 	return pkgs, nil
 }
 
-// parsePackages processes all packages and their files
+// parsePackages 处理所有包及其文件
 func (p *GoSrcParser) parsePackages(pkgs []*packages.Package) error {
 	for _, pkg := range pkgs {
 		log.Println(" - Processing package:", pkg.Name)
@@ -121,18 +117,18 @@ func (p *GoSrcParser) parsePackages(pkgs []*packages.Package) error {
 	return nil
 }
 
-// collectNodes collects AST nodes from a file
+// collectNodes 从文件中收集 AST 节点
 func (p *GoSrcParser) collectNodes(file *ast.File) error {
 	for _, decl := range file.Decls {
 		switch node := decl.(type) {
 		case *ast.GenDecl:
-			// Handle general declarations (IMPORT, CONST, TYPE, VAR)
+			// 处理通用声明（IMPORT, CONST, TYPE, VAR）
 			if err := p.handleGenDecl(node); err != nil {
 				return err
 			}
 
 		case *ast.FuncDecl:
-			// Collect function declarations
+			// 收集函数声明
 			p.funcNodes = append(p.funcNodes, node)
 
 		default:
@@ -143,11 +139,11 @@ func (p *GoSrcParser) collectNodes(file *ast.File) error {
 	return nil
 }
 
-// handleGenDecl processes general declarations
+// handleGenDecl 处理通用声明
 func (p *GoSrcParser) handleGenDecl(decl *ast.GenDecl) error {
 	switch decl.Tok {
 	case token.IMPORT, token.CONST, token.VAR:
-		// Ignore these declarations
+		// 忽略这些声明
 		return nil
 	case token.TYPE:
 		if len(decl.Specs) != 1 {
@@ -166,18 +162,18 @@ func (p *GoSrcParser) handleGenDecl(decl *ast.GenDecl) error {
 	}
 }
 
-// processNodes processes all collected AST nodes
+// processNodes 处理所有收集的 AST 节点
 func (p *GoSrcParser) processNodes() error {
 	log.Println("Processing collected nodes")
 
-	// Process types
+	// 处理类型
 	for _, spec := range p.typeNodes {
 		if err := p.processTypeNode(spec); err != nil {
 			return err
 		}
 	}
 
-	// Process functions
+	// 处理函数
 	for _, decl := range p.funcNodes {
 		if err := p.processFunctionNode(decl); err != nil {
 			return err
@@ -187,7 +183,7 @@ func (p *GoSrcParser) processNodes() error {
 	return nil
 }
 
-// processTypeNode processes a type declaration
+// processTypeNode 处理类型声明
 func (p *GoSrcParser) processTypeNode(typeSpec *ast.TypeSpec) error {
 	name := typeSpec.Name.Name
 	log.Println(" - Processing type:", name)
@@ -210,15 +206,15 @@ func (p *GoSrcParser) processTypeNode(typeSpec *ast.TypeSpec) error {
 	return nil
 }
 
-// processFunctionNode processes a function declaration
+// processFunctionNode 处理函数声明
 func (p *GoSrcParser) processFunctionNode(funcDecl *ast.FuncDecl) error {
-	// Skip methods (functions with receivers)
+	// 跳过方法（带接收者的函数）
 	if funcDecl.Recv != nil {
 		return nil
 	}
 
 	name := funcDecl.Name.Name
-	// Skip unexported functions
+	// 跳过未导出的函数
 	if unicode.IsLower(rune(name[0])) {
 		return nil
 	}
@@ -239,11 +235,11 @@ func (p *GoSrcParser) processFunctionNode(funcDecl *ast.FuncDecl) error {
 	return nil
 }
 
-// parseTypeExpr parses a Go type expression
+// parseTypeExpr 解析 Go 类型表达式
 func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, error) {
 	switch e := expr.(type) {
 	case *ast.Ident:
-		// Handle basic types and identifiers
+		// 处理基本类型
 		if basicType := models.BasicTypeMap[e.Name]; basicType != nil {
 			return basicType, nil
 		}
@@ -260,17 +256,23 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		return nil, fmt.Errorf("imported types are not supported: %v.%v", e.X, e.Sel)
 
 	case *ast.StarExpr:
-		// Handle pointer types
+		// 处理指针类型
 		inner, err := p.parseTypeExpr("", e.X)
 		if err != nil {
 			return nil, err
 		}
+
+		switch inner.(type) {
+		case *models.GoPointerType:
+			return nil, fmt.Errorf("double pointer types are not supported")
+		}
+
 		return &models.GoPointerType{
 			Inner: inner,
 		}, nil
 
 	case *ast.ArrayType:
-		// Handle slice types
+		// 处理切片类型
 		if e.Len != nil {
 			return nil, fmt.Errorf("fixed-size arrays are not supported")
 		}
@@ -284,11 +286,16 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}, nil
 
 	case *ast.StructType:
-		// Handle struct types
+		// 处理结构类型
 		fields, err := p.parseFields(e.Fields, true)
 		if err != nil {
 			return nil, err
 		}
+
+		if len(fields) == 0 {
+			return nil, fmt.Errorf("struct with no fields is not supported")
+		}
+
 		return &models.GoStructType{
 			Type: &models.GoIdentType{
 				Name: name,
@@ -297,7 +304,7 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}, nil
 
 	case *ast.FuncType:
-		// Handle function types
+		// 处理函数类型
 		if e.TypeParams != nil {
 			return nil, fmt.Errorf("generic functions with type parameters are not supported")
 		}
@@ -336,7 +343,7 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 	}
 }
 
-// parseFields parses field lists for structs, function parameters, and results
+// parseFields 解析结构体、函数参数和结果的字段列表
 func (p *GoSrcParser) parseFields(list *ast.FieldList, isStruct bool) ([]*models.GoField, error) {
 	if list == nil {
 		return nil, nil
@@ -351,7 +358,7 @@ func (p *GoSrcParser) parseFields(list *ast.FieldList, isStruct bool) ([]*models
 		}
 
 		if field.Names == nil {
-			// Anonymous field
+			// 匿名字段
 			fields = append(fields, &models.GoField{
 				Type: fieldType,
 			})
@@ -359,7 +366,7 @@ func (p *GoSrcParser) parseFields(list *ast.FieldList, isStruct bool) ([]*models
 		}
 
 		for _, name := range field.Names {
-			// Skip unexported struct fields
+			// 跳过私有的结构体字段
 			if isStruct && unicode.IsLower(rune(name.Name[0])) {
 				continue
 			}
