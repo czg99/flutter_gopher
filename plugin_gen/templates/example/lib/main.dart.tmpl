@@ -10,13 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Flutter Gopher Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Gopher Demo Home Page'),
+      home: MyHomePage(title: 'Flutter Gopher Demo Home Page'),
     );
   }
 }
@@ -32,24 +28,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  final ffi = {{.DartClassName}}();
-
-  void _incrementCounter() {
-    setState(() {
-      _counter = ffi.sum(_counter, 1);
-    });
-  }
+  final api = {{.DartClassName}}();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.grey,
         title: Text(widget.title),
       ),
-      body: Center(
+      body: Container(
+        padding: const EdgeInsets.only(top: 20),
+        alignment: Alignment.center,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             const Text(
               'You have pushed the button this many times:',
@@ -58,13 +50,42 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                MaterialButton(
+                  color: Colors.blue,
+                  onPressed: () {
+                    _counter = api.add(_counter, 1);
+                    setState(() {});
+                  },
+                  child: const Text('Add'),
+                ),
+                MaterialButton(
+                  color: Colors.green,
+                  onPressed: () async {
+                    _counter = await api.addGoAsync(_counter, 1);
+                    setState(() {});
+                  },
+                  child: const Text('Add async'),
+                ),
+                MaterialButton(
+                  color: Colors.pink,
+                  onPressed: () async {
+                    _counter = await api.addGoAsync(_counter, 1);
+                    setState(() {
+                      api.tick().listen((data) {
+                        _counter += data;
+                        setState(() {});
+                      });
+                    });
+                  },
+                  child: const Text('Chan'),
+                ),
+              ],
+            )
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
