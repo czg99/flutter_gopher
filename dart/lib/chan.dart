@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:ui';
@@ -42,6 +43,21 @@ class FgChan<T> {
 
   /// 创建一个通道
   FgChan() : _receivePort = ReceivePort();
+
+  /// 监听Dart对象数据流
+  StreamSubscription listen(
+    void Function(T) onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+  }
 
   /// 设置端口ID并注册到IsolateNameServer，不要手动调用
   void setPortId(int portId) {
