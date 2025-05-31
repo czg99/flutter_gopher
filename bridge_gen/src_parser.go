@@ -331,6 +331,11 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 			},
 		}, nil
 	case *ast.ChanType:
+		// 处理通道类型
+		if e.Arrow != token.NoPos {
+			return nil, fmt.Errorf("chan<- or <-chan are not supported, please use chan instead")
+		}
+
 		inner, err := p.parseTypeExpr("", e.Value)
 		if err != nil {
 			return nil, err
