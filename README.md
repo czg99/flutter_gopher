@@ -37,7 +37,7 @@ fgo create -n <project_name> -o <output_directory> [--example]
 
 **Parameters:**
 - `-n, --name`: Plugin project name (required)
-- `-o, --output`: Output directory for the generated plugin project (defaults to current directory)
+- `-o, --output`: Output directory for the generated plugin project (default: <project_name>)
 - `--example`: Generate an example Flutter application using the plugin
 
 **Examples:**
