@@ -23,7 +23,7 @@ var BasicTypeMap = map[string]*GoBasicType{
 	"float64": {cType: "double", goType: "float64", goCType: "C.double", dartCType: "ffi.Double", dartType: "double", dartDefault: "0"},
 
 	"int":  {cType: "int", goType: "int", goCType: "C.int", dartCType: "ffi.Int", dartType: "int", dartDefault: "0"},
-	"uint": {cType: "uint", goType: "uint", goCType: "C.uint", dartCType: "ffi.Uint", dartType: "int", dartDefault: "0"},
+	"uint": {cType: "unsigned int", goType: "uint", goCType: "C.uint", dartCType: "ffi.UnsignedInt", dartType: "int", dartDefault: "0"},
 
 	"uintptr": {cType: "uintptr_t", goType: "uintptr", goCType: "C.uintptr_t", dartCType: "ffi.UintPtr", dartType: "int", dartDefault: "0"},
 }
