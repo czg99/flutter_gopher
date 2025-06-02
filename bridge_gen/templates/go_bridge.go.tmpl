@@ -111,7 +111,7 @@ var portMutex sync.Mutex
 var nextPortId int64 = minPortId - 1
 
 //export fg_next_port_id
-func fg_next_port_id() int64 {
+func fg_next_port_id() C.int64_t {
 	next := atomic.AddInt64(&nextPortId, 1)
 
 	if next > maxPortId {
@@ -121,12 +121,12 @@ func fg_next_port_id() int64 {
 		current := atomic.LoadInt64(&nextPortId)
 		if current > maxPortId {
 			atomic.StoreInt64(&nextPortId, minPortId)
-			return minPortId
+			return C.int64_t(minPortId)
 		} else {
-			return atomic.AddInt64(&nextPortId, 1)
+			return C.int64_t(atomic.AddInt64(&nextPortId, 1))
 		}
 	}
-	return next
+	return C.int64_t(next)
 }
 
 {{range $fn := $bridge.Funcs}}
@@ -353,7 +353,7 @@ func mapToChan[T any, CT any](port C.fg_chan, convert func(T) CT) chan T {
 }
 
 func mapFromChan[T any, CT any](c <-chan T, convert func(T) CT) C.fg_chan {
-	portId := C.int64_t(fg_next_port_id())
+	portId := fg_next_port_id()
 	chanLoop(portId, c, convert)
 	return C.fg_chan{port_id: portId}
 }
