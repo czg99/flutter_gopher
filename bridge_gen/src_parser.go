@@ -354,30 +354,38 @@ func (p *GoSrcParser) parseFields(list *ast.FieldList, isStruct bool) ([]*models
 		return nil, nil
 	}
 
-	var fields []*models.GoField
-
+	fields := make([]*models.GoField, 0, len(list.List))
 	for _, field := range list.List {
+		var names []string
+		if field.Names == nil {
+			//结构体中过滤匿名字段
+			if isStruct {
+				continue
+			}
+			names = []string{""}
+		} else {
+			names = make([]string, 0, len(field.Names))
+			for _, name := range field.Names {
+				// 跳过私有的结构体字段
+				if isStruct && unicode.IsLower(rune(name.Name[0])) {
+					continue
+				}
+				names = append(names, name.Name)
+			}
+		}
+
+		if len(names) == 0 {
+			continue
+		}
+
 		fieldType, err := p.parseTypeExpr("", field.Type)
 		if err != nil {
 			return nil, err
 		}
 
-		if field.Names == nil {
-			// 匿名字段
+		for _, name := range names {
 			fields = append(fields, &models.GoField{
-				Type: fieldType,
-			})
-			continue
-		}
-
-		for _, name := range field.Names {
-			// 跳过私有的结构体字段
-			if isStruct && unicode.IsLower(rune(name.Name[0])) {
-				continue
-			}
-
-			fields = append(fields, &models.GoField{
-				Name: name.Name,
+				Name: name,
 				Type: fieldType,
 			})
 		}
