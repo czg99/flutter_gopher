@@ -26,15 +26,6 @@ var templateFiles embed.FS
 //
 // 如果代码生成失败则返回错误
 func GenerateBridgeCode(src, goOut, dartOut string) error {
-	// 处理未指定的默认输出路径
-	if src == "src/api" && goOut == "" && dartOut == "" {
-		module, _, _ := ParsePkgPath(src)
-		if module != "" {
-			goOut = "src/api.go"
-			dartOut = "lib/" + module + ".dart"
-		}
-	}
-
 	// 验证输出路径
 	if goOut == "" && dartOut == "" {
 		return fmt.Errorf("no output path specified")
