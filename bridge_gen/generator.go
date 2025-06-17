@@ -18,23 +18,32 @@ import (
 //go:embed templates/*
 var templateFiles embed.FS
 
-// GenerateBridgeCode 为给定的源路径生成桥接代码，并将生成的代码写入指定的输出路径
-// 参数:
-//   - src: 包含待处理Go API代码的源目录
-//   - goOut: 生成的Go桥接代码的输出路径
-//   - dartOut: 生成的Dart桥接代码的输出路径
-//
+// GenerateBridgeCode 为给定的源路径生成桥接代码，并将生成的代码写入指定的输出目录
 // 如果代码生成失败则返回错误
-func GenerateBridgeCode(src, goOut, dartOut string) error {
+func GenerateBridgeCode(srcDir, goOutDir, dartOutDir string) error {
 	// 验证输出路径
-	if goOut == "" && dartOut == "" {
+	if goOutDir == "" && dartOutDir == "" {
 		return fmt.Errorf("no output path specified")
+	}
+
+	module, _, err := ParsePkgPath(srcDir)
+	if err != nil {
+		return fmt.Errorf("failed to parse pkg path: %w", err)
+	}
+
+	var goOut, dartOut string
+	if goOutDir != "" {
+		goOut = filepath.Join(goOutDir, "api.go")
+	}
+
+	if dartOutDir != "" {
+		dartOut = filepath.Join(dartOutDir, module+".dart")
 	}
 
 	// 解析源代码
 	log.Println("Parsing source code")
 	parser := NewGoSrcParser()
-	pkg, err := parser.Parse(src)
+	pkg, err := parser.Parse(srcDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse source code: %w", err)
 	}

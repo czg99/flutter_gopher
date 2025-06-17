@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	bridgegen "github.com/czg99/flutter_gopher/bridge_gen"
 	"github.com/spf13/cobra"
@@ -39,40 +38,16 @@ func validateAndProcess() error {
 	if err != nil {
 		return fmt.Errorf("failed to find project root: %v", err)
 	}
-	log.Println("Found project at: ", projectRoot)
-
-	// 解析pubspec.yaml中的name字段
-	projectName, err := parseProjectName(filepath.Join(projectRoot, "pubspec.yaml"))
-	if err != nil {
-		return fmt.Errorf("failed to parse project name: %v", err)
-	}
+	log.Println("Found project at:", projectRoot)
 
 	if err = os.Chdir(projectRoot); err != nil {
 		return fmt.Errorf("failed to change directory: %v", err)
 	}
 
-	if err := bridgegen.GenerateBridgeCode("src/api", "src/api.go", "lib/"+projectName+".dart"); err != nil {
+	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib"); err != nil {
 		return fmt.Errorf("failed to generate FFI code: %v", err)
 	}
 	return nil
-}
-
-// 解析pubspec.yaml中的name字段
-func parseProjectName(pubspecPath string) (string, error) {
-	// 读取pubspec.yaml文件
-	data, err := os.ReadFile(pubspecPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read pubspec.yaml: %v", err)
-	}
-
-	// 查找name字段
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "name:") {
-			return strings.TrimSpace(line[5:]), nil
-		}
-	}
-	return "", fmt.Errorf("name field is missing in pubspec.yaml")
 }
 
 // 查找pubspec.yaml的工程目录，并且目录中存在src/api目录
