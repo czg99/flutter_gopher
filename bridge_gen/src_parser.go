@@ -65,10 +65,10 @@ func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
 	}
 
 	return &models.Package{
-		Module:  module,
-		PkgPath: pkgPath,
-		Structs: p.structs,
-		Funcs:   p.funcs,
+		ProjectNaming: models.NewProjectNaming(module),
+		PkgPath:       pkgPath,
+		Structs:       p.structs,
+		Funcs:         p.funcs,
 	}, nil
 }
 
@@ -231,6 +231,9 @@ func (p *GoSrcParser) processFunctionNode(funcDecl *ast.FuncDecl) error {
 		return fmt.Errorf("expected function type, got %v", reflect.TypeOf(goType))
 	}
 
+	// 处理函数返回值
+	processFunctionReturnValues(funcType)
+
 	p.funcs = append(p.funcs, funcType)
 	return nil
 }
@@ -392,4 +395,50 @@ func (p *GoSrcParser) parseFields(list *ast.FieldList, isStruct bool) ([]*models
 	}
 
 	return fields, nil
+}
+
+// isErrorType 检查类型是否为错误类型
+// 如果Go类型是"error"则返回true
+func isErrorType(t models.GoType) bool {
+	return t.GoType() == "error"
+}
+
+// processFunctionReturnValues 确保函数返回值有正确的名称
+// 同时识别错误返回值并计算结果数量
+func processFunctionReturnValues(funcType *models.GoFuncType) {
+	fields := funcType.Results.Fields
+	if len(fields) == 0 {
+		return
+	}
+
+	// 为未命名的返回值命名并确保错误有名称
+	for idx, field := range fields {
+		// 如果是最后一个字段且是错误类型，确保它有名称
+		if idx+1 == len(fields) && isErrorType(field.Type) {
+			if field.Name == "" {
+				field.Name = "err"
+			}
+		}
+
+		// 如果字段没有名称，给它一个默认名称
+		if field.Name == "" {
+			field.Name = fmt.Sprintf("res%d", idx)
+		}
+	}
+
+	// 计算结果数量（不包括错误）
+	resultCount := len(fields)
+	errorName := ""
+
+	// 检查最后一个返回值是否是错误
+	if resultCount > 0 {
+		lastField := fields[resultCount-1]
+		if isErrorType(lastField.Type) {
+			errorName = lastField.DartName()
+			resultCount--
+		}
+	}
+
+	funcType.ResultCount = resultCount
+	funcType.DartErrorName = errorName
 }

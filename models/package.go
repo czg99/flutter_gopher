@@ -1,7 +1,7 @@
 package models
 
 type Package struct {
-	Module  string
+	ProjectNaming
 	PkgPath string
 	Structs []*GoStructType
 	Funcs   []*GoFuncType

@@ -61,7 +61,7 @@ func validateAndGeneratePlugin() error {
 
 	// 如果输出目录不存在则创建
 	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
-		fmt.Printf("Creating output directory: %s\n", outputPath)
+		fmt.Println("Creating output directory:", outputPath)
 		if err = os.MkdirAll(outputPath, 0755); err != nil {
 			return fmt.Errorf("failed to create output directory: %v", err)
 		}
@@ -74,12 +74,12 @@ func validateAndGeneratePlugin() error {
 	generator := plugingen.NewPluginGenerator(projectName)
 
 	// 生成插件项目结构
-	fmt.Printf("Generating plugin project structure...\n")
+	fmt.Println("Generating plugin project structure...")
 	if err := generator.Generate(outputPath, withExample); err != nil {
 		return fmt.Errorf("failed to generate plugin project: %v", err)
 	}
 
-	fmt.Printf("Generating Go-Dart bridge code...\n")
+	fmt.Println("Generating Go-Dart bridge code...")
 
 	// 切换到输出目录
 	if err := os.Chdir(outputPath); err != nil {
@@ -92,8 +92,8 @@ func validateAndGeneratePlugin() error {
 	}
 
 	fmt.Println("\n✅ Plugin project created successfully!")
-	fmt.Printf("📁 Location: %s\n", outputPath)
-	fmt.Printf("📦 Plugin name: %s\n", projectName)
+	fmt.Println("📁 Location:", outputPath)
+	fmt.Println("📦 Plugin name:", projectName)
 
 	if withExample {
 		fmt.Println("📱 Example Flutter app has been created in the 'example' subdirectory")

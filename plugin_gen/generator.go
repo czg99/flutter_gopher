@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/iancoleman/strcase"
+	"github.com/czg99/flutter_gopher/models"
 )
 
 //go:embed templates/*
@@ -19,23 +19,13 @@ var templateFiles embed.FS
 
 // PluginGenerator 保存用于 Flutter 插件生成的配置信息
 type PluginGenerator struct {
-	ProjectName     string // 蛇形命名的项目名（例如 "my_api"）
-	PackageName     string // 插件包名（例如 "com.flutter_gopher.myapi"）
-	PluginClassName string // 原生插件类名（例如 "MyApiPlugin"）
-	DartClassName   string // Dart API 类名（例如 "MyApi"）
-	LibName         string // 用于导入的库名（例如 "myapi"）
+	models.ProjectNaming
 }
 
 // NewPluginGenerator 根据提供的项目名创建一个新的插件生成器
 func NewPluginGenerator(projectName string) *PluginGenerator {
-	snake := strcase.ToSnake(projectName)
-	flatName := strings.ToLower(strcase.ToLowerCamel(projectName))
 	return &PluginGenerator{
-		ProjectName:     snake,
-		PackageName:     "com.flutter_gopher." + flatName,
-		PluginClassName: strcase.ToCamel(projectName) + "Plugin",
-		DartClassName:   strcase.ToCamel(projectName),
-		LibName:         flatName,
+		ProjectNaming: models.NewProjectNaming(projectName),
 	}
 }
 
