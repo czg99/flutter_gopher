@@ -74,9 +74,9 @@ final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
     {{- if gt (len $fn.Results.Fields) 0}}
     final dart_result = _mapTo{{$fn.Results.DartType}}(c_result);
     {{- end}}
-    {{- if ne $fn.DartErrorName ""}}
-    if (dart_result.{{$fn.DartErrorName}} != null) {
-      throw FgError('{{$bridge.LibName}}', funcName, dart_result.{{$fn.DartErrorName}}!);
+    {{- if $fn.HasErr}}
+    if (dart_result.err != null) {
+      throw FgError('{{$bridge.LibName}}', funcName, dart_result.err!);
     }
     {{- end}}
 

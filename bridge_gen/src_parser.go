@@ -411,12 +411,19 @@ func processFunctionReturnValues(funcType *models.GoFuncType) {
 		return
 	}
 
-	// 为未命名的返回值命名并确保错误有名称
+	hasErr := false
+	resultCount := len(fields)
+	// 为未命名的返回值命名并确保错误类型有名称
 	for idx, field := range fields {
 		// 如果是最后一个字段且是错误类型，确保它有名称
-		if idx+1 == len(fields) && isErrorType(field.Type) {
+		if idx+1 == resultCount && isErrorType(field.Type) {
 			if field.Name == "" {
 				field.Name = "err"
+			}
+
+			if field.Name == "err" {
+				//只有错误类型名称为err时才为错误信息
+				hasErr = true
 			}
 		}
 
@@ -426,19 +433,11 @@ func processFunctionReturnValues(funcType *models.GoFuncType) {
 		}
 	}
 
-	// 计算结果数量（不包括错误）
-	resultCount := len(fields)
-	errorName := ""
-
-	// 检查最后一个返回值是否是错误
-	if resultCount > 0 {
-		lastField := fields[resultCount-1]
-		if isErrorType(lastField.Type) {
-			errorName = lastField.DartName()
-			resultCount--
-		}
+	// 结果数量不含错误
+	if hasErr {
+		resultCount--
 	}
 
 	funcType.ResultCount = resultCount
-	funcType.DartErrorName = errorName
+	funcType.HasErr = hasErr
 }

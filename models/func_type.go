@@ -3,11 +3,11 @@ package models
 import "github.com/iancoleman/strcase"
 
 type GoFuncType struct {
-	Name          string
-	Params        *GoStructType
-	Results       *GoStructType
-	ResultCount   int
-	DartErrorName string
+	Name        string
+	Params      *GoStructType
+	Results     *GoStructType
+	ResultCount int
+	HasErr      bool
 }
 
 func (t *GoFuncType) String() string {
