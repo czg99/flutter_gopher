@@ -10,7 +10,7 @@ type ProjectNaming struct {
 	ProjectName     string // 蛇形命名的项目名（例如 "my_api"）
 	PackageName     string // 插件包名（例如 "com.flutter_gopher.myapi"）
 	PluginClassName string // 原生插件类名（例如 "MyApiPlugin"）
-	DartClassName   string // Dart API 类名（例如 "MyApi"）
+	LibClassName    string // 库的类名（例如 "MyApi"）
 	LibName         string // 用于导入的库名（例如 "myapi"）
 }
 
@@ -21,7 +21,7 @@ func NewProjectNaming(projectName string) ProjectNaming {
 		ProjectName:     snake,
 		PackageName:     "com.flutter_gopher." + flatName,
 		PluginClassName: strcase.ToCamel(projectName) + "Plugin",
-		DartClassName:   strcase.ToCamel(projectName),
+		LibClassName:    strcase.ToCamel(projectName),
 		LibName:         flatName,
 	}
 }
