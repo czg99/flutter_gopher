@@ -3,6 +3,24 @@
 group = "{{.PackageName}}"
 version = "1.0"
 
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.0")
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 apply plugin: "com.android.library"
 
 android {
@@ -15,6 +33,11 @@ android {
 
     defaultConfig {
         minSdk = project.hasProperty('flutter') ? flutter.minSdkVersion : 21
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     
     // Add custom task to compile Go library
