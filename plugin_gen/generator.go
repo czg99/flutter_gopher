@@ -30,8 +30,7 @@ func NewPluginGenerator(projectName string) *PluginGenerator {
 }
 
 // Generate 在指定的目标目录下创建一个新的 Flutter 插件项目
-// 如果 example 为 true，则还会创建一个使用该插件的 example 应用
-func (g *PluginGenerator) Generate(destDir string, example bool) error {
+func (g *PluginGenerator) Generate(destDir string) error {
 	// 确保目标目录存在
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return fmt.Errorf("failed to create target directory: %w", err)
@@ -55,13 +54,54 @@ func (g *PluginGenerator) Generate(destDir string, example bool) error {
 		return fmt.Errorf("failed to process template files: %w", err)
 	}
 
-	// 如果需要则创建 example 应用
-	if example {
-		if err := g.createFlutterExample(destDir); err != nil {
-			return fmt.Errorf("failed to create flutter example: %w", err)
-		}
+	return nil
+}
+
+// GeneratorFlutterExample 生成一个 example 应用
+func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
+	// 创建 example 目录
+	if err := os.RemoveAll(destDir); err != nil {
+		return fmt.Errorf("failed to remove example directory: %w", err)
 	}
 
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return fmt.Errorf("failed to recreate example directory: %w", err)
+	}
+
+	// 执行 flutter create 命令创建示例项目
+	cmd := exec.Command("flutter", "create", ".")
+	cmd.Dir = destDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	fmt.Println("Creating Flutter example project...")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create flutter example project: %w", err)
+	}
+
+	// 添加主插件项目依赖
+	cmd = exec.Command("flutter", "pub", "add", g.ProjectName, "--path", "..")
+	cmd.Dir = destDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	fmt.Println("Adding project dependency...")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to add project dependency: %w", err)
+	}
+
+	// 从模板复制 example 文件
+	err := fs.WalkDir(templateFiles, "templates/example", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		return g.processTemplateFile(path, filepath.Join(destDir, "../"), d.IsDir())
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to process example template files: %w", err)
+	}
 	return nil
 }
 
@@ -72,6 +112,12 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 	relPath, err := filepath.Rel("templates", path)
 	if err != nil {
 		return err
+	}
+
+	// 处理 PackageName 占位符
+	if strings.Contains(relPath, "PackageName") {
+		packageDir := filepath.Join(strings.Split(g.PackageName, ".")...)
+		relPath = strings.ReplaceAll(relPath, "PackageName", packageDir)
 	}
 
 	if isDir {
@@ -128,55 +174,6 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 	err = os.WriteFile(destPath, content, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %w", destPath, err)
-	}
-	return nil
-}
-
-// createFlutterExample 创建一个 example 应用
-func (g *PluginGenerator) createFlutterExample(destDir string) error {
-	// 创建 example 目录
-	exampleDir := filepath.Join(destDir, "example")
-	if err := os.RemoveAll(exampleDir); err != nil {
-		return fmt.Errorf("failed to remove example directory: %w", err)
-	}
-
-	if err := os.MkdirAll(exampleDir, 0755); err != nil {
-		return fmt.Errorf("failed to recreate example directory: %w", err)
-	}
-
-	// 执行 flutter create 命令创建示例项目
-	cmd := exec.Command("flutter", "create", ".")
-	cmd.Dir = exampleDir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	fmt.Println("Creating Flutter example project...")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to create flutter example project: %w", err)
-	}
-
-	// 添加主插件项目依赖
-	cmd = exec.Command("flutter", "pub", "add", g.ProjectName, "--path", "..")
-	cmd.Dir = exampleDir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	fmt.Println("Adding project dependency...")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add project dependency: %w", err)
-	}
-
-	// 从模板复制 example 文件
-	err := fs.WalkDir(templateFiles, "templates/example", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		return g.processTemplateFile(path, destDir, d.IsDir())
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to process example template files: %w", err)
 	}
 	return nil
 }

@@ -17,7 +17,8 @@ flutter:
   plugin:
     platforms:
       android:
-        ffiPlugin: true
+        package: {{.PackageName}}
+        pluginClass: {{.PluginClassName}}
       ios:
         pluginClass: {{.PluginClassName}}
       linux:

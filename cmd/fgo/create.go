@@ -75,7 +75,7 @@ func validateAndGeneratePlugin() error {
 
 	// 生成插件项目结构
 	fmt.Println("Generating plugin project structure...")
-	if err := generator.Generate(outputPath, withExample); err != nil {
+	if err := generator.Generate(outputPath); err != nil {
 		return fmt.Errorf("failed to generate plugin project: %v", err)
 	}
 
@@ -89,6 +89,14 @@ func validateAndGeneratePlugin() error {
 	// 从API目录生成桥接代码
 	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib"); err != nil {
 		return fmt.Errorf("failed to generate bridge code: %v", err)
+	}
+
+	if withExample {
+		fmt.Println()
+		// 生成 example 应用
+		if err := generator.GeneratorFlutterExample("example"); err != nil {
+			return fmt.Errorf("failed to generate flutter example: %v", err)
+		}
 	}
 
 	fmt.Println("\n✅ Plugin project created successfully!")
