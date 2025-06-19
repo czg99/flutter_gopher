@@ -9,8 +9,8 @@ export 'package:flutter_gopher/chan.dart';
 
 typedef Error = String?;
 
-abstract interface class {{$bridge.DartClassName}} {
-  factory {{$bridge.DartClassName}}() => _{{$bridge.DartClassName}}();
+abstract interface class {{$bridge.LibClassName}} {
+  factory {{$bridge.LibClassName}}() => _{{$bridge.LibClassName}}();
 {{range $fn := $bridge.Funcs}}
   {{$fn.DartResultType}} {{$fn.DartType}}(
     {{- range $i, $param := $fn.Params.Fields}}
@@ -46,8 +46,8 @@ final int Function() _fgNextPortId = _lib
     .lookup<ffi.NativeFunction<ffi.Int64 Function()>>('fg_next_port_id')
     .asFunction();
 
-final class _{{$bridge.DartClassName}} implements {{$bridge.DartClassName}} {
-  _{{$bridge.DartClassName}}() {
+final class _{{$bridge.LibClassName}} implements {{$bridge.LibClassName}} {
+  _{{$bridge.LibClassName}}() {
     FgLoop.once('{{$bridge.LibName}}', (_) {
       final result = _fgResultLoop();
       FgAsync.sendGoResult(result.port_id, result.data);
