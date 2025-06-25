@@ -7,6 +7,9 @@ param(
     [string]$MIN_API
 )
 
+Write-Host "NDK_PATH: $NDK_PATH"
+Write-Host "MIN_API: $MIN_API"
+
 Set-Location -Path $PSScriptRoot
 
 if ([string]::IsNullOrEmpty($NDK_PATH)) {

@@ -20,6 +20,9 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
+echo "NDK_PATH: ${NDK_PATH}"
+echo "MIN_API: ${MIN_API}"
+
 cd $(dirname $0)
 
 OUTPUT_NAME="{{.LibName}}"
