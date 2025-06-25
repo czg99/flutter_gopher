@@ -4,6 +4,7 @@ group = "{{.PackageName}}"
 version = "1.0"
 
 buildscript {
+    ext.kotlin_version = "1.8.22"
     repositories {
         google()
         mavenCentral()
@@ -11,6 +12,7 @@ buildscript {
 
     dependencies {
         classpath("com.android.tools.build:gradle:8.1.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
     }
 }
 
@@ -22,6 +24,7 @@ rootProject.allprojects {
 }
 
 apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
 
 android {
     if (project.android.hasProperty("namespace")) {
@@ -39,7 +42,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
     // Add custom task to compile Go library
     tasks.register('compileGoLibrary', Exec) {
         def ndkDir = android.ndkDirectory
@@ -59,8 +66,7 @@ android {
     preBuild.dependsOn compileGoLibrary
     
     sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
+        main.java.srcDirs += "src/main/kotlin"
+        main.jniLibs.srcDirs = ['libs']
     }
 }
