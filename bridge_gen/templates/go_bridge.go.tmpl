@@ -42,7 +42,7 @@ typedef struct {
 {{- define "generateCStruct"}}
 {{- $obj := .obj}}
 typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
-	{{- if or .isParams}}
+	{{- if .isParams}}
 	int64_t port_id;
 	{{- end}}
 	{{- range $field := $obj.Fields}}

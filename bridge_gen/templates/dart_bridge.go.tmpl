@@ -183,7 +183,7 @@ final class {{$obj.DartType}} {
 }
 
 final class {{$obj.DartCType}} extends ffi.Struct {
-{{- if or .isParams}}
+{{- if .isParams}}
   @ffi.Int64()
   external int port_id;
 {{- end}}
