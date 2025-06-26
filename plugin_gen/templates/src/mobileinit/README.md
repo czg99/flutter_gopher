@@ -1,0 +1,1 @@
+The code is copied from https://github.com/golang/mobile/tree/a2a15c67f36f571f501e0a86d5a7f5f26e3fd201/internal/mobileinit
