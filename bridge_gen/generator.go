@@ -24,9 +24,12 @@ func GenerateBridgeCode(srcDir, goOutDir, dartOutDir string) error {
 		return fmt.Errorf("no output path specified")
 	}
 
-	module, _, err := ParsePkgPath(srcDir)
+	// 解析源代码
+	log.Println("Parsing source code")
+	parser := NewGoSrcParser()
+	pkg, err := parser.Parse(srcDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse pkg path: %w", err)
+		return fmt.Errorf("failed to parse source code: %w", err)
 	}
 
 	var goOut, dartOut string
@@ -35,15 +38,7 @@ func GenerateBridgeCode(srcDir, goOutDir, dartOutDir string) error {
 	}
 
 	if dartOutDir != "" {
-		dartOut = filepath.Join(dartOutDir, module+".dart")
-	}
-
-	// 解析源代码
-	log.Println("Parsing source code")
-	parser := NewGoSrcParser()
-	pkg, err := parser.Parse(srcDir)
-	if err != nil {
-		return fmt.Errorf("failed to parse source code: %w", err)
+		dartOut = filepath.Join(dartOutDir, pkg.ProjectName+".dart")
 	}
 
 	// 如果指定了输出路径则生成Go代码

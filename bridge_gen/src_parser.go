@@ -16,6 +16,8 @@ import (
 
 // GoSrcParser 实现了 Go 代码的 Parser 接口
 type GoSrcParser struct {
+	models.ProjectNaming
+
 	typeNodes []*ast.TypeSpec
 	funcNodes []*ast.FuncDecl
 
@@ -41,14 +43,15 @@ func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
 		return nil, fmt.Errorf("failed to access path: %w", err)
 	}
 
-	// 加载包
-	pkgs, err := p.loadPackages(path, fileInfo)
+	// 获取包路径
+	module, pkgPath, err := ParsePkgPath(path)
 	if err != nil {
 		return nil, err
 	}
+	p.ProjectNaming = models.NewProjectNaming(module)
 
-	// 获取包路径
-	module, pkgPath, err := ParsePkgPath(path)
+	// 加载包
+	pkgs, err := p.loadPackages(path, fileInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +68,8 @@ func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
 	}
 
 	return &models.Package{
-		ProjectNaming: models.NewProjectNaming(module),
+		ProjectNaming: p.ProjectNaming,
+		Module:        module,
 		PkgPath:       pkgPath,
 		Structs:       p.structs,
 		Funcs:         p.funcs,
