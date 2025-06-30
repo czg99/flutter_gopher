@@ -1,6 +1,6 @@
 # Flutter Gopher
 
-[English](https://github.com/czg99/flutter_gopher/blob/main/README.md) | [中文](https://github.com/czg99/flutter_gopher/blob/main/README_zh.md)
+[English](https://github.com/czg99/flutter_gopher/blob/main/README.md) | 中文
 
 Flutter Gopher 用于桥接 Flutter 与 Golang 原生代码。快速创建基于 Golang 原生的 Flutter 插件，并自动生成 FFI 绑定代码。
 
@@ -22,7 +22,7 @@ Flutter Gopher 用于桥接 Flutter 与 Golang 原生代码。快速创建基于
 ### 安装步骤
 
 ```bash
-go install github.com/czg99/flutter_gopher/cmd/fgo@latest
+go install github.com/czg99/flutter_gopher/cmd/fgo@v0.1.2
 ```
 
 ## 📋 使用方法

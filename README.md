@@ -1,6 +1,6 @@
 # Flutter Gopher
 
-[English](https://github.com/czg99/flutter_gopher/blob/main/README.md) | [中文](https://github.com/czg99/flutter_gopher/blob/main/README_zh.md)
+English | [中文](https://github.com/czg99/flutter_gopher/blob/main/README_zh.md)
 
 Flutter Gopher is used to bridge Flutter with native Golang code. It allows for rapid creation of Flutter plugins based on native Golang and automatically generates the FFI binding code.
 
@@ -22,7 +22,7 @@ Flutter Gopher is used to bridge Flutter with native Golang code. It allows for 
 ### Installation Steps
 
 ```bash
-go install github.com/czg99/flutter_gopher/cmd/fgo@latest
+go install github.com/czg99/flutter_gopher/cmd/fgo@v0.1.2
 ```
 
 ## 📋 Usage
