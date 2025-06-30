@@ -8,7 +8,6 @@ param(
 )
 
 Write-Host "NDK_PATH: $NDK_PATH"
-Write-Host "MIN_API: $MIN_API"
 
 Set-Location -Path $PSScriptRoot
 
