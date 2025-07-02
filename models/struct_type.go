@@ -1,6 +1,8 @@
 package models
 
-import "github.com/iancoleman/strcase"
+import (
+	"github.com/iancoleman/strcase"
+)
 
 type GoStructType struct {
 	Type   GoType
@@ -33,6 +35,22 @@ func (t *GoStructType) DartCType() string {
 
 func (t *GoStructType) DartDefault() string {
 	return t.Type.DartDefault()
+}
+
+func (t *GoStructType) KotlinType() string {
+	return t.Type.KotlinType()
+}
+
+func (t *GoStructType) KotlinCType() string {
+	return t.Type.KotlinCType()
+}
+
+func (t *GoStructType) KotlinDefault() string {
+	return t.Type.KotlinDefault()
+}
+
+func (t *GoStructType) KotlinPackagePath() string {
+	return t.Type.KotlinPackagePath()
 }
 
 func (t *GoStructType) MapName() string {

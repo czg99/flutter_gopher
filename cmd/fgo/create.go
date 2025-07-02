@@ -87,7 +87,7 @@ func validateAndGeneratePlugin() error {
 	}
 
 	// 从API目录生成桥接代码
-	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib"); err != nil {
+	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib", "android/src/main/kotlin"); err != nil {
 		return fmt.Errorf("failed to generate bridge code: %v", err)
 	}
 

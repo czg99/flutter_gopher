@@ -7,6 +7,27 @@ type GoField struct {
 	Type GoType
 }
 
+func (f *GoField) IsPtr() bool {
+	if _, ok := f.Type.(*GoPointerType); ok {
+		return true
+	}
+	return false
+}
+
+func (f *GoField) IsSlice() bool {
+	if _, ok := f.Type.(*GoSliceType); ok {
+		return true
+	}
+	return false
+}
+
+func (f *GoField) IsBasic() bool {
+	if _, ok := f.Type.(*GoBasicType); ok {
+		return true
+	}
+	return false
+}
+
 func (f *GoField) InnerMost() GoType {
 	var most func(t GoType) GoType
 	most = func(t GoType) GoType {
@@ -39,6 +60,10 @@ func (f *GoField) DartName() string {
 	return strcase.ToLowerCamel(f.Name)
 }
 
+func (f *GoField) KotlinName() string {
+	return strcase.ToLowerCamel(f.Name)
+}
+
 func (f *GoField) String() string {
 	return f.Type.String()
 }
@@ -65,6 +90,22 @@ func (f *GoField) DartCType() string {
 
 func (f *GoField) DartDefault() string {
 	return f.Type.DartDefault()
+}
+
+func (f *GoField) KotlinType() string {
+	return f.Type.KotlinType()
+}
+
+func (f *GoField) KotlinCType() string {
+	return f.Type.KotlinCType()
+}
+
+func (f *GoField) KotlinDefault() string {
+	return f.Type.KotlinDefault()
+}
+
+func (f *GoField) KotlinPackagePath() string {
+	return f.Type.KotlinPackagePath()
 }
 
 func (f *GoField) MapName() string {

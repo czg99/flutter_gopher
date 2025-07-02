@@ -1,7 +1,8 @@
 package models
 
 type GoSliceType struct {
-	Inner GoType
+	PackageName string
+	Inner       GoType
 }
 
 func (t *GoSliceType) String() string {
@@ -30,6 +31,22 @@ func (t *GoSliceType) DartCType() string {
 
 func (t *GoSliceType) DartDefault() string {
 	return "[]"
+}
+
+func (t *GoSliceType) KotlinType() string {
+	return "ArrayList<" + t.Inner.KotlinType() + ">"
+}
+
+func (t *GoSliceType) KotlinCType() string {
+	return "_fgArray"
+}
+
+func (t *GoSliceType) KotlinDefault() string {
+	return "arrayListOf()"
+}
+
+func (t *GoSliceType) KotlinPackagePath() string {
+	return "java/util/ArrayList"
 }
 
 func (t *GoSliceType) MapName() string {

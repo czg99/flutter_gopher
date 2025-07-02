@@ -256,7 +256,8 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}
 
 		return &models.GoIdentType{
-			Name: e.Name,
+			PackageName: p.PackageName,
+			Name:        e.Name,
 		}, nil
 
 	case *ast.SelectorExpr:
@@ -275,7 +276,8 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}
 
 		return &models.GoPointerType{
-			Inner: inner,
+			PackageName: p.PackageName,
+			Inner:       inner,
 		}, nil
 
 	case *ast.ArrayType:
@@ -289,7 +291,8 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 			return nil, err
 		}
 		return &models.GoSliceType{
-			Inner: inner,
+			PackageName: p.PackageName,
+			Inner:       inner,
 		}, nil
 
 	case *ast.StructType:
@@ -305,7 +308,8 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 
 		return &models.GoStructType{
 			Type: &models.GoIdentType{
-				Name: name,
+				PackageName: p.PackageName,
+				Name:        name,
 			},
 			Fields: fields,
 		}, nil
@@ -327,13 +331,21 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}
 
 		return &models.GoFuncType{
-			Name: name,
+			PackageName: p.PackageName,
+			ClassName:   p.LibClassName,
+			Name:        name,
 			Params: &models.GoStructType{
-				Type:   &models.GoIdentType{Name: strcase.ToLowerCamel(name) + "Params"},
+				Type: &models.GoIdentType{
+					PackageName: p.PackageName,
+					Name:        strcase.ToLowerCamel(name) + "Params",
+				},
 				Fields: params,
 			},
 			Results: &models.GoStructType{
-				Type:   &models.GoIdentType{Name: strcase.ToLowerCamel(name) + "Results"},
+				Type: &models.GoIdentType{
+					PackageName: p.PackageName,
+					Name:        strcase.ToLowerCamel(name) + "Results",
+				},
 				Fields: results,
 			},
 		}, nil
@@ -348,7 +360,8 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 			return nil, err
 		}
 		return &models.GoChanType{
-			Inner: inner,
+			PackageName: p.PackageName,
+			Inner:       inner,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported type expression: %v (%T)", expr, expr)

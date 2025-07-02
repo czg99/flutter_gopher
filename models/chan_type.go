@@ -1,7 +1,10 @@
 package models
 
+import "strings"
+
 type GoChanType struct {
-	Inner GoType
+	PackageName string
+	Inner       GoType
 }
 
 func (t *GoChanType) String() string {
@@ -30,6 +33,22 @@ func (t *GoChanType) DartCType() string {
 
 func (t *GoChanType) DartDefault() string {
 	return "FgChan<" + t.Inner.DartType() + ">()"
+}
+
+func (t *GoChanType) KotlinType() string {
+	return "FgChan<" + t.Inner.KotlinType() + ">"
+}
+
+func (t *GoChanType) KotlinCType() string {
+	return "_fgChan"
+}
+
+func (t *GoChanType) KotlinDefault() string {
+	return "FgChan<" + t.Inner.KotlinType() + ">()"
+}
+
+func (t *GoChanType) KotlinPackagePath() string {
+	return strings.ReplaceAll(t.PackageName+"."+t.KotlinType(), ".", "/")
 }
 
 func (t *GoChanType) MapName() string {

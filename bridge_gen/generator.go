@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/czg99/flutter_gopher/models"
@@ -18,9 +19,9 @@ var templateFiles embed.FS
 
 // GenerateBridgeCode 为给定的源路径生成桥接代码，并将生成的代码写入指定的输出目录
 // 如果代码生成失败则返回错误
-func GenerateBridgeCode(srcDir, goOutDir, dartOutDir string) error {
+func GenerateBridgeCode(srcDir, goOutDir, dartOutDir, kotlinOutDir string) error {
 	// 验证输出路径
-	if goOutDir == "" && dartOutDir == "" {
+	if goOutDir == "" && dartOutDir == "" && kotlinOutDir == "" {
 		return fmt.Errorf("no output path specified")
 	}
 
@@ -32,13 +33,21 @@ func GenerateBridgeCode(srcDir, goOutDir, dartOutDir string) error {
 		return fmt.Errorf("failed to parse source code: %w", err)
 	}
 
-	var goOut, dartOut string
+	var goOut, dartOut, kotlinOut, goJniOut string
 	if goOutDir != "" {
 		goOut = filepath.Join(goOutDir, "api.go")
 	}
 
 	if dartOutDir != "" {
 		dartOut = filepath.Join(dartOutDir, pkg.ProjectName+".dart")
+	}
+
+	if kotlinOutDir != "" {
+		kotlinPackageDir := filepath.Join(strings.Split(pkg.PackageName, ".")...)
+		kotlinOut = filepath.Join(kotlinOutDir, kotlinPackageDir, pkg.LibClassName+".kt")
+		if goOut != "" {
+			goJniOut = filepath.Join(goOutDir, "api_android.go")
+		}
 	}
 
 	// 如果指定了输出路径则生成Go代码
@@ -57,6 +66,21 @@ func GenerateBridgeCode(srcDir, goOutDir, dartOutDir string) error {
 		}
 	}
 
+	// 如果指定了输出路径则生成Kotlin代码
+	if kotlinOut != "" {
+		log.Println("Generating Kotlin code")
+		if err = NewKotlinGenerator(*pkg).Generate(kotlinOut); err != nil {
+			return fmt.Errorf("failed to generate Kotlin code: %w", err)
+		}
+	}
+
+	// 如果指定了输出路径则生成Go JNI代码
+	if goJniOut != "" {
+		log.Println("Generating Go JNI code")
+		if err = NewGoJniGenerator(*pkg).Generate(goJniOut); err != nil {
+			return fmt.Errorf("failed to generate Go JNI code: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -67,6 +91,7 @@ type BridgeGenerator struct {
 	Slices []*models.GoSliceType   // 需要桥接的切片类型
 	Ptrs   []*models.GoPointerType // 需要桥接的指针类型
 	Chans  []*models.GoChanType    // 需要桥接的通道类型
+	Basics []*models.GoBasicType   // 需要桥接的基本类型
 
 	generatedCode []byte // 最终生成的代码
 	templatePath  string // 模板文件路径
@@ -87,6 +112,24 @@ func NewDartGenerator(pkg models.Package) *BridgeGenerator {
 	return &BridgeGenerator{
 		Package:      pkg,
 		templatePath: "templates/dart_bridge.go.tmpl",
+	}
+}
+
+// NewKotlinGenerator 创建一个新的Kotlin桥接代码生成器
+// 使用Kotlin桥接模板初始化生成器
+func NewKotlinGenerator(pkg models.Package) *BridgeGenerator {
+	return &BridgeGenerator{
+		Package:      pkg,
+		templatePath: "templates/kotlin_bridge.go.tmpl",
+	}
+}
+
+// NewGoJniGenerator 创建一个新的Go JNI桥接代码生成器
+// 使用Go JNI桥接模板初始化生成器
+func NewGoJniGenerator(pkg models.Package) *BridgeGenerator {
+	return &BridgeGenerator{
+		Package:      pkg,
+		templatePath: "templates/go_jni_bridge.go.tmpl",
 	}
 }
 
@@ -160,12 +203,13 @@ func (g *BridgeGenerator) writeToFile(dest string) error {
 // processSpecialTypes 处理切片、指针和通道类型
 func (g *BridgeGenerator) processSpecialTypes() {
 	// 从结构体和函数中收集所有特殊类型
-	sliceMap, ptrMap, chanMap := g.collectSpecialTypes()
+	sliceMap, ptrMap, chanMap, basicMap := g.collectSpecialTypes()
 
 	// 将map转换为slice以便模板处理
 	g.Slices = mapToSlice(sliceMap)
 	g.Ptrs = mapToSlice(ptrMap)
 	g.Chans = mapToSlice(chanMap)
+	g.Basics = mapToSlice(basicMap)
 }
 
 // mapToSlice 将字段的map转换为slice
@@ -177,11 +221,12 @@ func mapToSlice[T models.GoType](fieldMap map[string]T) []T {
 	return result
 }
 
-// collectSpecialTypes 查找结构体和函数中的所有切片、指针和通道类型
-func (g *BridgeGenerator) collectSpecialTypes() (sliceMap map[string]*models.GoSliceType, ptrMap map[string]*models.GoPointerType, chanMap map[string]*models.GoChanType) {
+// collectSpecialTypes 查找结构体和函数中的所有切片、指针、通道和基本类型
+func (g *BridgeGenerator) collectSpecialTypes() (sliceMap map[string]*models.GoSliceType, ptrMap map[string]*models.GoPointerType, chanMap map[string]*models.GoChanType, basicMap map[string]*models.GoBasicType) {
 	sliceMap = make(map[string]*models.GoSliceType)
 	ptrMap = make(map[string]*models.GoPointerType)
 	chanMap = make(map[string]*models.GoChanType)
+	basicMap = make(map[string]*models.GoBasicType)
 
 	// 处理字段并查找特殊类型的辅助函数
 	var processTypes func(t models.GoType)
@@ -196,6 +241,8 @@ func (g *BridgeGenerator) collectSpecialTypes() (sliceMap map[string]*models.GoS
 		case *models.GoChanType:
 			chanMap[t.MapName()] = t
 			processTypes(t.Inner)
+		case *models.GoBasicType:
+			basicMap[t.MapName()] = t
 		}
 	}
 

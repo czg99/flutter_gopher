@@ -44,7 +44,7 @@ func validateAndProcess() error {
 		return fmt.Errorf("failed to change directory: %v", err)
 	}
 
-	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib"); err != nil {
+	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib", "android/src/main/kotlin"); err != nil {
 		return fmt.Errorf("failed to generate FFI code: %v", err)
 	}
 	return nil

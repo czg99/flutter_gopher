@@ -1,7 +1,8 @@
 package models
 
 type GoPointerType struct {
-	Inner GoType
+	PackageName string
+	Inner       GoType
 }
 
 func (t *GoPointerType) String() string {
@@ -30,6 +31,22 @@ func (t *GoPointerType) DartCType() string {
 
 func (t *GoPointerType) DartDefault() string {
 	return "null"
+}
+
+func (t *GoPointerType) KotlinType() string {
+	return t.Inner.KotlinType() + "?"
+}
+
+func (t *GoPointerType) KotlinCType() string {
+	return t.Inner.KotlinType() + "?"
+}
+
+func (t *GoPointerType) KotlinDefault() string {
+	return "null"
+}
+
+func (t *GoPointerType) KotlinPackagePath() string {
+	return t.Inner.KotlinPackagePath()
 }
 
 func (t *GoPointerType) MapName() string {

@@ -1,9 +1,14 @@
 package models
 
-import "github.com/iancoleman/strcase"
+import (
+	"strings"
+
+	"github.com/iancoleman/strcase"
+)
 
 type GoIdentType struct {
-	Name string
+	PackageName string
+	Name        string
 }
 
 func (t *GoIdentType) String() string {
@@ -32,6 +37,22 @@ func (t *GoIdentType) DartCType() string {
 
 func (t *GoIdentType) DartDefault() string {
 	return t.DartType() + "()"
+}
+
+func (t *GoIdentType) KotlinType() string {
+	return strcase.ToCamel(t.Name)
+}
+
+func (t *GoIdentType) KotlinCType() string {
+	return "fg" + strcase.ToCamel(t.Name)
+}
+
+func (t *GoIdentType) KotlinDefault() string {
+	return t.KotlinType() + "()"
+}
+
+func (t *GoIdentType) KotlinPackagePath() string {
+	return strings.ReplaceAll(t.PackageName+"."+t.KotlinType(), ".", "/")
 }
 
 func (t *GoIdentType) MapName() string {
