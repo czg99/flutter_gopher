@@ -29,13 +29,13 @@ var BasicTypeMap = map[string]*GoBasicType{
 }
 
 type GoBasicType struct {
-	cType     string
-	goType    string
-	goCType   string
-	dartType  string
-	dartCType string
+	cType string
 
-	mapName     string
+	goType  string
+	goCType string
+
+	dartType    string
+	dartCType   string
 	dartDefault string
 
 	needMap bool

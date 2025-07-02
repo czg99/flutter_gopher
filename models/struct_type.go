@@ -12,7 +12,7 @@ func (t *GoStructType) String() string {
 }
 
 func (t *GoStructType) CType() string {
-	return "fg_" + strcase.ToSnake(t.Type.GoType())
+	return "Fg" + strcase.ToCamel(t.Type.GoType())
 }
 
 func (t *GoStructType) GoType() string {

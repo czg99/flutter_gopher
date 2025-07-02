@@ -9,7 +9,7 @@ func (t *GoSliceType) String() string {
 }
 
 func (t *GoSliceType) CType() string {
-	return "fg_array"
+	return "FgArray"
 }
 
 func (t *GoSliceType) GoType() string {
@@ -17,7 +17,7 @@ func (t *GoSliceType) GoType() string {
 }
 
 func (t *GoSliceType) GoCType() string {
-	return "C.fg_array"
+	return "C.FgArray"
 }
 
 func (t *GoSliceType) DartType() string {

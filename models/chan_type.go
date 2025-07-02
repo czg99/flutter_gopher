@@ -9,7 +9,7 @@ func (t *GoChanType) String() string {
 }
 
 func (t *GoChanType) CType() string {
-	return "fg_chan"
+	return "FgChan"
 }
 
 func (t *GoChanType) GoType() string {
@@ -17,7 +17,7 @@ func (t *GoChanType) GoType() string {
 }
 
 func (t *GoChanType) GoCType() string {
-	return "C.fg_chan"
+	return "C.FgChan"
 }
 
 func (t *GoChanType) DartType() string {

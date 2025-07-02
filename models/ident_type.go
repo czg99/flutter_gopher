@@ -11,7 +11,7 @@ func (t *GoIdentType) String() string {
 }
 
 func (t *GoIdentType) CType() string {
-	return "struct fg_" + strcase.ToSnake(t.Name)
+	return "struct Fg" + strcase.ToCamel(t.Name)
 }
 
 func (t *GoIdentType) GoType() string {
@@ -19,7 +19,7 @@ func (t *GoIdentType) GoType() string {
 }
 
 func (t *GoIdentType) GoCType() string {
-	return "C.fg_" + strcase.ToSnake(t.Name)
+	return "C.Fg" + strcase.ToCamel(t.Name)
 }
 
 func (t *GoIdentType) DartType() string {
