@@ -68,10 +68,10 @@ class FgAsync {
   }
 
   /// 执行 Go 代码并等待结果
-  static Future<Pointer<Void>> go<P, R>(
+  static Future<R> go<P, R>(
       void Function(P params, int portId) computation, P params,
       [int? customPortId]) async {
-    final (receivePort, completer) = _setupCommunication<Pointer<Void>>();
+    final (receivePort, completer) = _setupCommunication<R>();
     final sendPort = receivePort.sendPort;
     final portId = customPortId ?? sendPort.nativePort;
     final success =
@@ -94,7 +94,7 @@ class FgAsync {
   }
 
   /// 发送 Go 函数结果到 Dart
-  static bool sendGoResult(int portId, Pointer<Void> result) {
+  static bool sendGoResult(int portId, dynamic result) {
     if (portId == 0) return false;
     final sendPort = IsolateNameServer.lookupPortByName(portId.toString());
     if (sendPort == null) return false;
