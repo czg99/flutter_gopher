@@ -13,7 +13,7 @@ OUTPUT_DIR="$(pwd)"
 GO_SRC="../src"
 TIMESTAMP_FILE=".last_build_time"
 
-MIN_VERSION=12
+MIN_VERSION=11
 
 # Check if source code has been updated
 check_source_changes() {
