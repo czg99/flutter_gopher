@@ -22,7 +22,7 @@ check_source_changes() {
     fi
     
     LAST_BUILD_TIME=$(cat "${TIMESTAMP_FILE}")
-    NEWEST_FILE=$(find ${GO_SRC} -type f -name "*.go" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -1)
+    NEWEST_FILE=$(find ${GO_SRC} -type f -name "*.go" -exec sh -c 'for file; do echo "$(date -r "$file" +%s) $file"; done' _ {} + | sort -nr | head -1)
     if [ -z "${NEWEST_FILE}" ]; then
         return 0
     fi
