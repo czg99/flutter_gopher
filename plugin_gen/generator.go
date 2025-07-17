@@ -167,6 +167,8 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		fileName = strings.Replace(fileName, "PluginClassName", g.PluginClassName, 1)
 	} else if strings.HasPrefix(fileName, "ProjectName") {
 		fileName = strings.Replace(fileName, "ProjectName", g.ProjectName, 1)
+	} else if strings.HasPrefix(fileName, "LibName") {
+		fileName = strings.Replace(fileName, "LibName", g.LibName, 1)
 	}
 
 	// 写入处理后的内容到目标文件

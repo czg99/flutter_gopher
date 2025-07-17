@@ -1,0 +1,9 @@
+package main
+
+import "{{.ProjectName}}/bridge"
+
+func init() {
+	bridge.InitMethodHandle(func(method string, data []byte) []byte {
+		return append([]byte(method), data...)
+	})
+}

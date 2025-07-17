@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	bridgegen "github.com/czg99/flutter_gopher/bridge_gen"
 	plugingen "github.com/czg99/flutter_gopher/plugin_gen"
 	"github.com/spf13/cobra"
 )
@@ -79,16 +78,9 @@ func validateAndGeneratePlugin() error {
 		return fmt.Errorf("failed to generate plugin project: %v", err)
 	}
 
-	fmt.Println("Generating Go-Dart bridge code...")
-
 	// 切换到输出目录
 	if err := os.Chdir(outputPath); err != nil {
 		return fmt.Errorf("failed to change directory: %v", err)
-	}
-
-	// 从API目录生成桥接代码
-	if err := bridgegen.GenerateBridgeCode("src/api", "src", "lib"); err != nil {
-		return fmt.Errorf("failed to generate bridge code: %v", err)
 	}
 
 	if withExample {
