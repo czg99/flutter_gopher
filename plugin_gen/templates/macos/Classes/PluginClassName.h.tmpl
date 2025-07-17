@@ -1,4 +1,14 @@
 #import <FlutterMacOS/FlutterMacOS.h>
 
-@interface {{.PluginClassName}} : NSObject<FlutterPlugin>
+@protocol {{.PluginClassName}}Delegate <NSObject>
+- (NSData*)methodHandle:(NSString*)method data:(NSData*)data;
 @end
+
+@interface {{.PluginClassName}} : NSObject<FlutterPlugin>
+
+@property (nonatomic, weak) id<{{.PluginClassName}}Delegate> delegate;
+
++ (instancetype)sharedInstance;
+
+@end
+
