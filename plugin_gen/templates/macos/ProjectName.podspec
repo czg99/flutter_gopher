@@ -20,5 +20,5 @@ A new Flutter project.
     sh ./build.sh
   CMD
 
-  s.vendored_libraries = 'lib{{.LibName}}.dylib'
+  s.vendored_frameworks = '{{.LibName}}.xcframework'
 end
