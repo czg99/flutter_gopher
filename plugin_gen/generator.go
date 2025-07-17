@@ -69,7 +69,7 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	}
 
 	// 执行 flutter create 命令创建示例项目
-	cmd := exec.Command("flutter", "create", ".")
+	cmd := exec.Command("flutter", "create", ".", "--no-pub", "--offline")
 	cmd.Dir = destDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -80,7 +80,7 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	}
 
 	// 添加主插件项目依赖
-	cmd = exec.Command("flutter", "pub", "add", g.ProjectName, "--path", "..")
+	cmd = exec.Command("flutter", "pub", "add", g.ProjectName, "--path", "..", "--offline")
 	cmd.Dir = destDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
