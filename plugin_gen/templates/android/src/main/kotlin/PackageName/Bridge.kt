@@ -4,7 +4,7 @@ interface BridgeDelegate {
     fun methodHandle(method: String, data: ByteArray?): ByteArray?
 }
 
-class Bridge {
+class Bridge private constructor() {
     companion object {
         init {
             System.loadLibrary("{{.LibName}}")
@@ -21,9 +21,13 @@ class Bridge {
         }
     }
 
+    init {
+        fgInit()
+    }
+
     var delegate: BridgeDelegate? = null
 
-    fun callGoMethod(method: String, data: ByteArray?): ByteArray? {
+    fun callGoMethod(method: String, data: ByteArray? = null): ByteArray? {
         val result = fgCallMethod(FgPacket(method, data))
         return result.data
     }
@@ -36,6 +40,7 @@ class Bridge {
         return FgPacket(packet.method)
     }
 
+    private external fun fgInit()
     private external fun fgCallMethod(packet: FgPacket): FgPacket
 }
 

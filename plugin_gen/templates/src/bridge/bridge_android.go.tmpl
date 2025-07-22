@@ -7,19 +7,60 @@ import (
 	"runtime/debug"
 	"unsafe"
 
-	"github.com/timob/jnigi"
+	"github.com/czg99/jnigi"
 )
 
-//export {{.JniFuncPrefix}}_Bridge_fgCallMethod
-func {{.JniFuncPrefix}}_Bridge_fgCallMethod(jenv unsafe.Pointer, jobj uintptr, params uintptr) (result uintptr) {
-	env := jnigi.WrapEnv(jenv)
-	defer env.DeleteGlobalRefCache()
+var sharedJEnv unsafe.Pointer
+
+func CallMethod(method string, data []byte) []byte {
+	if sharedJEnv == nil {
+		return nil
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println(fmt.Sprintf("panic: %v\n%s\n", r, string(debug.Stack())))
 		}
 	}()
+
+	env := jnigi.WrapEnv(sharedJEnv)
+	defer env.DeleteGlobalRefCache()
+
+	bridge := jnigi.NewObjectRef("{{.JniPackagePath}}/Bridge")
+	err := env.CallStaticMethod("{{.JniPackagePath}}/Bridge", "getInstance", bridge)
+	if err != nil {
+		panic(err)
+	}
+	defer env.DeleteLocalRef(bridge)
+
+	javaResult := jnigi.NewObjectRef("{{.JniPackagePath}}/FgPacket")
+	javaParams := jniMapFromFgPacket(env, FgPacket{method: method, data: data})
+	defer env.DeleteLocalRef(javaParams)
+	err = bridge.CallMethod(env, "methodHandle", javaResult, javaParams)
+	if err != nil {
+		panic(err)
+	}
+	defer env.DeleteLocalRef(javaResult)
+
+	result := jniMapToFgPacket(env, javaResult)
+	return result.data
+}
+
+//export {{.JniFuncPrefix}}_Bridge_fgInit
+func {{.JniFuncPrefix}}_Bridge_fgInit(jenv unsafe.Pointer, jobj uintptr) {
+	sharedJEnv = jenv
+}
+
+//export {{.JniFuncPrefix}}_Bridge_fgCallMethod
+func {{.JniFuncPrefix}}_Bridge_fgCallMethod(jenv unsafe.Pointer, jobj uintptr, params uintptr) (result uintptr) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(fmt.Sprintf("panic: %v\n%s\n", r, string(debug.Stack())))
+		}
+	}()
+
+	env := jnigi.WrapEnv(jenv)
+	defer env.DeleteGlobalRefCache()
 
 	paramsObj := jnigi.WrapJObject(params, "{{.JniPackagePath}}/FgPacket", false)
 	go_params := jniMapToFgPacket(env, paramsObj)
@@ -81,7 +122,7 @@ func jniMapToString(env *jnigi.Env, from *jnigi.ObjectRef) (result string) {
 }
 
 func jniMapFromString(env *jnigi.Env, from string) *jnigi.ObjectRef {
-	result, err := env.NewObject("java/lang/String", from)
+	result, err := env.NewObject("java/lang/String", []byte(from))
 	if err != nil {
 		panic(err)
 	}
