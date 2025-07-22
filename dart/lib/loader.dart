@@ -35,7 +35,7 @@ class FgLoader {
   /// 根据当前平台加载原生库
   void _loadLibrary() {
     try {
-      if (Platform.isIOS) {
+      if (Platform.isIOS || Platform.isMacOS) {
         _library = DynamicLibrary.executable();
       } else {
         final libFileName = _libraryFileName();
