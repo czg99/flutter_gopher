@@ -19,6 +19,29 @@ const maxPortId int64 = 0xFFFFFFFFFFFF
 var portMutex sync.Mutex
 var nextPortId int64 = minPortId - 1
 
+func CallNativeMethod(method string, data []byte) []byte {
+	if fgMethodHandle == nil {
+		return nil
+	}
+	c_param := C.FgPacket{
+		method:     C.CString(method),
+		method_len: C.int(len(method)),
+	}
+
+	if data != nil {
+		c_param.data = unsafe.Pointer(C.CBytes(data))
+		c_param.data_len = C.int(len(data))
+	}
+
+	c_result := C.call_fg_method_handle(fgMethodHandle, c_param)
+	defer C.free(unsafe.Pointer(c_result.method))
+	defer C.free(unsafe.Pointer(c_result.data))
+	if c_result.data == nil {
+		return nil
+	}
+	return C.GoBytes(unsafe.Pointer(c_result.data), C.int(c_result.data_len))
+}
+
 //export fg_next_port_id
 func fg_next_port_id() C.int64_t {
 	next := atomic.AddInt64(&nextPortId, 1)
@@ -73,12 +96,18 @@ func fg_call_method_async(packet C.FgPacket) {
 
 //export fg_call_native_method
 func fg_call_native_method(packet C.FgPacket) C.FgPacket {
-	method, data := fgPacketToGo(packet)
-	if packet.data != nil {
-		C.free(unsafe.Pointer(packet.data))
+	if fgMethodHandle == nil {
+		C.free(packet.data)
+		return C.FgPacket{
+			id:         packet.id,
+			method:     packet.method,
+			method_len: packet.method_len,
+		}
 	}
-	result := CallMethod(method, data)
-	return fgPacketFromGo(packet, result)
+
+	c_result := C.call_fg_method_handle(fgMethodHandle, packet)
+	c_result.id = packet.id
+	return c_result
 }
 
 //export fg_call_native_method_async
@@ -87,6 +116,13 @@ func fg_call_native_method_async(packet C.FgPacket) {
 		result := fg_call_native_method(packet)
 		packetChan <- result
 	}()
+}
+
+var fgMethodHandle C.FgMethodHandle = nil
+
+//export fg_init_method_handle
+func fg_init_method_handle(handle C.FgMethodHandle) {
+	fgMethodHandle = handle
 }
 
 //export enforce_binding
@@ -99,6 +135,7 @@ func enforce_binding() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_method_async))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method_async))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_method_handle))
 }
 
 func fgPacketToGo(packet C.FgPacket) (method string, data []byte) {

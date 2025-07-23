@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifndef FG_BRIDGE_H
+#define FG_BRIDGE_H
+
 typedef struct {
 	int64_t id;
 	char* method;
@@ -28,3 +31,7 @@ extern DLLEXPORT void fg_call_method_async(FgPacket packet);
 extern DLLEXPORT FgPacket fg_call_native_method(FgPacket packet);
 extern DLLEXPORT void fg_call_native_method_async(FgPacket packet);
 extern DLLEXPORT void fg_init_method_handle(FgMethodHandle handle);
+
+extern DLLEXPORT void enforce_binding(void);
+
+#endif
