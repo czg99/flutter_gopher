@@ -17,6 +17,14 @@ A new Flutter plugin project.
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
 
+  s.script_phases = [
+    {
+      :name => 'Run Pre-Build Script',
+      :script => "sh '#{__dir__}/build.sh'",
+      :execution_position => 'before_compile'
+    }
+  ]
+
   s.prepare_command = <<-CMD
     sh ./build.sh
   CMD

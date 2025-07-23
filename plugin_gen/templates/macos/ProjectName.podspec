@@ -17,6 +17,14 @@ A new Flutter project.
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
 
+  s.script_phases = [
+    {
+      :name => 'Run Pre-Build Script',
+      :script => "sh '#{__dir__}/build_dylib.sh'",
+      :execution_position => 'before_compile'
+    }
+  ]
+
   s.prepare_command = <<-CMD
     sh ./build_dylib.sh
   CMD
