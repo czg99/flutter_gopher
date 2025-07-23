@@ -80,7 +80,7 @@ FgPacket methodHandle(FgPacket packet) {
         packet.data_len = (int)[data length];
     }
     
-    FgPacket c_result = fg_call_method(packet);
+    FgPacket c_result = fg_call_go_method(packet);
     free(c_result.method);
     
     if (c_result.data != nil) {

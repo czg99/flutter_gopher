@@ -76,8 +76,8 @@ func fg_packet_loop() C.FgPacket {
 	}
 }
 
-//export fg_call_method
-func fg_call_method(packet C.FgPacket) C.FgPacket {
+//export fg_call_go_method
+func fg_call_go_method(packet C.FgPacket) C.FgPacket {
 	method, data := fgPacketToGo(packet)
 	if packet.data != nil {
 		C.free(unsafe.Pointer(packet.data))
@@ -86,10 +86,10 @@ func fg_call_method(packet C.FgPacket) C.FgPacket {
 	return fgPacketFromGo(packet, result)
 }
 
-//export fg_call_method_async
-func fg_call_method_async(packet C.FgPacket) {
+//export fg_call_go_method_async
+func fg_call_go_method_async(packet C.FgPacket) {
 	go func() {
-		result := fg_call_method(packet)
+		result := fg_call_go_method(packet)
 		packetChan <- result
 	}()
 }
@@ -131,8 +131,8 @@ func enforce_binding() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_next_port_id))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_packet))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_packet_loop))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_method))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_method_async))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method_async))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_method_handle))
