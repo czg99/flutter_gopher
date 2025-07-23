@@ -55,39 +55,36 @@ func fg_packet_loop() C.FgPacket {
 
 //export fg_call_method
 func fg_call_method(packet C.FgPacket) C.FgPacket {
-	var method string
-	if packet.method_len > 0 {
-		method = C.GoStringN(packet.method, packet.method_len)
-	} else {
-		method = C.GoString(packet.method)
-	}
-
-	var data []byte
+	method, data := fgPacketToGo(packet)
 	if packet.data != nil {
-		data = C.GoBytes(unsafe.Pointer(packet.data), C.int(packet.data_len))
 		C.free(unsafe.Pointer(packet.data))
 	}
-
 	result := callGoMethod(method, data)
-
-	var c_result unsafe.Pointer = nil
-	if result != nil {
-		c_result = C.CBytes(result)
-	}
-	c_result_len := C.int(len(result))
-	return C.FgPacket{
-		id:         packet.id,
-		method:     packet.method,
-		method_len: packet.method_len,
-		data:       c_result,
-		data_len:   c_result_len,
-	}
+	return fgPacketFromGo(packet, result)
 }
 
 //export fg_call_method_async
 func fg_call_method_async(packet C.FgPacket) {
 	go func() {
 		result := fg_call_method(packet)
+		packetChan <- result
+	}()
+}
+
+//export fg_call_native_method
+func fg_call_native_method(packet C.FgPacket) C.FgPacket {
+	method, data := fgPacketToGo(packet)
+	if packet.data != nil {
+		C.free(unsafe.Pointer(packet.data))
+	}
+	result := CallMethod(method, data)
+	return fgPacketFromGo(packet, result)
+}
+
+//export fg_call_native_method_async
+func fg_call_native_method_async(packet C.FgPacket) {
+	go func() {
+		result := fg_call_native_method(packet)
 		packetChan <- result
 	}()
 }
@@ -100,4 +97,35 @@ func enforce_binding() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_packet_loop))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_method_async))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method_async))
+}
+
+func fgPacketToGo(packet C.FgPacket) (method string, data []byte) {
+	if packet.method != nil {
+		if packet.method_len > 0 {
+			method = C.GoStringN(packet.method, packet.method_len)
+		} else {
+			method = C.GoString(packet.method)
+		}
+	}
+	if packet.data != nil {
+		data = C.GoBytes(unsafe.Pointer(packet.data), C.int(packet.data_len))
+	}
+	return
+}
+
+func fgPacketFromGo(srcPacket C.FgPacket, data []byte) C.FgPacket {
+	var cData unsafe.Pointer
+	cDataLen := C.int(len(data))
+	if data != nil {
+		cData = C.CBytes(data)
+	}
+	return C.FgPacket{
+		id:         srcPacket.id,
+		method:     srcPacket.method,
+		method_len: srcPacket.method_len,
+		data:       cData,
+		data_len:   cDataLen,
+	}
 }

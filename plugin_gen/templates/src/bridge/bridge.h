@@ -25,4 +25,6 @@ extern DLLEXPORT FgPacket fg_packet_loop(void);
 extern DLLEXPORT int64_t fg_next_port_id(void);
 extern DLLEXPORT FgPacket fg_call_method(FgPacket packet);
 extern DLLEXPORT void fg_call_method_async(FgPacket packet);
+extern DLLEXPORT FgPacket fg_call_native_method(FgPacket packet);
+extern DLLEXPORT void fg_call_native_method_async(FgPacket packet);
 extern DLLEXPORT void fg_init_method_handle(FgMethodHandle handle);
