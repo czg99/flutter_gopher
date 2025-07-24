@@ -1,0 +1,165 @@
+package {{.PackageName}}
+
+import com.sun.jna.Library
+import com.sun.jna.Native
+import com.sun.jna.Pointer
+import com.sun.jna.Structure
+import java.nio.charset.StandardCharsets
+
+/**
+ * Interface for FgBridge delegate to handle method calls
+ */
+interface FgBridgeDelegate {
+    fun methodHandle(method: String, data: ByteArray?): ByteArray?
+}
+
+@Structure.FieldOrder("id", "method", "method_len", "data", "data_len")
+private open class FgPacket private constructor() : Structure() {
+    class ByValue : FgPacket(), Structure.ByValue
+    class ByReference : FgPacket(), Structure.ByReference
+
+    @JvmField
+    var id: Long = 0
+
+    @JvmField
+    var method: Pointer? = null
+
+    @JvmField
+    var method_len: Int = 0
+
+    @JvmField
+    var data: Pointer? = null
+
+    @JvmField
+    var data_len: Int = 0
+}
+
+
+private interface BridgeLib : Library {
+    fun fg_call_go_method(packet: FgPacket.ByValue): FgPacket.ByValue
+    fun fg_init_method_handle(handle: FgMethodHandleCallback)
+}
+
+private interface FgMethodHandleCallback : com.sun.jna.Callback {
+    fun invoke(packet: FgPacket.ByValue, result: FgPacket.ByReference)
+}
+
+class FgBridge private constructor() {
+    companion object {
+        @Volatile
+        private var instance: FgBridge? = null
+
+        @JvmStatic
+        fun sharedInstance(): FgBridge {
+            return instance ?: synchronized(this) {
+                instance ?: FgBridge().also {
+                    instance = it
+                }
+            }
+        }
+    }
+
+    private val bridgeLib: BridgeLib = Native.load("{{.LibName}}", BridgeLib::class.java)
+
+    private var methodHandle: FgMethodHandleCallback
+
+    var delegate: FgBridgeDelegate? = null
+
+    init {
+        methodHandle = object : FgMethodHandleCallback {
+            override fun invoke(packet: FgPacket.ByValue, result: FgPacket.ByReference) {
+                val value = methodHandle(packet)
+                result.apply {
+                    method = value.method
+                    method_len = value.method_len
+                    data = value.data
+                    data_len = value.data_len
+                }
+            }
+        }
+        bridgeLib.fg_init_method_handle(methodHandle)
+    }
+
+    private fun byteArrayToPointer(data: ByteArray?): Pointer? {
+        if (data == null) return null
+        val memory = Pointer(Native.malloc(data.size.toLong()))
+        val buffer = memory.getByteBuffer(0, data.size.toLong())
+        buffer.put(data)
+        return memory
+    }
+
+    private fun pointerToByteArray(pointer: Pointer?, length: Int): ByteArray? {
+        if (pointer == null) return null
+        val buffer = pointer.getByteBuffer(0, length.toLong())
+        val result = ByteArray(length)
+        buffer.get(result)
+        return result
+    }
+
+    private fun methodHandle(packet: FgPacket): FgPacket {
+        val result = FgPacket.ByValue()
+
+        if (packet.method == null) {
+            if (packet.data != null) {
+                Native.free(Pointer.nativeValue(packet.data))
+            }
+            return result
+        }
+
+        val methodBytes = ByteArray(packet.method_len)
+        packet.method!!.read(0, methodBytes, 0, packet.method_len)
+        val methodStr = String(methodBytes, StandardCharsets.UTF_8)
+
+        val data = if (packet.data != null) {
+            pointerToByteArray(packet.data, packet.data_len)
+        } else null
+
+        if (packet.data != null) {
+            Native.free(Pointer.nativeValue(packet.data))
+        }
+
+        val handleData = delegate?.methodHandle(methodStr, data)
+
+        result.method = packet.method
+        result.method_len = packet.method_len
+
+        if (handleData != null) {
+            result.data = byteArrayToPointer(handleData)
+            result.data_len = handleData.size
+        }
+
+        return result
+    }
+
+    fun callGoMethod(method: String, data: ByteArray? = null): ByteArray? {
+        if (method.isEmpty()) return null
+
+        val methodBytes = method.toByteArray(Charsets.UTF_8)
+        val methodPointer = Pointer(Native.malloc((methodBytes.size + 1).toLong()))
+        methodPointer.write(0, methodBytes, 0, methodBytes.size)
+        methodPointer.setByte(methodBytes.size.toLong(), 0)
+
+        val packet = FgPacket.ByValue()
+        packet.method = methodPointer
+        packet.method_len = methodBytes.size
+
+        if (data != null) {
+            packet.data = byteArrayToPointer(data)
+            packet.data_len = data.size
+        }
+
+        val result = bridgeLib.fg_call_go_method(packet)
+
+        Native.free(Pointer.nativeValue(result.method))
+
+        val resultData = if (result.data != null) {
+            pointerToByteArray(result.data, result.data_len)
+        } else null
+
+        if (result.data != null) {
+            Native.free(Pointer.nativeValue(result.data))
+        }
+
+        return resultData
+    }
+}

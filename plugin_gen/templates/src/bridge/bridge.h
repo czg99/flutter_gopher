@@ -12,9 +12,9 @@ typedef struct {
 	int data_len;
 } FgPacket;
 
-typedef FgPacket (*FgMethodHandle)(FgPacket);
-static inline FgPacket call_fg_method_handle(FgMethodHandle handle, FgPacket packet) {
-	return handle(packet);
+typedef void (*FgMethodHandle)(FgPacket, FgPacket*);
+static inline void call_fg_method_handle(FgMethodHandle handle, FgPacket packet, FgPacket* result) {
+	handle(packet, result);
 }
 
 #ifdef _WIN32

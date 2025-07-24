@@ -33,7 +33,8 @@ func CallNativeMethod(method string, data []byte) []byte {
 		c_param.data_len = C.int(len(data))
 	}
 
-	c_result := C.call_fg_method_handle(fgMethodHandle, c_param)
+	c_result := C.FgPacket{}
+	C.call_fg_method_handle(fgMethodHandle, c_param, &c_result)
 	defer C.free(unsafe.Pointer(c_result.method))
 	defer C.free(unsafe.Pointer(c_result.data))
 	if c_result.data == nil {
@@ -105,8 +106,8 @@ func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 		}
 	}
 
-	c_result := C.call_fg_method_handle(fgMethodHandle, packet)
-	c_result.id = packet.id
+	c_result := C.FgPacket{id: packet.id}
+	C.call_fg_method_handle(fgMethodHandle, packet, &c_result)
 	return c_result
 }
 

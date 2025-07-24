@@ -69,4 +69,8 @@ android {
         main.java.srcDirs += "src/main/kotlin"
         main.jniLibs.srcDirs = ['libs']
     }
+    
+    dependencies {
+        implementation 'net.java.dev.jna:jna:5.17.0@aar'
+    }
 }

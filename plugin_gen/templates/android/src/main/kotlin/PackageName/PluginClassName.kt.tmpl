@@ -2,10 +2,19 @@ package {{.PackageName}}
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 
-class {{.PluginClassName}}: FlutterPlugin {
-  override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-  }
+class {{.PluginClassName}} : FlutterPlugin, FgBridgeDelegate {
 
-  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-  }
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        FgBridge.sharedInstance().delegate = this
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    }
+
+    // Implementation of FgBridgeDelegate
+    override fun methodHandle(method: String, data: ByteArray?): ByteArray? {
+        // This method will be called by Go code through the bridge
+        // You can implement custom handling here or forward to Flutter
+        return data
+    }
 }
