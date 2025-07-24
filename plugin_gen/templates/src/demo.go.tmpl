@@ -1,9 +1,13 @@
 package main
 
-import "{{.ProjectName}}/bridge"
+import (
+	"fmt"
+	"{{.ProjectName}}/bridge"
+)
 
 func init() {
 	bridge.InitMethodHandle(func(method string, data []byte) []byte {
-		return append([]byte(method), data...)
+		fmt.Println("Received:", method, data)
+		return data
 	})
 }

@@ -23,24 +23,16 @@ func CallNativeMethod(method string, data []byte) []byte {
 	if fgMethodHandle == nil {
 		return nil
 	}
-	c_param := C.FgPacket{
-		method:     C.CString(method),
-		method_len: C.int(len(method)),
-	}
-
-	if data != nil {
-		c_param.data = unsafe.Pointer(C.CBytes(data))
-		c_param.data_len = C.int(len(data))
+	packet := C.FgPacket{
+		method: mapFgDataFromString(method),
+		data:   mapFgDataFromBytes(data),
 	}
 
 	c_result := C.FgPacket{}
-	C.call_fg_method_handle(fgMethodHandle, c_param, &c_result)
-	defer C.free(unsafe.Pointer(c_result.method))
-	defer C.free(unsafe.Pointer(c_result.data))
-	if c_result.data == nil {
-		return nil
-	}
-	return C.GoBytes(unsafe.Pointer(c_result.data), C.int(c_result.data_len))
+	C.call_fg_method_handle(fgMethodHandle, packet, &c_result)
+	defer freeFgData(c_result.method)
+	defer freeFgData(c_result.data)
+	return mapFgDataToBytes(c_result.data)
 }
 
 //export fg_next_port_id
@@ -67,6 +59,11 @@ func fg_empty_packet() C.FgPacket {
 	return C.FgPacket{}
 }
 
+//export fg_empty_data
+func fg_empty_data() C.FgData {
+	return C.FgData{}
+}
+
 //export fg_packet_loop
 func fg_packet_loop() C.FgPacket {
 	select {
@@ -79,12 +76,15 @@ func fg_packet_loop() C.FgPacket {
 
 //export fg_call_go_method
 func fg_call_go_method(packet C.FgPacket) C.FgPacket {
-	method, data := fgPacketToGo(packet)
-	if packet.data != nil {
-		C.free(unsafe.Pointer(packet.data))
-	}
+	defer freeFgData(packet.data)
+	method, data := unpackFgPacket(packet)
+
 	result := callGoMethod(method, data)
-	return fgPacketFromGo(packet, result)
+	return C.FgPacket{
+		id:     packet.id,
+		method: packet.method,
+		data:   mapFgDataFromBytes(result),
+	}
 }
 
 //export fg_call_go_method_async
@@ -98,11 +98,10 @@ func fg_call_go_method_async(packet C.FgPacket) {
 //export fg_call_native_method
 func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 	if fgMethodHandle == nil {
-		C.free(packet.data)
+		freeFgData(packet.data)
 		return C.FgPacket{
-			id:         packet.id,
-			method:     packet.method,
-			method_len: packet.method_len,
+			id:     packet.id,
+			method: packet.method,
 		}
 	}
 
@@ -129,9 +128,10 @@ func fg_init_method_handle(handle C.FgMethodHandle) {
 //export enforce_binding
 func enforce_binding() {
 	var ptr uintptr
-	ptr ^= uintptr(unsafe.Pointer(C.fg_next_port_id))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_data))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_packet))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_packet_loop))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_next_port_id))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method))
@@ -139,31 +139,46 @@ func enforce_binding() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_method_handle))
 }
 
-func fgPacketToGo(packet C.FgPacket) (method string, data []byte) {
-	if packet.method != nil {
-		if packet.method_len > 0 {
-			method = C.GoStringN(packet.method, packet.method_len)
-		} else {
-			method = C.GoString(packet.method)
-		}
-	}
-	if packet.data != nil {
-		data = C.GoBytes(unsafe.Pointer(packet.data), C.int(packet.data_len))
-	}
+func unpackFgPacket(packet C.FgPacket) (method string, data []byte) {
+	method = mapFgDataToString(packet.method)
+	data = mapFgDataToBytes(packet.data)
 	return
 }
 
-func fgPacketFromGo(srcPacket C.FgPacket, data []byte) C.FgPacket {
-	var cData unsafe.Pointer
-	cDataLen := C.int(len(data))
-	if data != nil {
-		cData = C.CBytes(data)
+func mapFgDataFromString(from string) C.FgData {
+	return mapFgDataFromBytes([]byte(from))
+}
+
+func mapFgDataToString(from C.FgData) string {
+	data := mapFgDataToBytes(from)
+	if data == nil {
+		return ""
 	}
-	return C.FgPacket{
-		id:         srcPacket.id,
-		method:     srcPacket.method,
-		method_len: srcPacket.method_len,
-		data:       cData,
-		data_len:   cDataLen,
+	return string(data)
+}
+
+func mapFgDataFromBytes(from []byte) C.FgData {
+	if from == nil {
+		return C.FgData{}
+	}
+	data := C.CBytes(from)
+	len := C.int(len(from))
+	return C.FgData{
+		data: data,
+		len:  len,
+	}
+}
+
+func mapFgDataToBytes(from C.FgData) []byte {
+	if from.data == nil {
+		return nil
+	}
+	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.len))
+}
+
+func freeFgData(value C.FgData) {
+	if value.data != nil {
+		C.free(value.data)
+		value.data = nil
 	}
 }

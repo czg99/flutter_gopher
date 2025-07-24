@@ -5,11 +5,14 @@
 #define FG_BRIDGE_H
 
 typedef struct {
-	int64_t id;
-	char* method;
-	int method_len;
 	void* data;
-	int data_len;
+	int len;
+} FgData;
+
+typedef struct {
+	int64_t id;
+	FgData method;
+	FgData data;
 } FgPacket;
 
 typedef void (*FgMethodHandle)(FgPacket, FgPacket*);
@@ -23,6 +26,7 @@ static inline void call_fg_method_handle(FgMethodHandle handle, FgPacket packet,
     #define DLLEXPORT
 #endif
 
+extern DLLEXPORT FgData fg_empty_data(void);
 extern DLLEXPORT FgPacket fg_empty_packet(void);
 extern DLLEXPORT FgPacket fg_packet_loop(void);
 extern DLLEXPORT int64_t fg_next_port_id(void);
