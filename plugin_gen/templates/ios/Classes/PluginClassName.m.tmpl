@@ -1,10 +1,18 @@
 #import "{{.PluginClassName}}.h"
-#import "FgBridge.h"
 
 @implementation {{.PluginClassName}}
 
 + (void)registerWithRegistrar:(id<FlutterPluginRegistrar>)registrar {
-    [FgBridge sharedInstance];
+    static {{.PluginClassName}} *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    [FgBridge sharedInstance].delegate = instance;
+}
+
+- (NSData *)methodHandle:(NSString *)method data:(NSData *)data {
+    return nil;
 }
 
 @end

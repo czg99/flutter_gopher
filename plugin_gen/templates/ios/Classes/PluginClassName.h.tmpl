@@ -1,5 +1,6 @@
 #import <Flutter/Flutter.h>
+#import "FgBridge.h"
 
-@interface {{.PluginClassName}} : NSObject<FlutterPlugin>
+@interface {{.PluginClassName}} : NSObject<FlutterPlugin, FgBridgeDelegate>
 
 @end
