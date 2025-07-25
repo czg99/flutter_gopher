@@ -13,7 +13,18 @@ interface FgBridgeDelegate {
     fun methodHandle(method: String, data: ByteArray?): ByteArray?
 }
 
-@Structure.FieldOrder("id", "method", "method_len", "data", "data_len")
+@Structure.FieldOrder("data", "size")
+private open class FgData private constructor(): Structure() {
+    class ByValue : FgData(), Structure.ByValue
+
+    @JvmField
+    var data: Pointer? = null
+
+    @JvmField
+    var size: Int = 0
+}
+
+@Structure.FieldOrder("id", "method", "data")
 private open class FgPacket private constructor() : Structure() {
     class ByValue : FgPacket(), Structure.ByValue
     class ByReference : FgPacket(), Structure.ByReference
@@ -22,18 +33,11 @@ private open class FgPacket private constructor() : Structure() {
     var id: Long = 0
 
     @JvmField
-    var method: Pointer? = null
+    var method: FgData.ByValue = FgData.ByValue()
 
     @JvmField
-    var method_len: Int = 0
-
-    @JvmField
-    var data: Pointer? = null
-
-    @JvmField
-    var data_len: Int = 0
+    var data: FgData.ByValue = FgData.ByValue()
 }
-
 
 private interface BridgeLib : Library {
     fun fg_call_go_method(packet: FgPacket.ByValue): FgPacket.ByValue
@@ -68,98 +72,69 @@ class FgBridge private constructor() {
     init {
         methodHandle = object : FgMethodHandleCallback {
             override fun invoke(packet: FgPacket.ByValue, result: FgPacket.ByReference) {
-                val value = methodHandle(packet)
-                result.apply {
-                    method = value.method
-                    method_len = value.method_len
-                    data = value.data
-                    data_len = value.data_len
-                }
+                methodHandle(packet, result)
             }
         }
         bridgeLib.fg_init_method_handle(methodHandle)
     }
 
-    private fun byteArrayToPointer(data: ByteArray?): Pointer? {
-        if (data == null) return null
-        val memory = Pointer(Native.malloc(data.size.toLong()))
-        val buffer = memory.getByteBuffer(0, data.size.toLong())
-        buffer.put(data)
-        return memory
+    private fun freeFgData(value: FgData) {
+        if (value.data != null) {
+            Native.free(Pointer.nativeValue(value.data))
+            value.data = null
+            value.size = 0
+        }
     }
 
-    private fun pointerToByteArray(pointer: Pointer?, length: Int): ByteArray? {
-        if (pointer == null) return null
-        val buffer = pointer.getByteBuffer(0, length.toLong())
-        val result = ByteArray(length)
-        buffer.get(result)
+    private fun mapFgDataFromBytes(from: ByteArray?): FgData.ByValue {
+        val result = FgData.ByValue()
+        if (from != null) {
+            val memory = Pointer(Native.malloc(from.size.toLong()))
+            memory.write(0, from, 0, from.size)
+            result.data = memory
+            result.size = from.size
+        }
         return result
     }
 
-    private fun methodHandle(packet: FgPacket): FgPacket {
-        val result = FgPacket.ByValue()
+    private fun mapFgDataToBytes(from: FgData): ByteArray? {
+        if (from.data == null) return null
+        return from.data!!.getByteArray(0, from.size)
+    }
 
-        if (packet.method == null) {
-            if (packet.data != null) {
-                Native.free(Pointer.nativeValue(packet.data))
-            }
-            return result
-        }
+    private fun mapFgDataFromString(from: String): FgData.ByValue {
+        val bytes = from.toByteArray(Charsets.UTF_8)
+        return mapFgDataFromBytes(bytes)
+    }
 
-        val methodBytes = ByteArray(packet.method_len)
-        packet.method!!.read(0, methodBytes, 0, packet.method_len)
-        val methodStr = String(methodBytes, StandardCharsets.UTF_8)
+    private fun mapFgDataToString(from: FgData): String {
+        val bytes = mapFgDataToBytes(from) ?: return ""
+        return String(bytes, StandardCharsets.UTF_8)
+    }
 
-        val data = if (packet.data != null) {
-            pointerToByteArray(packet.data, packet.data_len)
-        } else null
+    private fun methodHandle(packet: FgPacket.ByValue, result: FgPacket.ByReference) {
+        val method = mapFgDataToString(packet.method)
+        val data = mapFgDataToBytes(packet.data)
+        freeFgData(packet.data)
 
-        if (packet.data != null) {
-            Native.free(Pointer.nativeValue(packet.data))
-        }
-
-        val handleData = delegate?.methodHandle(methodStr, data)
+        val handleData = delegate?.methodHandle(method, data)
 
         result.method = packet.method
-        result.method_len = packet.method_len
-
-        if (handleData != null) {
-            result.data = byteArrayToPointer(handleData)
-            result.data_len = handleData.size
-        }
-
-        return result
+        result.data = mapFgDataFromBytes(handleData)
     }
 
     fun callGoMethod(method: String, data: ByteArray? = null): ByteArray? {
         if (method.isEmpty()) return null
 
-        val methodBytes = method.toByteArray(Charsets.UTF_8)
-        val methodPointer = Pointer(Native.malloc((methodBytes.size + 1).toLong()))
-        methodPointer.write(0, methodBytes, 0, methodBytes.size)
-        methodPointer.setByte(methodBytes.size.toLong(), 0)
-
         val packet = FgPacket.ByValue()
-        packet.method = methodPointer
-        packet.method_len = methodBytes.size
+        packet.method = mapFgDataFromString(method)
+        packet.data = mapFgDataFromBytes(data)
 
-        if (data != null) {
-            packet.data = byteArrayToPointer(data)
-            packet.data_len = data.size
-        }
+        val cResult = bridgeLib.fg_call_go_method(packet)
 
-        val result = bridgeLib.fg_call_go_method(packet)
-
-        Native.free(Pointer.nativeValue(result.method))
-
-        val resultData = if (result.data != null) {
-            pointerToByteArray(result.data, result.data_len)
-        } else null
-
-        if (result.data != null) {
-            Native.free(Pointer.nativeValue(result.data))
-        }
-
-        return resultData
+        val result = mapFgDataToBytes(cResult.data)
+        freeFgData(cResult.method)
+        freeFgData(cResult.data)
+        return result
     }
 }
