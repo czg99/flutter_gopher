@@ -5,19 +5,12 @@ package bridge
 */
 import "C"
 import (
-	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
 )
 
 var packetChan = make(chan C.FgPacket)
-
-const minPortId int64 = 0xFF
-const maxPortId int64 = 0xFFFFFFFFFFFF
-
-var portMutex sync.Mutex
-var nextPortId int64 = minPortId - 1
 
 func CallNativeMethod(method string, data []byte) []byte {
 	if fgMethodHandle == nil {
@@ -35,21 +28,13 @@ func CallNativeMethod(method string, data []byte) []byte {
 	return mapFgDataToBytes(c_result.data)
 }
 
+var nextPortId uint32
+
 //export fg_next_port_id
 func fg_next_port_id() C.int64_t {
-	next := atomic.AddInt64(&nextPortId, 1)
-
-	if next > maxPortId {
-		portMutex.Lock()
-		defer portMutex.Unlock()
-
-		current := atomic.LoadInt64(&nextPortId)
-		if current > maxPortId {
-			atomic.StoreInt64(&nextPortId, minPortId)
-			return C.int64_t(minPortId)
-		} else {
-			return C.int64_t(atomic.AddInt64(&nextPortId, 1))
-		}
+	next := atomic.AddUint32(&nextPortId, 1)
+	if next == 0 {
+		return fg_next_port_id()
 	}
 	return C.int64_t(next)
 }
@@ -76,15 +61,13 @@ func fg_packet_loop() C.FgPacket {
 
 //export fg_call_go_method
 func fg_call_go_method(packet C.FgPacket) C.FgPacket {
-	defer freeFgData(packet.data)
-	method, data := unpackFgPacket(packet)
+	method := mapFgDataToString(packet.method)
+	data := mapFgDataToBytes(packet.data)
+	freeFgData(packet.data)
 
 	result := callGoMethod(method, data)
-	return C.FgPacket{
-		id:     packet.id,
-		method: packet.method,
-		data:   mapFgDataFromBytes(result),
-	}
+	packet.data = mapFgDataFromBytes(result)
+	return packet
 }
 
 //export fg_call_go_method_async
@@ -99,10 +82,7 @@ func fg_call_go_method_async(packet C.FgPacket) {
 func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 	if fgMethodHandle == nil {
 		freeFgData(packet.data)
-		return C.FgPacket{
-			id:     packet.id,
-			method: packet.method,
-		}
+		return packet
 	}
 
 	c_result := C.FgPacket{id: packet.id}
@@ -139,12 +119,6 @@ func enforce_binding() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_method_handle))
 }
 
-func unpackFgPacket(packet C.FgPacket) (method string, data []byte) {
-	method = mapFgDataToString(packet.method)
-	data = mapFgDataToBytes(packet.data)
-	return
-}
-
 func mapFgDataFromString(from string) C.FgData {
 	return mapFgDataFromBytes([]byte(from))
 }
@@ -162,10 +136,10 @@ func mapFgDataFromBytes(from []byte) C.FgData {
 		return C.FgData{}
 	}
 	data := C.CBytes(from)
-	len := C.int(len(from))
+	size := C.int(len(from))
 	return C.FgData{
 		data: data,
-		len:  len,
+		size: size,
 	}
 }
 
@@ -173,12 +147,13 @@ func mapFgDataToBytes(from C.FgData) []byte {
 	if from.data == nil {
 		return nil
 	}
-	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.len))
+	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
 }
 
 func freeFgData(value C.FgData) {
 	if value.data != nil {
 		C.free(value.data)
 		value.data = nil
+		value.size = 0
 	}
 }

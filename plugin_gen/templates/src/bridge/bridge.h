@@ -6,7 +6,7 @@
 
 typedef struct {
 	void* data;
-	int len;
+	int size;
 } FgData;
 
 typedef struct {
