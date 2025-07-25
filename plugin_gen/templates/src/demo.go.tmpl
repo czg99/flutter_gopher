@@ -3,11 +3,26 @@ package main
 import (
 	"fmt"
 	"{{.ProjectName}}/bridge"
+	"strings"
 )
+
+func byteArrayToHex(byteArray []byte) string {
+	if byteArray == nil {
+		return "null"
+	}
+	var builder strings.Builder
+	for i, b := range byteArray {
+		if i > 0 {
+			builder.WriteString(" ")
+		}
+		builder.WriteString(fmt.Sprintf("%02x", b))
+	}
+	return builder.String()
+}
 
 func init() {
 	bridge.InitMethodHandle(func(method string, data []byte) []byte {
-		fmt.Println("Received:", method, data)
+		fmt.Println("Go Received:", method, byteArrayToHex(data))
 		return data
 	})
 }
