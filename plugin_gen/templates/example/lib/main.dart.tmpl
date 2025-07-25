@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:{{.ProjectName}}/{{.ProjectName}}.dart';
 
@@ -30,6 +32,24 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   final api = {{.LibClassName}}();
 
+  (String, Uint8List?) randomPacket() {
+    final r = Random(DateTime.now().millisecondsSinceEpoch);
+    final method = '/app/${r.nextInt(99999)}';
+    final count = r.nextInt(10);
+    if (count < 3) {
+      return (method, null);
+    }
+    final data = Uint8List(count);
+    for (var i = 0; i < count; i++) {
+      data[i] = r.nextInt(255);
+    }
+    return (method, data);
+  }
+
+  String sendMethod = '';
+  Uint8List? send;
+  Uint8List? recv;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,44 +63,37 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
+            Text('Method: $sendMethod'),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+                'Send: ${send != null ? send!.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ') : 'null'}'),
+            Text(
+                'Recv: ${recv != null ? recv!.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ') : 'null'}'),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 MaterialButton(
                   color: Colors.blue,
                   onPressed: () {
-                    _counter = api.add(_counter, 1);
-                    setState(() {});
+                    setState(() {
+                      final (method, data) = randomPacket();
+                      sendMethod = method;
+                      send = data;
+                      recv = api.callGoMethod(sendMethod, data: send);
+                    });
                   },
-                  child: const Text('Add'),
+                  child: const Text('Call go method'),
                 ),
                 MaterialButton(
                   color: Colors.green,
-                  onPressed: () async {
-                    _counter = await api.addGoAsync(_counter, 1);
-                    setState(() {});
-                  },
-                  child: const Text('Add async'),
-                ),
-                MaterialButton(
-                  color: Colors.pink,
-                  onPressed: () async {
-                    _counter = await api.addGoAsync(_counter, 1);
+                  onPressed: () {
                     setState(() {
-                      api.tick().listen((data) {
-                        _counter += data;
-                        setState(() {});
-                      });
+                      final (method, data) = randomPacket();
+                      sendMethod = method;
+                      send = data;
+                      recv = api.callNativeMethod(sendMethod, data: send);
                     });
                   },
-                  child: const Text('Chan'),
+                  child: const Text('Call native method'),
                 ),
               ],
             )
