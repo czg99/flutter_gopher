@@ -152,10 +152,10 @@ _fgData _mapFgDataFromBytes(Uint8List? from) {
 String _mapFgDataToString(_fgData from) {
   final bytes = _mapFgDataToBytes(from);
   if (bytes == null) return '';
-  return utf8.decode(bytes);
+  return const Utf8Decoder().convert(bytes);
 }
 
 _fgData _mapFgDataFromString(String from) {
-  final bytes = utf8.encode(from);
+  final bytes = const Utf8Encoder().convert(from);
   return _mapFgDataFromBytes(bytes);
 }
