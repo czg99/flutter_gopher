@@ -46,18 +46,18 @@ void methodHandle(FgPacket packet, FgPacket* result) {
     return [[NSString alloc] initWithBytes:from.data length:from.size encoding:NSUTF8StringEncoding];
 }
 
-- (void)freeFgData:(FgData)value {
-    if (value.data != nil) {
-        free(value.data);
-        value.data = nil;
-        value.size = 0;
+- (void)freeFgData:(FgData*)value {
+    if (value->data != nil) {
+        free(value->data);
+        value->data = nil;
+        value->size = 0;
     }
 }
 
 - (void)methodHandle:(FgPacket)packet result:(FgPacket*)result {
     NSString* method = [self mapFgDataToNSString:packet.method];
     NSData* data = [self mapFgDataToNSData:packet.data];
-    [self freeFgData:packet.data];
+    [self freeFgData:&packet.data];
     
     NSData* handleData = nil;
     if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data];
@@ -76,11 +76,11 @@ void methodHandle(FgPacket packet, FgPacket* result) {
         .data = [self mapFgDataFromNSData:data],
     };
     
-    FgPacket c_result = fg_call_go_method(packet);
+    FgPacket cResult = fg_call_go_method(packet);
     
-    NSData* result = [self mapFgDataToNSData:c_result.data];
-    [self freeFgData:c_result.method];
-    [self freeFgData:c_result.data];
+    NSData* result = [self mapFgDataToNSData:cResult.data];
+    [self freeFgData:&cResult.method];
+    [self freeFgData:&cResult.data];
     return result;
 }
 

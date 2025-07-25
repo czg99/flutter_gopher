@@ -23,8 +23,8 @@ func CallNativeMethod(method string, data []byte) []byte {
 
 	c_result := C.FgPacket{}
 	C.call_fg_method_handle(fgMethodHandle, packet, &c_result)
-	defer freeFgData(c_result.method)
-	defer freeFgData(c_result.data)
+	defer freeFgData(&c_result.method)
+	defer freeFgData(&c_result.data)
 	return mapFgDataToBytes(c_result.data)
 }
 
@@ -63,7 +63,7 @@ func fg_packet_loop() C.FgPacket {
 func fg_call_go_method(packet C.FgPacket) C.FgPacket {
 	method := mapFgDataToString(packet.method)
 	data := mapFgDataToBytes(packet.data)
-	freeFgData(packet.data)
+	freeFgData(&packet.data)
 
 	result := callGoMethod(method, data)
 	packet.data = mapFgDataFromBytes(result)
@@ -81,7 +81,7 @@ func fg_call_go_method_async(packet C.FgPacket) {
 //export fg_call_native_method
 func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 	if fgMethodHandle == nil {
-		freeFgData(packet.data)
+		freeFgData(&packet.data)
 		return packet
 	}
 
@@ -150,7 +150,7 @@ func mapFgDataToBytes(from C.FgData) []byte {
 	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
 }
 
-func freeFgData(value C.FgData) {
+func freeFgData(value *C.FgData) {
 	if value.data != nil {
 		C.free(value.data)
 		value.data = nil
