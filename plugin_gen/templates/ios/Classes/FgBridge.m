@@ -4,8 +4,8 @@
 
 @implementation FgBridge
 
-FgPacket methodHandle(FgPacket packet) {
-    return [[FgBridge sharedInstance] methodHandle:packet];
+void methodHandle(FgPacket packet, FgPacket* result) {
+    [[FgBridge sharedInstance] methodHandle:packet result:result];
 }
 
 + (instancetype)sharedInstance {
@@ -19,46 +19,51 @@ FgPacket methodHandle(FgPacket packet) {
     return sharedInstance;
 }
 
-- (void*)nsdataToC:(NSData*)data {
-    if (data == nil) {
-        return nil;
+- (FgData)mapFgDataFromNSData:(NSData*)from {
+    FgData result = {};
+    if (from != nil) {
+        NSUInteger dataLen = [from length];
+        void* data = malloc(dataLen);
+        [from getBytes:data length:dataLen];
+        result.data = data;
+        result.size = (int)dataLen;
     }
-    NSUInteger dataLen = [data length];
-    void* cData = malloc(dataLen);
-    [data getBytes:cData length:dataLen];
-    return cData;
+    return result;
 }
 
-- (FgPacket)methodHandle:(FgPacket)packet {
-    FgPacket result = {};
-    if (packet.method == nil) {
-        free(packet.data);
-        return result;
+- (NSData*)mapFgDataToNSData:(FgData)from {
+    if (from.data == nil) return nil;
+    return [[NSData alloc] initWithBytes:from.data length:from.size];
+}
+
+- (FgData)mapFgDataFromNSString:(NSString*)from {
+    NSData* data = from != nil ? [from dataUsingEncoding:NSUTF8StringEncoding] : nil;
+    return [self mapFgDataFromNSData:data];
+}
+
+- (NSString*)mapFgDataToNSString:(FgData)from {
+    if (from.data == nil) return @"";
+    return [[NSString alloc] initWithBytes:from.data length:from.size encoding:NSUTF8StringEncoding];
+}
+
+- (void)freeFgData:(FgData)value {
+    if (value.data != nil) {
+        free(value.data);
+        value.data = nil;
+        value.size = 0;
     }
-    
-    NSString* method = @"";
-    NSData* data = nil;
-    if (packet.method != nil) {
-        method = [[NSString alloc] initWithBytes:packet.method length:packet.method_len encoding:NSUTF8StringEncoding];
-    }
-    
-    if (packet.data != nil) {
-        data = [[NSData alloc] initWithBytes:packet.data length:packet.data_len];
-        free(packet.data);
-    }
+}
+
+- (void)methodHandle:(FgPacket)packet result:(FgPacket*)result {
+    NSString* method = [self mapFgDataToNSString:packet.method];
+    NSData* data = [self mapFgDataToNSData:packet.data];
+    [self freeFgData:packet.data];
     
     NSData* handleData = nil;
     if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data];
     
-    result.method = packet.method;
-    result.method_len = packet.method_len;
-    
-    result.data = [self nsdataToC:handleData];
-    if (result.data != nil) {
-        result.data_len = (int)[handleData length];
-    }
-    
-    return result;
+    result->method = packet.method;
+    result->data = [self mapFgDataFromNSData:handleData];
 }
 
 - (NSData*)callGoMethod:(NSString*)method data:(NSData*)data {
@@ -66,30 +71,17 @@ FgPacket methodHandle(FgPacket packet) {
         return nil;
     }
     
-    NSUInteger method_len = [method lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-    char* c_method = calloc(method_len + 1, method_len + 1);
-    [method getCString:c_method maxLength:method_len+1 encoding:NSUTF8StringEncoding];
-    
     FgPacket packet = {
-        .method = c_method,
-        .method_len = (int)method_len,
+        .method = [self mapFgDataFromNSString:method],
+        .data = [self mapFgDataFromNSData:data],
     };
     
-    packet.data = [self nsdataToC:data];
-    if (packet.data != nil) {
-        packet.data_len = (int)[data length];
-    }
-    
     FgPacket c_result = fg_call_go_method(packet);
-    free(c_result.method);
     
-    if (c_result.data != nil) {
-        NSData* result = [NSData dataWithBytes:c_result.data length:c_result.data_len];
-        free(c_result.data);
-        return result;
-    }
-    return nil;
+    NSData* result = [self mapFgDataToNSData:c_result.data];
+    [self freeFgData:c_result.method];
+    [self freeFgData:c_result.data];
+    return result;
 }
-
 
 @end
