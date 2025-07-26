@@ -79,19 +79,24 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 		return fmt.Errorf("failed to create flutter example project: %w", err)
 	}
 
-	// 添加主插件项目依赖
-	cmd = exec.Command("flutter", "pub", "add", g.ProjectName, "--path", "..", "--offline")
-	cmd.Dir = destDir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	pubspecFile := filepath.Join(destDir, "pubspec.yaml")
+	// 读取 pubspec.yaml 文件内容
+	content, err := os.ReadFile(pubspecFile)
+	if err != nil {
+		return fmt.Errorf("failed to read pubspec.yaml file: %w", err)
+	}
 
-	fmt.Println("Adding project dependency...")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add project dependency: %w", err)
+	// 加入项目依赖
+	projectDep := fmt.Sprintf("  %s:\n    path: ../\n\n", g.ProjectName)
+	content = bytes.ReplaceAll(content, []byte("dev_dependencies:"), []byte(projectDep+"dev_dependencies:"))
+
+	// 写入修改后的内容
+	if err = os.WriteFile(pubspecFile, content, 0644); err != nil {
+		return fmt.Errorf("failed to write pubspec.yaml file: %w", err)
 	}
 
 	// 从模板复制 example 文件
-	err := fs.WalkDir(templateFiles, "templates/example", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(templateFiles, "templates/example", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
