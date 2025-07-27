@@ -8,13 +8,19 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:flutter_gopher/flutter_gopher.dart';
 
-abstract interface class {{.LibClassName}} {
-  factory {{.LibClassName}}() => _{{.LibClassName}}();
+class FgBridge {
+  static final _api = _bridge();
 
-  Uint8List? callGoMethod(String method, {Uint8List? data});
-  Future<Uint8List?> callGoMethodAsync(String method, {Uint8List? data});
-  Uint8List? callNativeMethod(String method, {Uint8List? data});
-  Future<Uint8List?> callNativeMethodAsync(String method, {Uint8List? data});
+  static Uint8List? callGoMethod(String method, {Uint8List? data}) =>
+      _api.callGoMethod(method, data: data);
+  static Future<Uint8List?> callGoMethodAsync(String method,
+          {Uint8List? data}) =>
+      _api.callGoMethodAsync(method, data: data);
+  static Uint8List? callNativeMethod(String method, {Uint8List? data}) =>
+      _api.callNativeMethod(method, data: data);
+  static Future<Uint8List?> callNativeMethodAsync(String method,
+          {Uint8List? data}) =>
+      _api.callNativeMethodAsync(method, data: data);
 }
 
 final _lib = FgLoader('{{.LibName}}');
@@ -45,12 +51,11 @@ final _fgPacket Function() _fgEmptyPacket = _lib
     .lookup<ffi.NativeFunction<_fgPacket Function()>>('fg_empty_packet')
     .asFunction();
 
-final class _{{.LibClassName}} implements {{.LibClassName}} {
-  _{{.LibClassName}}() {
+class _bridge {
+  _bridge() {
     _fgInitDartApi(ffi.NativeApi.initializeApiDLData);
   }
 
-  @override
   Uint8List? callGoMethod(String method, {Uint8List? data}) {
     final packet = _mapToPacket(method, data);
     final c_result = _fgCallGoMethod(packet);
@@ -59,7 +64,6 @@ final class _{{.LibClassName}} implements {{.LibClassName}} {
     return result;
   }
 
-  @override
   Future<Uint8List?> callGoMethodAsync(String method, {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final packet = _mapToPacket(method, data);
@@ -74,7 +78,6 @@ final class _{{.LibClassName}} implements {{.LibClassName}} {
     return result;
   }
 
-  @override
   Uint8List? callNativeMethod(String method, {Uint8List? data}) {
     final packet = _mapToPacket(method, data);
     final c_result = _fgCallNativeMethod(packet);
@@ -83,7 +86,6 @@ final class _{{.LibClassName}} implements {{.LibClassName}} {
     return result;
   }
 
-  @override
   Future<Uint8List?> callNativeMethodAsync(String method,
       {Uint8List? data}) async {
     final receivePort = ReceivePort();

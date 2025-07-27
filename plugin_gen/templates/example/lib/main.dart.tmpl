@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:{{.ProjectName}}/{{.ProjectName}}.dart';
+import 'package:{{.ProjectName}}/bridge.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,7 +29,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final api = {{.LibClassName}}();
 
   (String, Uint8List?) randomPacket() {
     final r = Random(DateTime.now().millisecondsSinceEpoch);
@@ -77,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       final (method, data) = randomPacket();
                       sendMethod = method;
                       send = data;
-                      recv = api.callGoMethod(sendMethod, data: send);
+                      recv = FgBridge.callGoMethod(sendMethod, data: send);
                     });
                   },
                   child: const Text('Call go method'),
@@ -89,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       final (method, data) = randomPacket();
                       sendMethod = method;
                       send = data;
-                      recv = api.callNativeMethod(sendMethod, data: send);
+                      recv = FgBridge.callNativeMethod(sendMethod, data: send);
                     });
                   },
                   child: const Text('Call native method'),
