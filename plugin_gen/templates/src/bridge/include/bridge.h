@@ -25,9 +25,10 @@ static inline void call_fg_method_handle(FgMethodHandle handle, FgPacket packet,
     #define DLLEXPORT
 #endif
 
-extern DLLEXPORT void fg_init_dart_api(void* api);
+extern DLLEXPORT void fg_init_dart_api(void* api, int64_t port);
 extern DLLEXPORT FgData fg_empty_data(void);
 extern DLLEXPORT FgPacket fg_empty_packet(void);
+extern DLLEXPORT void fg_call_dart_method(FgPacket packet);
 extern DLLEXPORT FgPacket fg_call_go_method(FgPacket packet);
 extern DLLEXPORT void fg_call_go_method_async(int64_t port, FgPacket packet);
 extern DLLEXPORT FgPacket fg_call_native_method(FgPacket packet);

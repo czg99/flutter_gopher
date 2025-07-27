@@ -24,8 +24,8 @@ class FgBridge {
 }
 
 final _lib = FgLoader('{{.LibName}}');
-final void Function(ffi.Pointer<ffi.Void>) _fgInitDartApi = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+final void Function(ffi.Pointer<ffi.Void>, int) _fgInitDartApi = _lib
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Int64)>>(
         'fg_init_dart_api')
     .asFunction();
 final _fgPacket Function(_fgPacket) _fgCallGoMethod = _lib
@@ -53,7 +53,19 @@ final _fgPacket Function() _fgEmptyPacket = _lib
 
 class _bridge {
   _bridge() {
-    _fgInitDartApi(ffi.NativeApi.initializeApiDLData);
+    final receivePort = ReceivePort();
+    receivePort.listen((addr) {
+      final packetPtr = ffi.Pointer.fromAddress(addr).cast<_fgPacket>();
+      final packet = packetPtr[0];
+      final method = _mapFgDataToString(packet.method);
+      final data = _mapFgDataToBytes(packet.data);
+      print(
+          'Dart Received: $method ${data != null ? data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ') : 'null'}');
+      _freeFgPacket(packet);
+      malloc.free(packetPtr);
+    });
+    _fgInitDartApi(
+        ffi.NativeApi.initializeApiDLData, receivePort.sendPort.nativePort);
   }
 
   Uint8List? callGoMethod(String method, {Uint8List? data}) {

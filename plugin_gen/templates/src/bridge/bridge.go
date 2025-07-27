@@ -24,9 +24,20 @@ func CallNativeMethod(method string, data []byte) []byte {
 	return mapFgDataToBytes(c_result.data)
 }
 
+func CallDartMethod(method string, data []byte) {
+	packet := C.FgPacket{
+		method: mapFgDataFromString(method),
+		data:   mapFgDataFromBytes(data),
+	}
+	fg_call_dart_method(packet)
+}
+
+var global_port int64
+
 //export fg_init_dart_api
-func fg_init_dart_api(api unsafe.Pointer) {
+func fg_init_dart_api(api unsafe.Pointer, port int64) {
 	init_dart_api(api)
+	global_port = port
 }
 
 //export fg_empty_packet
@@ -37,6 +48,16 @@ func fg_empty_packet() C.FgPacket {
 //export fg_empty_data
 func fg_empty_data() C.FgData {
 	return C.FgData{}
+}
+
+//export fg_call_dart_method
+func fg_call_dart_method(packet C.FgPacket) {
+	if global_port == 0 {
+		freeFgData(&packet.method)
+		freeFgData(&packet.data)
+		return
+	}
+	sendToPort(global_port, unsafe.Pointer(cValueToPtr(packet)))
 }
 
 //export fg_call_go_method
@@ -54,10 +75,7 @@ func fg_call_go_method(packet C.FgPacket) C.FgPacket {
 func fg_call_go_method_async(port int64, packet C.FgPacket) {
 	go func() {
 		result := fg_call_go_method(packet)
-		size := unsafe.Sizeof(result)
-		data := C.malloc(C.size_t(size))
-		*(*C.FgPacket)(data) = result
-		sendToPort(port, data)
+		sendToPort(port, unsafe.Pointer(cValueToPtr(result)))
 	}()
 }
 
@@ -77,10 +95,7 @@ func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 func fg_call_native_method_async(port int64, packet C.FgPacket) {
 	go func() {
 		result := fg_call_native_method(packet)
-		size := unsafe.Sizeof(result)
-		data := C.malloc(C.size_t(size))
-		*(*C.FgPacket)(data) = result
-		sendToPort(port, data)
+		sendToPort(port, unsafe.Pointer(cValueToPtr(result)))
 	}()
 }
 
@@ -97,6 +112,7 @@ func enforce_binding() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_data))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_packet))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method))
@@ -133,6 +149,13 @@ func mapFgDataToBytes(from C.FgData) []byte {
 		return nil
 	}
 	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
+}
+
+func cValueToPtr[T any](value T) *T {
+	size := unsafe.Sizeof(value)
+	data := C.malloc(C.size_t(size))
+	*(*T)(data) = value
+	return (*T)(data)
 }
 
 func freeFgData(value *C.FgData) {
