@@ -1,16 +1,12 @@
 package bridge
 
 /*
-#include "bridge.h"
+#include "include/bridge.h"
 */
 import "C"
 import (
-	"sync/atomic"
-	"time"
 	"unsafe"
 )
-
-var packetChan = make(chan C.FgPacket)
 
 func CallNativeMethod(method string, data []byte) []byte {
 	if fgMethodHandle == nil {
@@ -28,15 +24,9 @@ func CallNativeMethod(method string, data []byte) []byte {
 	return mapFgDataToBytes(c_result.data)
 }
 
-var nextPortId uint32
-
-//export fg_next_port_id
-func fg_next_port_id() C.int64_t {
-	next := atomic.AddUint32(&nextPortId, 1)
-	if next == 0 {
-		return fg_next_port_id()
-	}
-	return C.int64_t(next)
+//export fg_init_dart_api
+func fg_init_dart_api(api unsafe.Pointer) {
+	init_dart_api(api)
 }
 
 //export fg_empty_packet
@@ -47,16 +37,6 @@ func fg_empty_packet() C.FgPacket {
 //export fg_empty_data
 func fg_empty_data() C.FgData {
 	return C.FgData{}
-}
-
-//export fg_packet_loop
-func fg_packet_loop() C.FgPacket {
-	select {
-	case result := <-packetChan:
-		return result
-	case <-time.After(time.Second):
-		return fg_empty_packet()
-	}
 }
 
 //export fg_call_go_method
@@ -74,7 +54,10 @@ func fg_call_go_method(packet C.FgPacket) C.FgPacket {
 func fg_call_go_method_async(packet C.FgPacket) {
 	go func() {
 		result := fg_call_go_method(packet)
-		packetChan <- result
+		size := unsafe.Sizeof(result)
+		data := C.malloc(C.size_t(size))
+		*(*C.FgPacket)(data) = result
+		sendToPort(int64(packet.id), data)
 	}()
 }
 
@@ -94,7 +77,10 @@ func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 func fg_call_native_method_async(packet C.FgPacket) {
 	go func() {
 		result := fg_call_native_method(packet)
-		packetChan <- result
+		size := unsafe.Sizeof(result)
+		data := C.malloc(C.size_t(size))
+		*(*C.FgPacket)(data) = result
+		sendToPort(int64(packet.id), data)
 	}()
 }
 
@@ -108,10 +94,9 @@ func fg_init_method_handle(handle C.FgMethodHandle) {
 //export enforce_binding
 func enforce_binding() {
 	var ptr uintptr
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_data))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_packet))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_packet_loop))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_next_port_id))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method))
