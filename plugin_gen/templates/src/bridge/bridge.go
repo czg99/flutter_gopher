@@ -51,13 +51,13 @@ func fg_call_go_method(packet C.FgPacket) C.FgPacket {
 }
 
 //export fg_call_go_method_async
-func fg_call_go_method_async(packet C.FgPacket) {
+func fg_call_go_method_async(port int64, packet C.FgPacket) {
 	go func() {
 		result := fg_call_go_method(packet)
 		size := unsafe.Sizeof(result)
 		data := C.malloc(C.size_t(size))
 		*(*C.FgPacket)(data) = result
-		sendToPort(int64(packet.id), data)
+		sendToPort(port, data)
 	}()
 }
 
@@ -68,19 +68,19 @@ func fg_call_native_method(packet C.FgPacket) C.FgPacket {
 		return packet
 	}
 
-	c_result := C.FgPacket{id: packet.id}
+	c_result := C.FgPacket{}
 	C.call_fg_method_handle(fgMethodHandle, packet, &c_result)
 	return c_result
 }
 
 //export fg_call_native_method_async
-func fg_call_native_method_async(packet C.FgPacket) {
+func fg_call_native_method_async(port int64, packet C.FgPacket) {
 	go func() {
 		result := fg_call_native_method(packet)
 		size := unsafe.Sizeof(result)
 		data := C.malloc(C.size_t(size))
 		*(*C.FgPacket)(data) = result
-		sendToPort(int64(packet.id), data)
+		sendToPort(port, data)
 	}()
 }
 

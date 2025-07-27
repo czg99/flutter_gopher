@@ -26,16 +26,16 @@ final _fgPacket Function(_fgPacket) _fgCallGoMethod = _lib
     .lookup<ffi.NativeFunction<_fgPacket Function(_fgPacket)>>(
         'fg_call_go_method')
     .asFunction();
-final void Function(_fgPacket) _fgCallGoMethodAsync = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(_fgPacket)>>(
+final void Function(int, _fgPacket) _fgCallGoMethodAsync = _lib
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgPacket)>>(
         'fg_call_go_method_async')
     .asFunction();
 final _fgPacket Function(_fgPacket) _fgCallNativeMethod = _lib
     .lookup<ffi.NativeFunction<_fgPacket Function(_fgPacket)>>(
         'fg_call_native_method')
     .asFunction();
-final void Function(_fgPacket) _fgCallNativeMethodAsync = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(_fgPacket)>>(
+final void Function(int, _fgPacket) _fgCallNativeMethodAsync = _lib
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgPacket)>>(
         'fg_call_native_method_async')
     .asFunction();
 final _fgData Function() _fgEmptyData = _lib
@@ -63,8 +63,7 @@ final class _{{.LibClassName}} implements {{.LibClassName}} {
   Future<Uint8List?> callGoMethodAsync(String method, {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final packet = _mapToPacket(method, data);
-    packet.id = receivePort.sendPort.nativePort;
-    _fgCallGoMethodAsync(packet);
+    _fgCallGoMethodAsync(receivePort.sendPort.nativePort, packet);
     final cResultAddr = await receivePort.first;
     final cResultPtr = ffi.Pointer.fromAddress(cResultAddr).cast<_fgPacket>();
     final cResult = cResultPtr[0];
@@ -89,8 +88,7 @@ final class _{{.LibClassName}} implements {{.LibClassName}} {
       {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final packet = _mapToPacket(method, data);
-    packet.id = receivePort.sendPort.nativePort;
-    _fgCallNativeMethodAsync(packet);
+    _fgCallNativeMethodAsync(receivePort.sendPort.nativePort, packet);
     final cResultAddr = await receivePort.first;
     final cResultPtr = ffi.Pointer.fromAddress(cResultAddr).cast<_fgPacket>();
     final cResult = cResultPtr[0];
@@ -109,8 +107,6 @@ final class _fgData extends ffi.Struct {
 }
 
 final class _fgPacket extends ffi.Struct {
-  @ffi.Int64()
-  external int id;
   external _fgData method;
   external _fgData data;
 }

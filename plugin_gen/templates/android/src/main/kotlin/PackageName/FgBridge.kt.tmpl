@@ -24,13 +24,10 @@ private open class FgData private constructor(): Structure() {
     var size: Int = 0
 }
 
-@Structure.FieldOrder("id", "method", "data")
+@Structure.FieldOrder("method", "data")
 private open class FgPacket private constructor() : Structure() {
     class ByValue : FgPacket(), Structure.ByValue
     class ByReference : FgPacket(), Structure.ByReference
-
-    @JvmField
-    var id: Long = 0
 
     @JvmField
     var method: FgData.ByValue = FgData.ByValue()
