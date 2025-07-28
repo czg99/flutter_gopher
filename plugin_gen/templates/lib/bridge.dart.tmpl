@@ -28,6 +28,11 @@ class FgBridge {
   static Future<Uint8List?> callNativeMethodAsync(String method,
           {Uint8List? data}) =>
       _api.callNativeMethodAsync(method, data: data);
+
+  static Uint8List stringToUint8List(String value) =>
+      const Utf8Encoder().convert(value);
+  static String uint8ListToString(Uint8List value) =>
+      const Utf8Decoder().convert(value);
 }
 
 final _lib = FgLoader('{{.LibName}}');
