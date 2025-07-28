@@ -14,7 +14,7 @@ interface FgBridgeDelegate {
 }
 
 @Structure.FieldOrder("data", "size")
-private open class FgData private constructor(): Structure() {
+private open class FgData private constructor() : Structure() {
     class ByValue : FgData(), Structure.ByValue
 
     @JvmField
@@ -25,9 +25,9 @@ private open class FgData private constructor(): Structure() {
 }
 
 @Structure.FieldOrder("method", "data")
-private open class FgPacket private constructor() : Structure() {
-    class ByValue : FgPacket(), Structure.ByValue
-    class ByReference : FgPacket(), Structure.ByReference
+private open class FgRequest private constructor() : Structure() {
+    class ByValue : FgRequest(), Structure.ByValue
+    class ByReference : FgRequest(), Structure.ByReference
 
     @JvmField
     var method: FgData.ByValue = FgData.ByValue()
@@ -36,13 +36,23 @@ private open class FgPacket private constructor() : Structure() {
     var data: FgData.ByValue = FgData.ByValue()
 }
 
+@Structure.FieldOrder("data")
+private open class FgResponse private constructor() : Structure() {
+    class ByValue : FgResponse(), Structure.ByValue
+    class ByReference : FgResponse(), Structure.ByReference
+
+    @JvmField
+    var data: FgData.ByValue = FgData.ByValue()
+}
+
 private interface BridgeLib : Library {
-    fun fg_call_go_method(packet: FgPacket.ByValue): FgPacket.ByValue
     fun fg_init_method_handle(handle: FgMethodHandleCallback)
+    fun fg_call_dart_method(request: FgRequest.ByValue)
+    fun fg_call_go_method(request: FgRequest.ByValue): FgResponse.ByValue
 }
 
 private interface FgMethodHandleCallback : com.sun.jna.Callback {
-    fun invoke(packet: FgPacket.ByValue, result: FgPacket.ByReference)
+    fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference)
 }
 
 class FgBridge private constructor() {
@@ -68,8 +78,8 @@ class FgBridge private constructor() {
 
     init {
         methodHandle = object : FgMethodHandleCallback {
-            override fun invoke(packet: FgPacket.ByValue, result: FgPacket.ByReference) {
-                methodHandle(packet, result)
+            override fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference) {
+                methodHandle(request, response)
             }
         }
         bridgeLib.fg_init_method_handle(methodHandle)
@@ -96,7 +106,9 @@ class FgBridge private constructor() {
 
     private fun mapFgDataToBytes(from: FgData): ByteArray? {
         if (from.data == null) return null
-        return from.data!!.getByteArray(0, from.size)
+        val result = from.data!!.getByteArray(0, from.size)
+        freeFgData(from)
+        return result
     }
 
     private fun mapFgDataFromString(from: String): FgData.ByValue {
@@ -109,29 +121,35 @@ class FgBridge private constructor() {
         return String(bytes, StandardCharsets.UTF_8)
     }
 
-    private fun methodHandle(packet: FgPacket.ByValue, result: FgPacket.ByReference) {
-        val method = mapFgDataToString(packet.method)
-        val data = mapFgDataToBytes(packet.data)
-        freeFgData(packet.data)
+    private fun methodHandle(request: FgRequest.ByValue, response: FgResponse.ByReference) {
+        val method = mapFgDataToString(request.method)
+        val data = mapFgDataToBytes(request.data)
 
         val handleData = delegate?.methodHandle(method, data)
 
-        result.method = packet.method
-        result.data = mapFgDataFromBytes(handleData)
+        response.data = mapFgDataFromBytes(handleData)
     }
 
     fun callGoMethod(method: String, data: ByteArray? = null): ByteArray? {
         if (method.isEmpty()) return null
 
-        val packet = FgPacket.ByValue()
-        packet.method = mapFgDataFromString(method)
-        packet.data = mapFgDataFromBytes(data)
+        val request = FgRequest.ByValue()
+        request.method = mapFgDataFromString(method)
+        request.data = mapFgDataFromBytes(data)
 
-        val cResult = bridgeLib.fg_call_go_method(packet)
+        val response = bridgeLib.fg_call_go_method(request)
 
-        val result = mapFgDataToBytes(cResult.data)
-        freeFgData(cResult.method)
-        freeFgData(cResult.data)
+        val result = mapFgDataToBytes(response.data)
         return result
+    }
+
+    fun callDartMethod(method: String, data: ByteArray? = null) {
+        if (method.isEmpty()) return
+
+        val request = FgRequest.ByValue()
+        request.method = mapFgDataFromString(method)
+        request.data = mapFgDataFromBytes(data)
+
+        bridgeLib.fg_call_dart_method(request)
     }
 }
