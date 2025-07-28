@@ -12,8 +12,6 @@ type ProjectNaming struct {
 	PluginClassName string // 原生插件类名（例如 "MyApiPlugin"）
 	LibClassName    string // 库的类名（例如 "MyApi"）
 	LibName         string // 用于导入的库名（例如 "myapi"）
-	JniPackagePath  string // 用于Jni包路径
-	JniFuncPrefix   string // 用于Jni函数前缀
 }
 
 func NewProjectNaming(projectName string) ProjectNaming {
@@ -27,7 +25,5 @@ func NewProjectNaming(projectName string) ProjectNaming {
 		PluginClassName: strcase.ToCamel(projectName) + "Plugin",
 		LibClassName:    strcase.ToCamel(projectName),
 		LibName:         flatName,
-		JniPackagePath:  strings.ReplaceAll(pkgName, ".", "/"),
-		JniFuncPrefix:   strings.ReplaceAll(strings.ReplaceAll("Java."+pkgName, "_", "_1"), ".", "_"),
 	}
 }
