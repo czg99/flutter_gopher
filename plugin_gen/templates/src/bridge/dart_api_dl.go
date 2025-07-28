@@ -25,6 +25,6 @@ func init_dart_api(api unsafe.Pointer) {
 	}
 }
 
-func sendToPort(port int64, data unsafe.Pointer) bool {
+func sendToPort(port C.int64_t, data unsafe.Pointer) bool {
 	return C.GoDart_PostCObject(C.Dart_Port_DL(port), data) == true
 }

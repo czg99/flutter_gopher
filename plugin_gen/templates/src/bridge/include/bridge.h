@@ -12,28 +12,36 @@ typedef struct {
 typedef struct {
 	FgData method;
 	FgData data;
-} FgPacket;
+} FgRequest;
 
-typedef void (*FgMethodHandle)(FgPacket, FgPacket*);
-static inline void call_fg_method_handle(FgMethodHandle handle, FgPacket packet, FgPacket* result) {
-	handle(packet, result);
+typedef struct {
+	FgData data;
+} FgResponse;
+
+
+typedef void (*FgMethodHandle)(FgRequest, FgResponse*);
+static inline void call_fg_method_handle(FgMethodHandle handle, FgRequest request, FgResponse* response) {
+	handle(request, response);
 }
 
 #ifdef _WIN32
     #define DLLEXPORT __declspec(dllexport)
 #else
-    #define DLLEXPORT
+    #define DLLEXPORT __attribute__((visibility("default")))
 #endif
 
-extern DLLEXPORT void fg_init_dart_api(void* api, int64_t port);
 extern DLLEXPORT FgData fg_empty_data(void);
-extern DLLEXPORT FgPacket fg_empty_packet(void);
-extern DLLEXPORT void fg_call_dart_method(FgPacket packet);
-extern DLLEXPORT FgPacket fg_call_go_method(FgPacket packet);
-extern DLLEXPORT void fg_call_go_method_async(int64_t port, FgPacket packet);
-extern DLLEXPORT FgPacket fg_call_native_method(FgPacket packet);
-extern DLLEXPORT void fg_call_native_method_async(int64_t port, FgPacket packet);
+extern DLLEXPORT FgRequest fg_empty_request(void);
+extern DLLEXPORT FgResponse fg_empty_response(void);
+
+extern DLLEXPORT void fg_init_dart_api(void* api, int64_t port);
 extern DLLEXPORT void fg_init_method_handle(FgMethodHandle handle);
+
+extern DLLEXPORT void fg_call_dart_method(FgRequest request);
+extern DLLEXPORT FgResponse fg_call_go_method(FgRequest request);
+extern DLLEXPORT void fg_call_go_method_async(int64_t port, FgRequest request);
+extern DLLEXPORT FgResponse fg_call_native_method(FgRequest request);
+extern DLLEXPORT void fg_call_native_method_async(int64_t port, FgRequest request);
 
 extern DLLEXPORT void enforce_binding(void);
 
