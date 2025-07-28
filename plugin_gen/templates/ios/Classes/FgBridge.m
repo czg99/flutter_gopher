@@ -1,11 +1,11 @@
 #import "FgBridge.h"
 
-#include "../../src/bridge/bridge.h"
+#include "../../src/bridge/include/bridge.h"
 
 @implementation FgBridge
 
-void methodHandle(FgPacket packet, FgPacket* result) {
-    [[FgBridge sharedInstance] methodHandle:packet result:result];
+void methodHandle(FgRequest request, FgResponse* response) {
+    [[FgBridge sharedInstance] methodHandle:request response:response];
 }
 
 + (instancetype)sharedInstance {
@@ -33,7 +33,9 @@ void methodHandle(FgPacket packet, FgPacket* result) {
 
 - (NSData*)mapFgDataToNSData:(FgData)from {
     if (from.data == nil) return nil;
-    return [[NSData alloc] initWithBytes:from.data length:from.size];
+    NSData* result = [[NSData alloc] initWithBytes:from.data length:from.size];
+    [self freeFgData:&from];
+    return result;
 }
 
 - (FgData)mapFgDataFromNSString:(NSString*)from {
@@ -43,7 +45,9 @@ void methodHandle(FgPacket packet, FgPacket* result) {
 
 - (NSString*)mapFgDataToNSString:(FgData)from {
     if (from.data == nil) return @"";
-    return [[NSString alloc] initWithBytes:from.data length:from.size encoding:NSUTF8StringEncoding];
+    NSString* result = [[NSString alloc] initWithBytes:from.data length:from.size encoding:NSUTF8StringEncoding];
+    [self freeFgData:&from];
+    return result;
 }
 
 - (void)freeFgData:(FgData*)value {
@@ -54,16 +58,14 @@ void methodHandle(FgPacket packet, FgPacket* result) {
     }
 }
 
-- (void)methodHandle:(FgPacket)packet result:(FgPacket*)result {
-    NSString* method = [self mapFgDataToNSString:packet.method];
-    NSData* data = [self mapFgDataToNSData:packet.data];
-    [self freeFgData:&packet.data];
+- (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
+    NSString* method = [self mapFgDataToNSString:request.method];
+    NSData* data = [self mapFgDataToNSData:request.data];
     
     NSData* handleData = nil;
     if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data];
     
-    result->method = packet.method;
-    result->data = [self mapFgDataFromNSData:handleData];
+    response->data = [self mapFgDataFromNSData:handleData];
 }
 
 - (NSData*)callGoMethod:(NSString*)method data:(NSData*)data {
@@ -71,17 +73,28 @@ void methodHandle(FgPacket packet, FgPacket* result) {
         return nil;
     }
     
-    FgPacket packet = {
+    FgRequest request = {
         .method = [self mapFgDataFromNSString:method],
         .data = [self mapFgDataFromNSData:data],
     };
     
-    FgPacket cResult = fg_call_go_method(packet);
+    FgResponse response = fg_call_go_method(request);
     
-    NSData* result = [self mapFgDataToNSData:cResult.data];
-    [self freeFgData:&cResult.method];
-    [self freeFgData:&cResult.data];
+    NSData* result = [self mapFgDataToNSData:response.data];
     return result;
+}
+
+- (void)callDartMethod:(NSString*)method data:(NSData*)data {
+    if (method == nil) {
+        return;
+    }
+    
+    FgRequest request = {
+        .method = [self mapFgDataFromNSString:method],
+        .data = [self mapFgDataFromNSData:data],
+    };
+    
+    fg_call_go_method(request);
 }
 
 @end

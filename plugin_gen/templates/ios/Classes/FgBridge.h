@@ -12,5 +12,6 @@
 + (instancetype)sharedInstance;
 
 - (NSData*)callGoMethod:(NSString*)method data:(NSData*)data;
+- (void)callDartMethod:(NSString*)method data:(NSData*)data;
 
 @end
