@@ -29,6 +29,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String sendMethod = '';
+  Uint8List? send;
+  Uint8List? recv;
 
   (String, Uint8List?) randomPacket() {
     final r = Random(DateTime.now().millisecondsSinceEpoch);
@@ -44,9 +47,17 @@ class _MyHomePageState extends State<MyHomePage> {
     return (method, data);
   }
 
-  String sendMethod = '';
-  Uint8List? send;
-  Uint8List? recv;
+  String bytesToHex(Uint8List? data) => data != null
+      ? data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')
+      : 'null';
+
+  @override
+  void initState() {
+    super.initState();
+    FgBridge.setMethodHandle((method, data) {
+      print('Dart Received: $method ${bytesToHex(data)}');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +73,8 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Text('Method: $sendMethod'),
-            Text(
-                'Send: ${send != null ? send!.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ') : 'null'}'),
-            Text(
-                'Recv: ${recv != null ? recv!.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ') : 'null'}'),
+            Text('Send: ${bytesToHex(send)}'),
+            Text('Recv: ${bytesToHex(recv)}'),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
