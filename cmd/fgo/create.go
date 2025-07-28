@@ -18,20 +18,12 @@ var (
 // createCmd 创建Flutter插件的命令
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new Flutter plugin with Go backend",
-	Long: `Create a new Flutter plugin with Go backend integration.
-
-This command generates a complete Flutter plugin project structure with
-all necessary Go and Dart code to enable seamless Flutter-Go interoperability.
-The generated plugin includes:
-  - Go API structure for implementing native functionality
-  - Dart API for calling Go code from Flutter
-  - Platform-specific integration code
-  - Bridge code for communication between Flutter and Go
+	Short: "Create a new Flutter plugin with Go backend.",
+	Long: `This command generates a complete Flutter plugin project structure that enables seamless interoperability between Flutter, Go, and Native.
 
 Example usage:
-  fgo create -n my_api
-  fgo create -n my_api -o ./output --example`,
+  fgo create -n my_ffi
+  fgo create -n my_ffi -o ./output --example`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := validateAndGeneratePlugin(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
@@ -99,11 +91,6 @@ func validateAndGeneratePlugin() error {
 		fmt.Println("📱 Example Flutter app has been created in the 'example' subdirectory")
 		fmt.Println("   Run 'cd example && flutter run' to test the plugin")
 	}
-
-	fmt.Println("\n📝 Next steps:")
-	fmt.Println("  1. Implement your Go API in the 'src/api' directory")
-	fmt.Println("  2. Run 'fgo generate' to regenerate bridge code after API changes")
-	fmt.Println("  3. Use the plugin in your Flutter app with 'flutter pub add <plugin_name> --path <plugin_path>'")
 
 	return nil
 }

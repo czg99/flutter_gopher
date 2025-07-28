@@ -8,8 +8,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "fgo",
-	Short: "Flutter Gopher - A tool for Flutter and Go integration",
-	Long:  "Flutter Gopher is a comprehensive tool for creating Flutter plugins with Go backends and generating FFI bindings between Flutter and Dart.",
+	Short: "Flutter Gopher - A tool for Flutter, Go, and Native integration.",
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},
