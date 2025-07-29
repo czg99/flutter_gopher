@@ -29,18 +29,17 @@ go install github.com/czg99/flutter_gopher/cmd/fgo@latest
 ### Create a New Flutter Plugin Project
 
 ```bash
-fgo create -n <project_name> -o <output_directory> [--example]
+fgo create <project_name> [--example]
 ```
 
 **Parameters:**
-- `-n, --name`: Plugin project name (required)
-- `-o, --output`: Output directory for the generated plugin project (default: <project_name>)
+- `<project_name>`: Plugin project name (required)
 - `--example`: Generate an example Flutter application using the plugin
 
 **Examples:**
 ```bash
-fgo create -n my_ffi -o ./my_ffi
-fgo create -n my_ffi --example
+fgo create my_ffi
+fgo create my_ffi --example
 ```
 
 ## 📁 Project Structure

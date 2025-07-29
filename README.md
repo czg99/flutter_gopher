@@ -29,18 +29,17 @@ go install github.com/czg99/flutter_gopher/cmd/fgo@latest
 ### 创建新的 Flutter 插件项目
 
 ```bash
-fgo create -n <项目名称> -o <输出目录> [--example]
+fgo create <project_name> [--example]
 ```
 
 **参数说明：**
-- `-n, --name`：插件项目名称（必需）
-- `-o, --output`：生成的插件项目的输出目录（默认: <项目名称>）
+- `<project_name>`：插件项目名称（必需）
 - `--example`：生成使用该插件的示例 Flutter 应用
 
 **示例：**
 ```bash
-fgo create -n my_ffi -o ./my_ffi
-fgo create -n my_ffi --example
+fgo create my_ffi
+fgo create my_ffi --example
 ```
 
 ## 📁 项目结构

@@ -9,23 +9,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	projectName string
-	outputDir   string
-	withExample bool
-)
+var withExample bool
 
 // createCmd 创建Flutter插件的命令
 var createCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create <project_name>",
 	Short: "Create a new Flutter plugin with Go backend.",
 	Long: `This command generates a complete Flutter plugin project structure that enables seamless interoperability between Flutter, Go, and Native.
 
 Example usage:
-  fgo create -n my_ffi
-  fgo create -n my_ffi -o ./output --example`,
+  fgo create my_ffi
+  fgo create my_ffi --example`,
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := validateAndGeneratePlugin(); err != nil {
+		if err := validateAndGeneratePlugin(args[0]); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
 			os.Exit(1)
 		}
@@ -33,16 +30,13 @@ Example usage:
 }
 
 // validateAndGeneratePlugin 处理输入验证和插件生成
-func validateAndGeneratePlugin() error {
+func validateAndGeneratePlugin(projectName string) error {
 	// 验证项目名称
 	if projectName == "" {
-		return fmt.Errorf("project name is required (use -n or --name flag)")
+		return fmt.Errorf("project name is required")
 	}
 
-	// 如果未指定输出目录则设置默认值
-	if outputDir == "" {
-		outputDir = projectName
-	}
+	outputDir := projectName
 
 	// 确保输出目录存在
 	outputPath, err := filepath.Abs(outputDir)
@@ -86,22 +80,11 @@ func validateAndGeneratePlugin() error {
 	fmt.Println("\n✅ Plugin project created successfully!")
 	fmt.Println("📁 Location:", outputPath)
 	fmt.Println("📦 Plugin name:", projectName)
-
-	if withExample {
-		fmt.Println("📱 Example Flutter app has been created in the 'example' subdirectory")
-		fmt.Println("   Run 'cd example && flutter run' to test the plugin")
-	}
-
 	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	createCmd.Flags().StringVarP(&projectName, "name", "n", "", "Plugin project name (required)")
-	createCmd.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory for the generated plugin project")
 	createCmd.Flags().BoolVar(&withExample, "example", false, "Generate example Flutter app that demonstrates the plugin usage")
-
-	// 标记必填标志
-	createCmd.MarkFlagRequired("name")
 }
