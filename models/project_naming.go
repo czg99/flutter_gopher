@@ -2,6 +2,7 @@ package models
 
 import (
 	"strings"
+	"time"
 
 	"github.com/iancoleman/strcase"
 )
@@ -12,6 +13,7 @@ type ProjectNaming struct {
 	PluginClassName string // 原生插件类名（例如 "MyApiPlugin"）
 	LibClassName    string // 库的类名（例如 "MyApi"）
 	LibName         string // 用于导入的库名（例如 "myapi"）
+	Timestamp       int64  // 用于标识导出函数唯一性
 }
 
 func NewProjectNaming(projectName string) ProjectNaming {
@@ -25,5 +27,6 @@ func NewProjectNaming(projectName string) ProjectNaming {
 		PluginClassName: strcase.ToCamel(projectName) + "Plugin",
 		LibClassName:    strcase.ToCamel(projectName),
 		LibName:         flatName,
+		Timestamp:       time.Now().UnixMilli(),
 	}
 }

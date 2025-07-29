@@ -37,35 +37,35 @@ class {{.LibClassName}} {
 
 final _lib = FgLoader('{{.LibName}}');
 final _fgData Function() _fgEmptyData = _lib
-    .lookup<ffi.NativeFunction<_fgData Function()>>('fg_empty_data')
+    .lookup<ffi.NativeFunction<_fgData Function()>>('fg_empty_data_{{.Timestamp}}')
     .asFunction();
 final _fgRequest Function() _fgEmptyRequest = _lib
-    .lookup<ffi.NativeFunction<_fgRequest Function()>>('fg_empty_request')
+    .lookup<ffi.NativeFunction<_fgRequest Function()>>('fg_empty_request_{{.Timestamp}}')
     .asFunction();
 final _fgResponse Function() _fgEmptyResponse = _lib
-    .lookup<ffi.NativeFunction<_fgResponse Function()>>('fg_empty_response')
+    .lookup<ffi.NativeFunction<_fgResponse Function()>>('fg_empty_response_{{.Timestamp}}')
     .asFunction();
 final void Function(ffi.Pointer<ffi.Void>, int) _fgInitDartApi = _lib
     .lookup<
         ffi.NativeFunction<
             ffi.Void Function(
-                ffi.Pointer<ffi.Void>, ffi.Int64)>>('fg_init_dart_api')
+                ffi.Pointer<ffi.Void>, ffi.Int64)>>('fg_init_dart_api_{{.Timestamp}}')
     .asFunction();
 final _fgResponse Function(_fgRequest) _fgCallGoMethod = _lib
     .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>(
-        'fg_call_go_method')
+        'fg_call_go_method_{{.Timestamp}}')
     .asFunction();
 final void Function(int, _fgRequest) _fgCallGoMethodAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
-        'fg_call_go_method_async')
+        'fg_call_go_method_async_{{.Timestamp}}')
     .asFunction();
 final _fgResponse Function(_fgRequest) _fgCallNativeMethod = _lib
     .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>(
-        'fg_call_native_method')
+        'fg_call_native_method_{{.Timestamp}}')
     .asFunction();
 final void Function(int, _fgRequest) _fgCallNativeMethodAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
-        'fg_call_native_method_async')
+        'fg_call_native_method_async_{{.Timestamp}}')
     .asFunction();
 
 class _bridge {
