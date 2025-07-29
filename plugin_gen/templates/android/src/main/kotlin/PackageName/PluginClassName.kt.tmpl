@@ -13,7 +13,7 @@ class {{.PluginClassName}} : FlutterPlugin, FgBridgeDelegate {
 
     // Implementation of FgBridgeDelegate
     override fun methodHandle(method: String, data: ByteArray?): ByteArray? {
-        println("Native Received: $method ${data?.joinToString(separator = " ") { "%02x".format(it) } ?: "null"}")
+        println("[{{.LibClassName}}] Native Received: $method ${data?.joinToString(separator = " ") { "%02x".format(it) } ?: "null"}")
         return data
     }
 }

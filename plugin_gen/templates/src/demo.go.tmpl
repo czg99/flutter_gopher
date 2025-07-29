@@ -23,7 +23,7 @@ func byteArrayToHex(byteArray []byte) string {
 
 func init() {
 	bridge.InitMethodHandle(func(method string, data []byte) []byte {
-		log.Println("Go Received:", method, byteArrayToHex(data))
+		log.Println("[{{.LibClassName}}] Go Received:", method, byteArrayToHex(data))
 		bridge.CallDartMethod(method, data)
 		return data
 	})
