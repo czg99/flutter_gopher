@@ -8,14 +8,14 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'loader.dart';
 
-typedef FgBridgeMethodHandle = void Function(String method, Uint8List? data);
+typedef {{.LibClassName}}MethodHandle = void Function(String method, Uint8List? data);
 
-class FgBridge {
+class {{.LibClassName}} {
   static final _api = _bridge();
 
-  static FgBridgeMethodHandle? methodHandle;
+  static {{.LibClassName}}MethodHandle? methodHandle;
 
-  static void setMethodHandle(FgBridgeMethodHandle handle) =>
+  static void setMethodHandle({{.LibClassName}}MethodHandle handle) =>
       methodHandle = handle;
 
   static Uint8List? callGoMethod(String method, {Uint8List? data}) =>
@@ -76,8 +76,8 @@ class _bridge {
       final (method, data) = _mapFromFgRequest(requestPtr[0]);
       malloc.free(requestPtr);
 
-      if (FgBridge.methodHandle != null) {
-        FgBridge.methodHandle!(method, data);
+      if ({{.LibClassName}}.methodHandle != null) {
+        {{.LibClassName}}.methodHandle!(method, data);
       }
     });
     _fgInitDartApi(

@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:{{.ProjectName}}/bridge.dart';
+import 'package:{{.ProjectName}}/{{.ProjectName}}.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    FgBridge.setMethodHandle((method, data) {
+    {{.LibClassName}}.setMethodHandle((method, data) {
       print('Dart Received: $method ${bytesToHex(data)}');
     });
   }
@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       final (method, data) = randomPacket();
                       sendMethod = method;
                       send = data;
-                      recv = FgBridge.callGoMethod(sendMethod, data: send);
+                      recv = {{.LibClassName}}.callGoMethod(sendMethod, data: send);
                     });
                   },
                   child: const Text('Call go method'),
@@ -97,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       final (method, data) = randomPacket();
                       sendMethod = method;
                       send = data;
-                      recv = FgBridge.callNativeMethod(sendMethod, data: send);
+                      recv = {{.LibClassName}}.callNativeMethod(sendMethod, data: send);
                     });
                   },
                   child: const Text('Call native method'),
