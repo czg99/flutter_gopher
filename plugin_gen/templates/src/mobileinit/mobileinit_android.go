@@ -25,18 +25,12 @@ adb logcat GoLog:I *:S
 import "C"
 
 import (
-	"bufio"
 	"log"
-	"os"
-	"syscall"
 	"unsafe"
 )
 
 var (
 	ctag = C.CString("GoLog")
-	// Store the writer end of the redirected stderr and stdout
-	// so that they are not garbage collected and closed.
-	stderr, stdout *os.File
 )
 
 type infoWriter struct{}
@@ -48,46 +42,8 @@ func (infoWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func lineLog(f *os.File, priority C.int) {
-	const logSize = 1024 // matches android/log.h.
-	r := bufio.NewReaderSize(f, logSize)
-	for {
-		line, _, err := r.ReadLine()
-		str := string(line)
-		if err != nil {
-			str += " " + err.Error()
-		}
-		cstr := C.CString(str)
-		C.__android_log_write(priority, ctag, cstr)
-		C.free(unsafe.Pointer(cstr))
-		if err != nil {
-			break
-		}
-	}
-}
-
 func init() {
 	log.SetOutput(infoWriter{})
 	// android logcat includes all of log.LstdFlags
 	log.SetFlags(log.Flags() &^ log.LstdFlags)
-
-	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	stderr = w
-	if err := syscall.Dup3(int(w.Fd()), int(os.Stderr.Fd()), 0); err != nil {
-		panic(err)
-	}
-	go lineLog(r, C.ANDROID_LOG_ERROR)
-
-	r, w, err = os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	stdout = w
-	if err := syscall.Dup3(int(w.Fd()), int(os.Stdout.Fd()), 0); err != nil {
-		panic(err)
-	}
-	go lineLog(r, C.ANDROID_LOG_INFO)
 }
