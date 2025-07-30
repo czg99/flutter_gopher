@@ -11,49 +11,7 @@ interface FgBridgeDelegate {
     fun methodHandle(method: String, data: ByteArray?): ByteArray?
 }
 
-@Structure.FieldOrder("data", "size")
-private open class FgData private constructor() : Structure() {
-    class ByValue : FgData(), Structure.ByValue
-
-    @JvmField
-    var data: Pointer? = null
-
-    @JvmField
-    var size: Int = 0
-}
-
-@Structure.FieldOrder("method", "data")
-private open class FgRequest private constructor() : Structure() {
-    class ByValue : FgRequest(), Structure.ByValue
-    class ByReference : FgRequest(), Structure.ByReference
-
-    @JvmField
-    var method: FgData.ByValue = FgData.ByValue()
-
-    @JvmField
-    var data: FgData.ByValue = FgData.ByValue()
-}
-
-@Structure.FieldOrder("data")
-private open class FgResponse private constructor() : Structure() {
-    class ByValue : FgResponse(), Structure.ByValue
-    class ByReference : FgResponse(), Structure.ByReference
-
-    @JvmField
-    var data: FgData.ByValue = FgData.ByValue()
-}
-
-private interface BridgeLib : Library {
-    fun fg_init_native_method_handle_{{.Timestamp}}(handle: FgNativeMethodHandleCallback)
-    fun fg_call_dart_method_{{.Timestamp}}(request: FgRequest.ByValue)
-    fun fg_call_go_method_{{.Timestamp}}(request: FgRequest.ByValue): FgResponse.ByValue
-}
-
-private interface FgNativeMethodHandleCallback : com.sun.jna.Callback {
-    fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference)
-}
-
-class FgBridge private constructor() {
+abstract class FgBridge {
     companion object {
         @Volatile
         private var instance: FgBridge? = null
@@ -61,18 +19,22 @@ class FgBridge private constructor() {
         @JvmStatic
         fun sharedInstance(): FgBridge {
             return instance ?: synchronized(this) {
-                instance ?: FgBridge().also {
+                instance ?: Bridge().also {
                     instance = it
                 }
             }
         }
     }
 
-    private val bridgeLib: BridgeLib = Native.load("{{.LibName}}", BridgeLib::class.java)
-
-    private var methodHandle: FgNativeMethodHandleCallback
-
     var delegate: FgBridgeDelegate? = null
+
+    abstract fun callGoMethod(method: String, data: ByteArray? = null): ByteArray?
+    abstract fun callDartMethod(method: String, data: ByteArray? = null)
+}
+
+private class Bridge : FgBridge() {
+    private val bridgeLib: BridgeLib = Native.load("{{.LibName}}", BridgeLib::class.java)
+    private var methodHandle: FgNativeMethodHandleCallback
 
     init {
         methodHandle = object : FgNativeMethodHandleCallback {
@@ -81,6 +43,31 @@ class FgBridge private constructor() {
             }
         }
         bridgeLib.fg_init_native_method_handle_{{.Timestamp}}(methodHandle)
+    }
+
+    override
+    fun callGoMethod(method: String, data: ByteArray?): ByteArray? {
+        if (method.isEmpty()) return null
+
+        val request = FgRequest.ByValue()
+        request.method = mapFgDataFromString(method)
+        request.data = mapFgDataFromBytes(data)
+
+        val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
+
+        val result = mapFgDataToBytes(response.data)
+        return result
+    }
+
+    override
+    fun callDartMethod(method: String, data: ByteArray?) {
+        if (method.isEmpty()) return
+
+        val request = FgRequest.ByValue()
+        request.method = mapFgDataFromString(method)
+        request.data = mapFgDataFromBytes(data)
+
+        bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
     }
 
     private fun freeFgData(value: FgData) {
@@ -127,27 +114,46 @@ class FgBridge private constructor() {
 
         response.data = mapFgDataFromBytes(handleData)
     }
+}
 
-    fun callGoMethod(method: String, data: ByteArray? = null): ByteArray? {
-        if (method.isEmpty()) return null
+@Structure.FieldOrder("data", "size")
+private open class FgData private constructor() : Structure() {
+    class ByValue : FgData(), Structure.ByValue
 
-        val request = FgRequest.ByValue()
-        request.method = mapFgDataFromString(method)
-        request.data = mapFgDataFromBytes(data)
+    @JvmField
+    var data: Pointer? = null
 
-        val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
+    @JvmField
+    var size: Int = 0
+}
 
-        val result = mapFgDataToBytes(response.data)
-        return result
-    }
+@Structure.FieldOrder("method", "data")
+private open class FgRequest private constructor() : Structure() {
+    class ByValue : FgRequest(), Structure.ByValue
+    class ByReference : FgRequest(), Structure.ByReference
 
-    fun callDartMethod(method: String, data: ByteArray? = null) {
-        if (method.isEmpty()) return
+    @JvmField
+    var method: FgData.ByValue = FgData.ByValue()
 
-        val request = FgRequest.ByValue()
-        request.method = mapFgDataFromString(method)
-        request.data = mapFgDataFromBytes(data)
+    @JvmField
+    var data: FgData.ByValue = FgData.ByValue()
+}
 
-        bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
-    }
+@Structure.FieldOrder("data")
+private open class FgResponse private constructor() : Structure() {
+    class ByValue : FgResponse(), Structure.ByValue
+    class ByReference : FgResponse(), Structure.ByReference
+
+    @JvmField
+    var data: FgData.ByValue = FgData.ByValue()
+}
+
+private interface BridgeLib : Library {
+    fun fg_init_native_method_handle_{{.Timestamp}}(handle: FgNativeMethodHandleCallback)
+    fun fg_call_dart_method_{{.Timestamp}}(request: FgRequest.ByValue)
+    fun fg_call_go_method_{{.Timestamp}}(request: FgRequest.ByValue): FgResponse.ByValue
+}
+
+private interface FgNativeMethodHandleCallback : com.sun.jna.Callback {
+    fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference)
 }
