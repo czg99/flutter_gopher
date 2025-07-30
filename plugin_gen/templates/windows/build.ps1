@@ -13,7 +13,7 @@ if (-not (Get-Command "zig" -ErrorAction SilentlyContinue)) {
 $OUTPUT_NAME = "{{.LibName}}"
 $OUTPUT_FILE = "$OUTPUT_NAME.dll"
 $OUTPUT_DIR = $PSScriptRoot
-$GO_SRC = "../src"
+$GO_SRC_DIRS = @("../src", "src")
 $TIMESTAMP_FILE = ".last_build_time"
 
 # Function to check if source code has been updated
@@ -28,11 +28,14 @@ function Check-SourceChanges {
     
     $lastBuildTime = [datetime]::Parse((Get-Content -Path $TIMESTAMP_FILE))
 
-    $newestFileTime = Get-ChildItem -Path $GO_SRC -Filter "*.go" -Recurse | 
-                      Select-Object -ExpandProperty LastWriteTime | 
-                      Sort-Object -Descending | 
-                      Select-Object -First 1
-    
+    $newestFileTime = $GO_SRC_DIRS | 
+    ForEach-Object {
+        Get-ChildItem -Path $_ -Filter "*.go" -Recurse | 
+        Select-Object -ExpandProperty LastWriteTime
+    } | 
+    Sort-Object -Descending | 
+    Select-Object -First 1
+
     if ($null -eq $newestFileTime) {
         return $true
     }
@@ -73,7 +76,7 @@ $env:GOARCH = $GOARCH
 $env:CC = "zig cc -target $ZIG_TARGET"
 $env:CXX = "zig c++ -target $ZIG_TARGET"
 
-& go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-shared -o "$OUTPUT_DIR\$OUTPUT_FILE"
+& go build -C $GO_SRC_DIRS[0] -ldflags "-s -w" -trimpath -buildmode=c-shared -o "$OUTPUT_DIR\$OUTPUT_FILE"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Go compilation failed, error code: $LASTEXITCODE"
     Write-Error "Please check Go source code or compilation environment settings"
