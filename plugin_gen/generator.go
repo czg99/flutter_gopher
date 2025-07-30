@@ -119,6 +119,12 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		return err
 	}
 
+	if relPath == "." {
+		return nil
+	}
+
+	fmt.Println("Processing template:", strings.TrimSuffix(relPath, ".tmpl"))
+
 	// 处理 PackageName 占位符
 	if strings.Contains(relPath, "PackageName") {
 		packageDir := filepath.Join(strings.Split(g.PackageName, ".")...)
@@ -127,13 +133,10 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 
 	if isDir {
 		// 在目标位置创建目录
-		if relPath != "." {
-			destPath := filepath.Join(destDir, relPath)
-			if err = os.MkdirAll(destPath, 0755); err != nil {
-				return fmt.Errorf("failed to create directory %s: %w", destPath, err)
-			}
+		destPath := filepath.Join(destDir, relPath)
+		if err = os.MkdirAll(destPath, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", destPath, err)
 		}
-
 		return nil
 	}
 
