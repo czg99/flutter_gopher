@@ -44,12 +44,12 @@ private open class FgResponse private constructor() : Structure() {
 }
 
 private interface BridgeLib : Library {
-    fun fg_init_method_handle_{{.Timestamp}}(handle: FgMethodHandleCallback)
+    fun fg_init_native_method_handle_{{.Timestamp}}(handle: FgNativeMethodHandleCallback)
     fun fg_call_dart_method_{{.Timestamp}}(request: FgRequest.ByValue)
     fun fg_call_go_method_{{.Timestamp}}(request: FgRequest.ByValue): FgResponse.ByValue
 }
 
-private interface FgMethodHandleCallback : com.sun.jna.Callback {
+private interface FgNativeMethodHandleCallback : com.sun.jna.Callback {
     fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference)
 }
 
@@ -70,17 +70,17 @@ class FgBridge private constructor() {
 
     private val bridgeLib: BridgeLib = Native.load("{{.LibName}}", BridgeLib::class.java)
 
-    private var methodHandle: FgMethodHandleCallback
+    private var methodHandle: FgNativeMethodHandleCallback
 
     var delegate: FgBridgeDelegate? = null
 
     init {
-        methodHandle = object : FgMethodHandleCallback {
+        methodHandle = object : FgNativeMethodHandleCallback {
             override fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference) {
                 methodHandle(request, response)
             }
         }
-        bridgeLib.fg_init_method_handle_{{.Timestamp}}(methodHandle)
+        bridgeLib.fg_init_native_method_handle_{{.Timestamp}}(methodHandle)
     }
 
     private fun freeFgData(value: FgData) {

@@ -14,8 +14,8 @@ void methodHandle(FgRequest request, FgResponse* response) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[self alloc] init];
-        enforce_binding_{{.Timestamp}}();
-        fg_init_method_handle_{{.Timestamp}}(methodHandle);
+        fg_enforce_binding_{{.Timestamp}}();
+        fg_init_native_method_handle_{{.Timestamp}}(methodHandle);
     });
     return sharedInstance;
 }

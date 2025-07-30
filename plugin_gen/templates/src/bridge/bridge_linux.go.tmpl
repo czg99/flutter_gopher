@@ -32,8 +32,8 @@ func nativeMethodHandle(request C.FgRequest, response *C.FgResponse) {
 func initNativeMethodHandle(handle func(method string, data []byte) []byte) {
 	linuxNativeMethodHandle = handle
 	if handle != nil {
-		fgMethodHandle = (C.FgMethodHandle)(C.nativeMethodHandle)
+		fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.nativeMethodHandle)
 		return
 	}
-	fgMethodHandle = nil
+	fgNativeMethodHandle = nil
 }
