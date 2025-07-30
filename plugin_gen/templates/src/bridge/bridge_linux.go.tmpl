@@ -3,7 +3,7 @@ package bridge
 
 /*
 #include "include/bridge.h"
-extern void nativeMethodHandle(FgRequest request, FgResponse* response);
+extern DLLEXPORT void fg_native_method_handle(FgRequest request, FgResponse* response);
 */
 import "C"
 import (
@@ -20,8 +20,8 @@ func init() {
 
 var linuxNativeMethodHandle MethodHandle
 
-//export nativeMethodHandle
-func nativeMethodHandle(request C.FgRequest, response *C.FgResponse) {
+//export fg_native_method_handle
+func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
 	if linuxNativeMethodHandle != nil {
 		result := linuxNativeMethodHandle(method, data)
@@ -32,7 +32,7 @@ func nativeMethodHandle(request C.FgRequest, response *C.FgResponse) {
 func initNativeMethodHandle(handle func(method string, data []byte) []byte) {
 	linuxNativeMethodHandle = handle
 	if handle != nil {
-		fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.nativeMethodHandle)
+		fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.fg_native_method_handle)
 		return
 	}
 	fgNativeMethodHandle = nil
