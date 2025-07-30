@@ -2,7 +2,7 @@
 
 简体中文 | [English](https://github.com/czg99/flutter_gopher/blob/main/README_en.md)
 
-Flutter Gopher 用于桥接 Flutter、Golang、Native 三者之间的代码。 快速创建基于 Golang 的 Flutter 插件。
+Flutter Gopher 用于快速创建基于 Golang 的 Flutter 插件，并生成了便利的 Flutter、Golang、Native 桥接代码。
 
 ## ✨ 功能特点
 
