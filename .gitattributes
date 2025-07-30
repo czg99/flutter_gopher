@@ -1,2 +1,5 @@
 *.go.tmpl linguist-language=Go
 *.dart.tmpl linguist-language=Dart
+
+*.h linguist-detectable=false
+*.c linguist-detectable=false
