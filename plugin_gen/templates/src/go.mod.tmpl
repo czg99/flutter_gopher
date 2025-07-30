@@ -1,3 +1,9 @@
 module {{.ProjectName}}
 
 go 1.23.0
+
+replace native_windows => ../windows/src
+replace native_linux => ../linux/src
+
+require native_windows v0.0.0-00010101000000-000000000000
+require native_linux v0.0.0-00010101000000-000000000000

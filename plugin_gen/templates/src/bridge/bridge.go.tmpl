@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-func CallNativeMethod(method string, data []byte) []byte {
+func callNativeMethod(method string, data []byte) []byte {
 	if fgMethodHandle == nil {
 		return nil
 	}
@@ -20,7 +20,7 @@ func CallNativeMethod(method string, data []byte) []byte {
 	return result
 }
 
-func CallDartMethod(method string, data []byte) {
+func callDartMethod(method string, data []byte) {
 	if global_port == 0 {
 		return
 	}
