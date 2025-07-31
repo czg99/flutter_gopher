@@ -1,0 +1,13 @@
+
+syntax = "proto3";
+
+option go_package="/models";
+option java_package="{{.PackageName}}.models";
+
+message DemoRequest {
+    string greet = 1;
+}
+
+message DemoResponse {
+    string message = 1; 
+}
