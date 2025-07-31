@@ -44,6 +44,7 @@ esac
 
 if [ -d "src" ]; then
     protoc --go_out=src protos/*.proto
+    go mod -C src tidy
 fi
 
 if [ -d "lib" ]; then
@@ -73,8 +74,10 @@ fi
 
 if [ -d "linux" ]; then
     protoc --go_out=linux/src protos/*.proto
+    go mod -C linux/src tidy
 fi
 
 if [ -d "windows" ]; then
     protoc --go_out=windows/src protos/*.proto
+    go mod -C windows/src tidy
 fi
