@@ -7,7 +7,7 @@
 # 2. The Dart .pub-cache/bin directory (usually $HOME/.pub-cache/bin)
 #
 # These directories must be included in your PATH environment variable for the script to properly run the required tools.
-# Usage: ./gen_protos.sh
+# Usage: sh gen_protos.sh
 
 cd $(dirname $0)/../
 
@@ -21,7 +21,7 @@ fi
 # Check if protoc-gen-go is installed
 if ! command -v protoc-gen-go &> /dev/null; then
     echo "protoc-gen-go not found, installing..."
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
 fi
 
 # Check if protoc-gen-dart is installed
@@ -42,45 +42,45 @@ case "$(uname -s)" in
         ;;
 esac
 
+protoc --go_out=. --proto_path=protos protos/proto/*.proto
+go mod -C protos tidy
+
 if [ -d "src" ]; then
-    protoc --go_out=src protos/*.proto
     go mod -C src tidy
 fi
 
+if [ -d "linux/src" ]; then
+    go mod -C linux/src tidy
+fi
+
+if [ -d "windows/src" ]; then
+    go mod -C windows/src tidy
+fi
+
 if [ -d "lib" ]; then
-    if [ ! -d "lib/models" ]; then
-        mkdir -p lib/models
+    if [ ! -d "lib/protos" ]; then
+        mkdir -p lib/protos
     fi
-    protoc --dart_out=lib/models --proto_path=protos protos/*.proto
+    protoc --dart_out=lib/protos --proto_path=protos protos/proto/*.proto
 fi
 
 if [ -d "android" ]; then
     if [ ! -d "android/src/main/java" ]; then
         mkdir -p android/src/main/java
     fi
-    protoc --java_out=android/src/main/java protos/*.proto
+    protoc --java_out=android/src/main/java --proto_path=protos protos/proto/*.proto
 fi
 
 if [ -d "ios" ]; then
-    if [ ! -d "ios/Classes/models" ]; then
-        mkdir -p ios/Classes/models
+    if [ ! -d "ios/Classes/protos" ]; then
+        mkdir -p ios/Classes/protos
     fi
-    protoc --objc_out=ios/Classes/models --proto_path=protos protos/*.proto
+    protoc --objc_out=ios/Classes/protos --proto_path=protos protos/proto/*.proto
 fi
 
 if [ -d "macos" ]; then
-    if [ ! -d "macos/Classes/models" ]; then
-        mkdir -p macos/Classes/models
+    if [ ! -d "macos/Classes/protos" ]; then
+        mkdir -p macos/Classes/protos
     fi
-    protoc --objc_out=macos/Classes/models --proto_path=protos protos/*.proto
-fi
-
-if [ -d "linux" ]; then
-    protoc --go_out=linux/src protos/*.proto
-    go mod -C linux/src tidy
-fi
-
-if [ -d "windows" ]; then
-    protoc --go_out=windows/src protos/*.proto
-    go mod -C windows/src tidy
+    protoc --objc_out=macos/Classes/protos --proto_path=protos protos/proto/*.proto
 fi
