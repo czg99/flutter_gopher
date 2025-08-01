@@ -2,7 +2,7 @@
 #import <Foundation/Foundation.h>
 
 @protocol FgBridgeDelegate <NSObject>
-- (NSData*)methodHandle:(NSString*)method data:(NSData*)data;
+- (NSData*)methodHandle:(NSString*)method data:(NSData*)data error:(NSError**)error;
 @end
 
 
@@ -12,7 +12,7 @@
 
 + (instancetype)sharedInstance;
 
-- (NSData*)callGoMethod:(NSString*)method data:(NSData*)data;
+- (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error;
 - (void)callDartMethod:(NSString*)method data:(NSData*)data;
 
 @end

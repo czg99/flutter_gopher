@@ -5,6 +5,8 @@
 
 @implementation FgBridge
 
+typedef NSString FgError;
+
 void methodHandle(FgRequest request, FgResponse* response) {
     [[FgBridge sharedInstance] methodHandle:request response:response];
 }
@@ -51,6 +53,15 @@ void methodHandle(FgRequest request, FgResponse* response) {
     return result;
 }
 
+- (FgData)mapFgDataFromFgError:(FgError*)from {
+    return [self mapFgDataFromNSString:from];
+}
+
+- (FgError*)mapFgDataToFgError:(FgData)from {
+    if (from.data == nil) return nil;
+    return [self mapFgDataToNSString:from];
+}
+
 - (void)freeFgData:(FgData*)value {
     if (value->data != nil) {
         free(value->data);
@@ -64,12 +75,14 @@ void methodHandle(FgRequest request, FgResponse* response) {
     NSData* data = [self mapFgDataToNSData:request.data];
     
     NSData* handleData = nil;
-    if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data];
+    NSError* error = nil;
+    if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data error:&error];
     
     response->data = [self mapFgDataFromNSData:handleData];
+    response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"macos native methodHandle error: %@", error.localizedDescription]];
 }
 
-- (NSData*)callGoMethod:(NSString*)method data:(NSData*)data {
+- (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error {
     if (method == nil) {
         return nil;
     }
@@ -82,6 +95,10 @@ void methodHandle(FgRequest request, FgResponse* response) {
     FgResponse response = fg_call_go_method_{{.Timestamp}}(request);
     
     NSData* result = [self mapFgDataToNSData:response.data];
+    FgError* err = [self mapFgDataToFgError:response.error];
+    if (err != nil) {
+        *error = [NSError errorWithDomain:@"{{.PackageName}}" code:1 userInfo:@{NSLocalizedDescriptionKey: err}];
+    }
     return result;
 }
 
