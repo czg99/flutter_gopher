@@ -48,12 +48,15 @@ fgo create my_ffi --example
 
 ```
 my_ffi/
-├── android/        # Android 平台代码
-├── ios/            # iOS 平台代码
-├── linux/          # Linux 平台代码
-├── macos/          # macOS 平台代码
-├── windows/        # Windows 平台代码
-├── lib/            # Dart 代码
-├── src/            # Go 代码
-└── example/        # 示例 Flutter 应用（如果使用 --example 选项）
+├── android/          # Android 平台代码
+├── ios/              # iOS 平台代码
+├── linux/            # Linux 平台代码
+├── macos/            # macOS 平台代码
+├── windows/          # Windows 平台代码
+├── lib/              # Dart 代码
+├── src/              # Go 代码
+├── protos/           # Protobuf 代码
+│   ├── proto/        # Protobuf 定义文件
+│   ├── gen_protos.sh # 生成 Protobuf 代码的脚本
+└── example/          # 示例 Flutter 应用（如果使用 --example 选项）
 ```

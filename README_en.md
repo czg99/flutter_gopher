@@ -48,12 +48,15 @@ The plugin project structure generated using the `create` command is as follows:
 
 ```
 my_ffi/
-├── android/        # Android platform code
-├── ios/            # iOS platform code
-├── linux/          # Linux platform code
-├── macos/          # macOS platform code
-├── windows/        # Windows platform code
-├── lib/            # Dart code
-├── src/            # Go code
-└── example/        # Example Flutter application (if using the --example option)
+├── android/          # Android platform code
+├── ios/              # iOS platform code
+├── linux/            # Linux platform code
+├── macos/            # macOS platform code
+├── windows/          # Windows platform code
+├── lib/              # Dart code
+├── src/              # Go code
+├── protos/           # Protobuf code
+│   ├── proto/        # Protobuf definition files
+│   ├── gen_protos.sh # Script to generate Protobuf code
+└── example/          # Example Flutter application (if using the --example option)
 ```
