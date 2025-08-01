@@ -7,6 +7,8 @@ import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import java.nio.charset.StandardCharsets
 
+typealias Error = String?
+
 interface FgBridgeDelegate {
     fun methodHandle(method: String, data: ByteArray?): ByteArray?
 }
@@ -56,6 +58,10 @@ private class Bridge : FgBridge() {
         val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
 
         val result = mapFgDataToBytes(response.data)
+        val error = mapFgDataToError(response.error)
+        if (error != null) {
+            throw Exception(error)
+        }
         return result
     }
 
@@ -106,13 +112,30 @@ private class Bridge : FgBridge() {
         return String(bytes, StandardCharsets.UTF_8)
     }
 
+    private fun mapFgDataFromError(from: Error): FgData.ByValue {
+        if (from == null) return FgData.ByValue()
+        return mapFgDataFromString(from)
+    }
+
+    private fun mapFgDataToError(from: FgData): Error {
+        if (from.data == null) return null
+        return mapFgDataToString(from)
+    }
+
     private fun methodHandle(request: FgRequest.ByValue, response: FgResponse.ByReference) {
         val method = mapFgDataToString(request.method)
         val data = mapFgDataToBytes(request.data)
 
-        val handleData = delegate?.methodHandle(method, data)
+        var error: Error = null
+        val handleData = try {
+            delegate?.methodHandle(method, data)
+        } catch (e: Exception) {
+            error = "android native method handle error: ${e.message}\n${e.stackTrace}"
+            null
+        }
 
         response.data = mapFgDataFromBytes(handleData)
+        response.error = mapFgDataFromError(error)
     }
 }
 
@@ -146,6 +169,9 @@ private open class FgResponse private constructor() : Structure() {
 
     @JvmField
     var data: FgData.ByValue = FgData.ByValue()
+
+    @JvmField
+    var error: FgData.ByValue = FgData.ByValue()
 }
 
 private interface BridgeLib : Library {
