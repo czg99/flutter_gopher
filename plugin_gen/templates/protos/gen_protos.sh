@@ -30,14 +30,14 @@ case "$(uname -s)" in
         # Windows check
         if ! where protoc-gen-dart.bat &> /dev/null; then
             echo "protoc-gen-dart.bat not found, installing..."
-            dart pub global activate protoc_plugin
+            dart pub global activate protoc_plugin 21.1.2
         fi
         ;;
     *)
         # Unix-like check
         if ! command -v protoc-gen-dart &> /dev/null; then
             echo "protoc-gen-dart not found, installing..."
-            dart pub global activate protoc_plugin
+            dart pub global activate protoc_plugin 21.1.2
         fi
         ;;
 esac
