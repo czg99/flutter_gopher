@@ -55,7 +55,10 @@ if [ -d "lib" ]; then
 fi
 
 if [ -d "android" ]; then
-    protoc --kotlin_out=android/src/main/kotlin protos/*.proto
+    if [ ! -d "android/src/main/java" ]; then
+        mkdir -p android/src/main/java
+    fi
+    protoc --java_out=android/src/main/java protos/*.proto
 fi
 
 if [ -d "ios" ]; then
