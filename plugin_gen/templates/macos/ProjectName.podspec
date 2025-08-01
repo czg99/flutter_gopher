@@ -13,6 +13,7 @@ A new Flutter project.
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'FlutterMacOS'
+  s.dependency 'Protobuf'
 
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
