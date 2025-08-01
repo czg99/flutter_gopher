@@ -3,6 +3,6 @@ package bridge
 
 var InitMethodHandle func(handle func(method string, data []byte) []byte)
 
-var CallGoMethod func(method string, data []byte) []byte
+var CallGoMethod func(method string, data []byte) ([]byte, error)
 
 var CallDartMethod func(method string, data []byte)

@@ -7,13 +7,15 @@ extern DLLEXPORT void fg_native_method_handle(FgRequest request, FgResponse* res
 */
 import "C"
 import (
+	"fmt"
 	nl "native_linux"
 	nlb "native_linux/bridge"
+	"runtime/debug"
 )
 
 func init() {
 	nlb.CallGoMethod = callGoMethod
-	nlb.CallDartMethod = CallDartMethod
+	nlb.CallDartMethod = callDartMethod
 	nlb.InitMethodHandle = initNativeMethodHandle
 	go nl.Register()
 }
@@ -23,10 +25,19 @@ var linuxNativeMethodHandle MethodHandle
 //export fg_native_method_handle
 func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
-	if linuxNativeMethodHandle != nil {
-		result := linuxNativeMethodHandle(method, data)
-		response.data = mapFgDataFromBytes(result)
+	if linuxNativeMethodHandle == nil {
+		response.error = mapFgDataFromString("linux native method handle not init")
+		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			response.error = mapFgDataFromString(fmt.Sprintf("linux native method handle panic: %v\n%s\n", r, string(debug.Stack())))
+		}
+	}()
+
+	result := linuxNativeMethodHandle(method, data)
+	response.data = mapFgDataFromBytes(result)
 }
 
 func initNativeMethodHandle(handle func(method string, data []byte) []byte) {

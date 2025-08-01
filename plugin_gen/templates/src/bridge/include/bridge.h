@@ -17,6 +17,7 @@ typedef struct {
 
 typedef struct {
 	FgData data;
+	FgData error;
 } FgResponse;
 
 

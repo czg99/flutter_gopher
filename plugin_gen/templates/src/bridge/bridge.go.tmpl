@@ -6,18 +6,18 @@ package bridge
 */
 import "C"
 import (
+	"errors"
 	"unsafe"
 )
 
-func callNativeMethod(method string, data []byte) []byte {
+func callNativeMethod(method string, data []byte) ([]byte, error) {
 	if fgNativeMethodHandle == nil {
-		return nil
+		return nil, errors.New("native method handle not init")
 	}
 	request := mapToFgRequest(method, data)
 	response := C.FgResponse{}
 	C.call_fg_native_method_handle(fgNativeMethodHandle, request, &response)
-	result := mapFromFgResponse(response)
-	return result
+	return mapFromFgResponse(response)
 }
 
 func callDartMethod(method string, data []byte) {
@@ -71,8 +71,8 @@ func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
 //export fg_call_go_method_{{.Timestamp}}
 func fg_call_go_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	method, data := mapFromFgRequest(request)
-	result := callGoMethod(method, data)
-	return mapToFgResponse(result)
+	result, err := callGoMethod(method, data)
+	return mapToFgResponse(result, err)
 }
 
 //export fg_call_go_method_async_{{.Timestamp}}
@@ -89,6 +89,7 @@ func fg_call_native_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	if fgNativeMethodHandle == nil {
 		freeFgData(&request.method)
 		freeFgData(&request.data)
+		response.error = mapFgDataFromString("native method handle not init")
 		return response
 	}
 
@@ -134,16 +135,22 @@ func mapToFgRequest(method string, data []byte) C.FgRequest {
 	}
 }
 
-func mapFromFgResponse(from C.FgResponse) []byte {
+func mapFromFgResponse(from C.FgResponse) ([]byte, error) {
 	data := mapFgDataToBytes(from.data)
+	err := mapFgDataToError(from.error)
 	freeFgData(&from.data)
-	return data
+	freeFgData(&from.error)
+	return data, err
 }
 
-func mapToFgResponse(data []byte) C.FgResponse {
-	return C.FgResponse{
+func mapToFgResponse(data []byte, err error) C.FgResponse {
+	response := C.FgResponse{
 		data: mapFgDataFromBytes(data),
 	}
+	if err != nil {
+		response.error = mapFgDataFromError(err)
+	}
+	return response
 }
 
 func mapFgDataFromString(from string) C.FgData {
@@ -156,6 +163,21 @@ func mapFgDataToString(from C.FgData) string {
 		return ""
 	}
 	return string(data)
+}
+
+func mapFgDataFromError(from error) C.FgData {
+	if from == nil {
+		return C.FgData{}
+	}
+	return mapFgDataFromString(from.Error())
+}
+
+func mapFgDataToError(from C.FgData) error {
+	data := mapFgDataToBytes(from)
+	if data == nil {
+		return nil
+	}
+	return errors.New(string(data))
 }
 
 func mapFgDataFromBytes(from []byte) C.FgData {

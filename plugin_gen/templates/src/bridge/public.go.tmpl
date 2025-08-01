@@ -9,6 +9,6 @@ func CallDartMethod(method string, data []byte) {
 	callDartMethod(method, data)
 }
 
-func CallNativeMethod(method string, data []byte) []byte {
+func CallNativeMethod(method string, data []byte) ([]byte, error) {
 	return callNativeMethod(method, data)
 }
