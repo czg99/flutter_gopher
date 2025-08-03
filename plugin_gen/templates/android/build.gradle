@@ -47,23 +47,32 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
 
-    // Add custom task to compile Go library
-    tasks.register('compileGoLibrary', Exec) {
+    try {
         def ndkDir = android.ndkDirectory
         def minSdkVersion = android.defaultConfig.minSdkVersion.apiLevel
+        // Add custom task to compile Go library
+        tasks.register('compileGoLibrary', Exec) {
+            workingDir projectDir
+            
+            // Execute build.ps1 on Windows, build.sh on other platforms
+            if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+                commandLine 'powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', 'build.ps1', ndkDir, minSdkVersion
+            } else {
+                commandLine 'sh', './build.sh', ndkDir, minSdkVersion
+            }
+        }
         
-        workingDir projectDir
-        
-        // Execute build.ps1 on Windows, build.sh on other platforms
-        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-            commandLine 'powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', 'build.ps1', ndkDir, minSdkVersion
-        } else {
-            commandLine 'sh', './build.sh', ndkDir, minSdkVersion
+        // Ensure pre-build task depends on Go library compilation
+        preBuild.dependsOn compileGoLibrary
+    } catch(Exception e) {
+        println("Failed to compile Go library: ${e.message}")
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = "CMakeLists.txt"
         }
     }
-    
-    // Ensure pre-build task depends on Go library compilation
-    preBuild.dependsOn compileGoLibrary
     
     sourceSets {
         main.jniLibs.srcDirs = ['libs']
