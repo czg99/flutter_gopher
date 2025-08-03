@@ -162,7 +162,7 @@ private open class FgRequest private constructor() : Structure() {
     var data: FgData.ByValue = FgData.ByValue()
 }
 
-@Structure.FieldOrder("data")
+@Structure.FieldOrder("data", "error")
 private open class FgResponse private constructor() : Structure() {
     class ByValue : FgResponse(), Structure.ByValue
     class ByReference : FgResponse(), Structure.ByReference
