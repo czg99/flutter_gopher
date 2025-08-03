@@ -130,7 +130,7 @@ private class Bridge : FgBridge() {
         val handleData = try {
             delegate?.methodHandle(method, data)
         } catch (e: Exception) {
-            error = "android native method handle error: ${e.message}\n${e.stackTrace}"
+            error = "call native method: $method, error: ${e.message}"
             null
         }
 

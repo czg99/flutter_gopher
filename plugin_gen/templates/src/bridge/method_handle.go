@@ -4,10 +4,9 @@ package bridge
 import (
 	"errors"
 	"fmt"
-	"runtime/debug"
 )
 
-type MethodHandle func(method string, data []byte) []byte
+type MethodHandle func(method string, data []byte) ([]byte, error)
 
 var goMethodHandle MethodHandle = nil
 
@@ -17,9 +16,13 @@ func callGoMethod(method string, data []byte) (result []byte, err error) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("go panic: %v\n%s\n", r, string(debug.Stack()))
+			err = fmt.Errorf("call go method: %s, panic err: %v", method, r)
 		}
 	}()
-	result = goMethodHandle(method, data)
+
+	result, err = goMethodHandle(method, data)
+	if err != nil {
+		return nil, fmt.Errorf("call go method: %s, error: %w", method, err)
+	}
 	return
 }

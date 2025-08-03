@@ -78,8 +78,11 @@ void methodHandle(FgRequest request, FgResponse* response) {
     NSError* error = nil;
     if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data error:&error];
     
-    response->data = [self mapFgDataFromNSData:handleData];
-    response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"ios native methodHandle error: %@", error.localizedDescription]];
+    if (error != nil) {
+        response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"call native method: %@, error: %@", method, error.localizedDescription]];
+    } else {
+        response->data = [self mapFgDataFromNSData:handleData];
+    }
 }
 
 - (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error {

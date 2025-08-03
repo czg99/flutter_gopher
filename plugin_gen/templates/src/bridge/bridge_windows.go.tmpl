@@ -10,7 +10,6 @@ import (
 	"fmt"
 	nw "native_windows"
 	nwb "native_windows/bridge"
-	"runtime/debug"
 )
 
 func init() {
@@ -26,21 +25,25 @@ var winNativeMethodHandle MethodHandle
 func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
 	if winNativeMethodHandle == nil {
-		response.error = mapFgDataFromString("windows native method handle not init")
+		response.error = mapFgDataFromString("native method handle not init")
 		return
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			response.error = mapFgDataFromString(fmt.Sprintf("windows native method handle panic: %v\n%s\n", r, string(debug.Stack())))
+			response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, panic err: %v", method, r))
 		}
 	}()
 
-	result := winNativeMethodHandle(method, data)
+	result, err := winNativeMethodHandle(method, data)
+	if err != nil {
+		response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, error: %v", method, err))
+		return
+	}
 	response.data = mapFgDataFromBytes(result)
 }
 
-func initNativeMethodHandle(handle func(method string, data []byte) []byte) {
+func initNativeMethodHandle(handle func(method string, data []byte) ([]byte, error)) {
 	winNativeMethodHandle = handle
 	if handle != nil {
 		fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.fg_native_method_handle)
