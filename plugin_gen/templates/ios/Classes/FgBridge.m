@@ -75,7 +75,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     NSData* data = [self mapFgDataToNSData:request.data];
 
     if (self.delegate == nil) {
-        response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"call native method: %@, error: delegate is nil", method]];
+        response->error = [self mapFgDataFromFgError:@"init err: delegate is nil"];
         return;
     }
     
@@ -84,7 +84,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     result = [self.delegate methodHandle:method data:data error:&error];
     
     if (error != nil) {
-        response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"call native method: %@, error: %@", method, error.localizedDescription]];
+        response->error = [self mapFgDataFromFgError:error.localizedDescription];
         return;
     }
     response->data = [self mapFgDataFromNSData:result];

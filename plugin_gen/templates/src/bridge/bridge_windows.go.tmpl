@@ -26,19 +26,19 @@ var winNativeMethodHandle MethodHandle
 func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
 	if winNativeMethodHandle == nil {
-		response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, error: native method handle not init", method))
+		response.error = mapFgDataFromString("init err: native method handle not init")
 		return
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, panic err: %v", method, r))
+			response.error = mapFgDataFromString(fmt.Sprintf("panic err: %v", r))
 		}
 	}()
 
 	result, err := winNativeMethodHandle(method, data)
 	if err != nil {
-		response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, error: %v", method, err))
+		response.error = mapFgDataFromString(err.Error())
 		return
 	}
 	response.data = mapFgDataFromBytes(result)

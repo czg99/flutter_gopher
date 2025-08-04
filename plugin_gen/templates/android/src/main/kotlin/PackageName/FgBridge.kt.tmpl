@@ -127,8 +127,7 @@ private class Bridge : FgBridge() {
         val data = mapFgDataToBytes(request.data)
 
         if (delegate == null) {
-            response.error =
-                mapFgDataFromError("call native method: $method, error: delegate is null")
+            response.error = mapFgDataFromError("init err: delegate is null")
             return
         }
 
@@ -137,12 +136,10 @@ private class Bridge : FgBridge() {
             if (result.isSuccess) {
                 response.data = mapFgDataFromBytes(result.getOrNull())
             } else {
-                response.error =
-                    mapFgDataFromError("call native method: $method, error: ${result.exceptionOrNull()?.message}")
+                response.error = mapFgDataFromError("${result.exceptionOrNull()?.message}")
             }
         } catch (e: Throwable) {
-            response.error =
-                mapFgDataFromError("call native method: $method, caught err: ${e.message}")
+            response.error = mapFgDataFromError("caught err: ${e.message}")
         }
     }
 }
