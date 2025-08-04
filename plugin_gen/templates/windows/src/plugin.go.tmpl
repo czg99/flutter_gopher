@@ -1,9 +1,9 @@
-package native_windows
+package platform_windows
 
 import (
 	"fmt"
 	"log"
-	"native_windows/bridge"
+	"platform_windows/bridge"
 	"strings"
 )
 
@@ -23,7 +23,7 @@ func byteArrayToHex(byteArray []byte) string {
 
 func Register() {
 	bridge.InitMethodHandle(func(method string, data []byte) ([]byte, error) {
-		log.Println("[{{.LibClassName}}] Native Received:", method, byteArrayToHex(data))
+		log.Println("[{{.LibClassName}}] Platform Received:", method, byteArrayToHex(data))
 		return data, nil
 	})
 }

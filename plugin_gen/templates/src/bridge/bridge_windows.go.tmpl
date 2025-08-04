@@ -3,30 +3,30 @@ package bridge
 
 /*
 #include "include/bridge.h"
-extern DLLEXPORT void fg_native_method_handle(FgRequest request, FgResponse* response);
+extern DLLEXPORT void fg_platform_method_handle(FgRequest request, FgResponse* response);
 */
 import "C"
 import (
 	"fmt"
-	nw "native_windows"
-	nwb "native_windows/bridge"
+	pw "platform_windows"
+	pwb "platform_windows/bridge"
 )
 
 func init() {
-	fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.fg_native_method_handle)
-	nwb.CallGoMethod = callGoMethod
-	nwb.CallDartMethod = callDartMethod
-	nwb.InitMethodHandle = initNativeMethodHandle
-	go nw.Register()
+	fgPlatformMethodHandle = (C.FgPlatformMethodHandle)(C.fg_platform_method_handle)
+	pwb.CallGoMethod = callGoMethod
+	pwb.CallDartMethod = callDartMethod
+	pwb.InitMethodHandle = initPlatformMethodHandle
+	go pw.Register()
 }
 
-var winNativeMethodHandle MethodHandle
+var winPlatformMethodHandle MethodHandle
 
-//export fg_native_method_handle
-func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
+//export fg_platform_method_handle
+func fg_platform_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
-	if winNativeMethodHandle == nil {
-		response.error = mapFgDataFromString("init err: native method handle not init")
+	if winPlatformMethodHandle == nil {
+		response.error = mapFgDataFromString("init err: platform method handle not init")
 		return
 	}
 
@@ -36,7 +36,7 @@ func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 		}
 	}()
 
-	result, err := winNativeMethodHandle(method, data)
+	result, err := winPlatformMethodHandle(method, data)
 	if err != nil {
 		response.error = mapFgDataFromString(err.Error())
 		return
@@ -44,6 +44,6 @@ func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 	response.data = mapFgDataFromBytes(result)
 }
 
-func initNativeMethodHandle(handle func(method string, data []byte) ([]byte, error)) {
-	winNativeMethodHandle = handle
+func initPlatformMethodHandle(handle func(method string, data []byte) ([]byte, error)) {
+	winPlatformMethodHandle = handle
 }

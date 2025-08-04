@@ -8,7 +8,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "fgo",
-	Short: "Flutter Gopher - A tool for Flutter, Go, and Native integration.",
+	Short: "Flutter Gopher - A tool for Flutter, Go, and Platform integration.",
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},

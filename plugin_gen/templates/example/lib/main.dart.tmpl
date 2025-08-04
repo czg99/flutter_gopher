@@ -112,8 +112,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 buildButton('Call go', Colors.blue, (method, data) {
                   recv = {{.LibClassName}}.callGoMethod(sendMethod, data: send);
                 }),
-                buildButton('Call native', Colors.green, (method, data) {
-                  recv = {{.LibClassName}}.callNativeMethod(sendMethod, data: send);
+                buildButton('Call platform', Colors.green, (method, data) {
+                  recv = {{.LibClassName}}.callPlatformMethod(sendMethod, data: send);
                 }),
               ],
             ),
@@ -125,9 +125,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     (method, data) async {
                   recv = await {{.LibClassName}}.callGoMethodAsync(sendMethod, data: send);
                 }),
-                buildButton('Call native async', Colors.greenAccent,
+                buildButton('Call platform async', Colors.greenAccent,
                     (method, data) async {
-                  recv = await {{.LibClassName}}.callNativeMethodAsync(sendMethod, data: send);
+                  recv = await {{.LibClassName}}.callPlatformMethodAsync(sendMethod, data: send);
                 }),
               ],
             )

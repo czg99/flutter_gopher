@@ -21,8 +21,8 @@ typedef struct {
 } FgResponse;
 
 
-typedef void (*FgNativeMethodHandle)(FgRequest, FgResponse*);
-static inline void call_fg_native_method_handle(FgNativeMethodHandle handle, FgRequest request, FgResponse* response) {
+typedef void (*FgPlatformMethodHandle)(FgRequest, FgResponse*);
+static inline void call_fg_platform_method_handle(FgPlatformMethodHandle handle, FgRequest request, FgResponse* response) {
 	handle(request, response);
 }
 
@@ -37,13 +37,13 @@ extern DLLEXPORT FgRequest fg_empty_request_{{.Timestamp}}(void);
 extern DLLEXPORT FgResponse fg_empty_response_{{.Timestamp}}(void);
 
 extern DLLEXPORT void fg_init_dart_api_{{.Timestamp}}(void* api, int64_t port);
-extern DLLEXPORT void fg_init_native_method_handle_{{.Timestamp}}(FgNativeMethodHandle handle);
+extern DLLEXPORT void fg_init_platform_method_handle_{{.Timestamp}}(FgPlatformMethodHandle handle);
 
 extern DLLEXPORT void fg_call_dart_method_{{.Timestamp}}(FgRequest request);
 extern DLLEXPORT FgResponse fg_call_go_method_{{.Timestamp}}(FgRequest request);
 extern DLLEXPORT void fg_call_go_method_async_{{.Timestamp}}(int64_t port, FgRequest request);
-extern DLLEXPORT FgResponse fg_call_native_method_{{.Timestamp}}(FgRequest request);
-extern DLLEXPORT void fg_call_native_method_async_{{.Timestamp}}(int64_t port, FgRequest request);
+extern DLLEXPORT FgResponse fg_call_platform_method_{{.Timestamp}}(FgRequest request);
+extern DLLEXPORT void fg_call_platform_method_async_{{.Timestamp}}(int64_t port, FgRequest request);
 
 extern DLLEXPORT void fg_enforce_binding_{{.Timestamp}}(void);
 

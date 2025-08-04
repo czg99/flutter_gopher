@@ -10,13 +10,13 @@ import (
 	"unsafe"
 )
 
-func callNativeMethod(method string, data []byte) ([]byte, error) {
-	if fgNativeMethodHandle == nil {
-		return nil, errors.New("init err: native method handle not init")
+func callPlatformMethod(method string, data []byte) ([]byte, error) {
+	if fgPlatformMethodHandle == nil {
+		return nil, errors.New("init err: platform method handle not init")
 	}
 	request := mapToFgRequest(method, data)
 	response := C.FgResponse{}
-	C.call_fg_native_method_handle(fgNativeMethodHandle, request, &response)
+	C.call_fg_platform_method_handle(fgPlatformMethodHandle, request, &response)
 	return mapFromFgResponse(response)
 }
 
@@ -51,11 +51,11 @@ func fg_init_dart_api_{{.Timestamp}}(api unsafe.Pointer, port C.int64_t) {
 	global_port = port
 }
 
-var fgNativeMethodHandle C.FgNativeMethodHandle = nil
+var fgPlatformMethodHandle C.FgPlatformMethodHandle = nil
 
-//export fg_init_native_method_handle_{{.Timestamp}}
-func fg_init_native_method_handle_{{.Timestamp}}(handle C.FgNativeMethodHandle) {
-	fgNativeMethodHandle = handle
+//export fg_init_platform_method_handle_{{.Timestamp}}
+func fg_init_platform_method_handle_{{.Timestamp}}(handle C.FgPlatformMethodHandle) {
+	fgPlatformMethodHandle = handle
 }
 
 //export fg_call_dart_method_{{.Timestamp}}
@@ -83,24 +83,24 @@ func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest)
 	}()
 }
 
-//export fg_call_native_method_{{.Timestamp}}
-func fg_call_native_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
+//export fg_call_platform_method_{{.Timestamp}}
+func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	response := C.FgResponse{}
-	if fgNativeMethodHandle == nil {
+	if fgPlatformMethodHandle == nil {
 		freeFgData(&request.method)
 		freeFgData(&request.data)
-		response.error = mapFgDataFromString("init err: native method handle not init")
+		response.error = mapFgDataFromString("init err: platform method handle not init")
 		return response
 	}
 
-	C.call_fg_native_method_handle(fgNativeMethodHandle, request, &response)
+	C.call_fg_platform_method_handle(fgPlatformMethodHandle, request, &response)
 	return response
 }
 
-//export fg_call_native_method_async_{{.Timestamp}}
-func fg_call_native_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
+//export fg_call_platform_method_async_{{.Timestamp}}
+func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
 	go func() {
-		response := fg_call_native_method_{{.Timestamp}}(request)
+		response := fg_call_platform_method_{{.Timestamp}}(request)
 		sendToPort(port, unsafe.Pointer(cValueToPtr(response)))
 	}()
 }
@@ -112,12 +112,12 @@ func fg_enforce_binding_{{.Timestamp}}() {
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_request_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_response_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_native_method_handle_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_native_method_async_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_async_{{.Timestamp}}))
 }
 
 func mapFromFgRequest(from C.FgRequest) (string, []byte) {

@@ -3,8 +3,8 @@ module {{.ProjectName}}
 go 1.23.0
 
 replace protos => ../protos
-replace native_windows => ../windows/src
-replace native_linux => ../linux/src
+replace platform_windows => ../windows/src
+replace platform_linux => ../linux/src
 
-require native_windows v0.0.0
-require native_linux v0.0.0
+require platform_windows v0.0.0
+require platform_linux v0.0.0

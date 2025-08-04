@@ -15,7 +15,7 @@ var withExample bool
 var createCmd = &cobra.Command{
 	Use:   "create <project_name>",
 	Short: "Create a new Flutter plugin with Go backend.",
-	Long: `This command generates a complete Flutter plugin project structure that enables seamless interoperability between Flutter, Go, and Native.
+	Long: `This command generates a complete Flutter plugin project structure that enables seamless interoperability between Flutter, Go, and Platform.
 
 Example usage:
   fgo create my_ffi

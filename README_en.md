@@ -2,12 +2,12 @@
 
 [简体中文](https://github.com/czg99/flutter_gopher/blob/main/README.md) | English
 
-Flutter Gopher is used to quickly create Golang-based Flutter plugins and generates convenient Flutter, Golang, and Native bridge code.
+Flutter Gopher is used to quickly create Golang-based Flutter plugins and generates convenient Flutter, Golang, and Platform bridge code.
 
 ## ✨ Features
 
 - 🔄 Create complete Flutter plugin project structure
-- 🚀 Provide seamless interoperability between Flutter, Go, and Native
+- 🚀 Provide seamless interoperability between Flutter, Go, and Platform
 - 💻 Support multiple platforms (iOS, Android, Windows, macOS, Linux)
 
 ## 🛠️ Installation

@@ -36,11 +36,11 @@ class {{.LibClassName}} {
   static Future<Uint8List?> callGoMethodAsync(String method,
           {Uint8List? data}) =>
       _api.callGoMethodAsync(method, data: data);
-  static Uint8List? callNativeMethod(String method, {Uint8List? data}) =>
-      _api.callNativeMethod(method, data: data);
-  static Future<Uint8List?> callNativeMethodAsync(String method,
+  static Uint8List? callPlatformMethod(String method, {Uint8List? data}) =>
+      _api.callPlatformMethod(method, data: data);
+  static Future<Uint8List?> callPlatformMethodAsync(String method,
           {Uint8List? data}) =>
-      _api.callNativeMethodAsync(method, data: data);
+      _api.callPlatformMethodAsync(method, data: data);
 
   static Uint8List stringToUint8List(String value) =>
       const Utf8Encoder().convert(value);
@@ -72,13 +72,13 @@ final void Function(int, _fgRequest) _fgCallGoMethodAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
         'fg_call_go_method_async_{{.Timestamp}}')
     .asFunction();
-final _fgResponse Function(_fgRequest) _fgCallNativeMethod = _lib
+final _fgResponse Function(_fgRequest) _fgCallPlatformMethod = _lib
     .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>(
-        'fg_call_native_method_{{.Timestamp}}')
+        'fg_call_platform_method_{{.Timestamp}}')
     .asFunction();
-final void Function(int, _fgRequest) _fgCallNativeMethodAsync = _lib
+final void Function(int, _fgRequest) _fgCallPlatformMethodAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
-        'fg_call_native_method_async_{{.Timestamp}}')
+        'fg_call_platform_method_async_{{.Timestamp}}')
     .asFunction();
 
 class _bridge {
@@ -123,9 +123,9 @@ class _bridge {
     return result;
   }
 
-  Uint8List? callNativeMethod(String method, {Uint8List? data}) {
+  Uint8List? callPlatformMethod(String method, {Uint8List? data}) {
     final request = _mapToFgRequest(method, data);
-    final response = _fgCallNativeMethod(request);
+    final response = _fgCallPlatformMethod(request);
     final (result, error) = _mapFromFgResponse(response);
     if (error != null) {
       throw {{.LibClassName}}Exception(error);
@@ -133,11 +133,11 @@ class _bridge {
     return result;
   }
 
-  Future<Uint8List?> callNativeMethodAsync(String method,
+  Future<Uint8List?> callPlatformMethodAsync(String method,
       {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final request = _mapToFgRequest(method, data);
-    _fgCallNativeMethodAsync(receivePort.sendPort.nativePort, request);
+    _fgCallPlatformMethodAsync(receivePort.sendPort.nativePort, request);
     final responseAddr = await receivePort.first;
     final responsePtr =
         ffi.Pointer.fromAddress(responseAddr).cast<_fgResponse>();
