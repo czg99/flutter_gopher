@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void showToast(String text) {
     if (context.mounted) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+          .showSnackBar(SnackBar(content: Text(text)));
     }
   }
 

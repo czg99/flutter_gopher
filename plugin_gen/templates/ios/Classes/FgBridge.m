@@ -73,16 +73,21 @@ void methodHandle(FgRequest request, FgResponse* response) {
 - (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
     NSString* method = [self mapFgDataToNSString:request.method];
     NSData* data = [self mapFgDataToNSData:request.data];
+
+    if (self.delegate == nil) {
+        response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"call native method: %@, error: delegate is nil", method]];
+        return;
+    }
     
-    NSData* handleData = nil;
+    NSData* result = nil;
     NSError* error = nil;
-    if (self.delegate != nil) handleData = [self.delegate methodHandle:method data:data error:&error];
+    result = [self.delegate methodHandle:method data:data error:&error];
     
     if (error != nil) {
         response->error = [self mapFgDataFromFgError:[NSString stringWithFormat:@"call native method: %@, error: %@", method, error.localizedDescription]];
-    } else {
-        response->data = [self mapFgDataFromNSData:handleData];
+        return;
     }
+    response->data = [self mapFgDataFromNSData:result];
 }
 
 - (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error {
@@ -101,6 +106,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     FgError* err = [self mapFgDataToFgError:response.error];
     if (err != nil) {
         *error = [NSError errorWithDomain:@"{{.PackageName}}" code:1 userInfo:@{NSLocalizedDescriptionKey: err}];
+        return nil;
     }
     return result;
 }
