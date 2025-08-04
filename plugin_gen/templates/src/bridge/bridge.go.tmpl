@@ -123,8 +123,6 @@ func fg_enforce_binding_{{.Timestamp}}() {
 func mapFromFgRequest(from C.FgRequest) (string, []byte) {
 	method := mapFgDataToString(from.method)
 	data := mapFgDataToBytes(from.data)
-	freeFgData(&from.method)
-	freeFgData(&from.data)
 	return method, data
 }
 
@@ -138,8 +136,6 @@ func mapToFgRequest(method string, data []byte) C.FgRequest {
 func mapFromFgResponse(from C.FgResponse) ([]byte, error) {
 	data := mapFgDataToBytes(from.data)
 	err := mapFgDataToError(from.error)
-	freeFgData(&from.data)
-	freeFgData(&from.error)
 	return data, err
 }
 
@@ -196,6 +192,7 @@ func mapFgDataToBytes(from C.FgData) []byte {
 	if from.data == nil {
 		return nil
 	}
+	defer freeFgData(&from)
 	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
 }
 
