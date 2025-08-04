@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -28,6 +29,9 @@ class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
+
+typedef MethodCallback = FutureOr<void> Function(
+    String method, Uint8List? data);
 
 class _MyHomePageState extends State<MyHomePage> {
   String sendMethod = '';
@@ -60,6 +64,31 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Widget buildButton(String text, Color color, MethodCallback onTap) {
+    return MaterialButton(
+      color: color,
+      onPressed: () async {
+        final (method, data) = randomPacket();
+        sendMethod = method;
+        send = data;
+        try {
+          await onTap(method, data);
+        } catch (e) {
+          showToast(e.toString());
+        }
+        setState(() {});
+      },
+      child: Text(text),
+    );
+  }
+
+  void showToast(String text) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,33 +105,30 @@ class _MyHomePageState extends State<MyHomePage> {
             Text('Method: $sendMethod'),
             Text('Send: ${bytesToHex(send)}'),
             Text('Recv: ${bytesToHex(recv)}'),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                MaterialButton(
-                  color: Colors.blue,
-                  onPressed: () {
-                    setState(() {
-                      final (method, data) = randomPacket();
-                      sendMethod = method;
-                      send = data;
-                      recv = {{.LibClassName}}.callGoMethod(sendMethod, data: send);
-                    });
-                  },
-                  child: const Text('Call go method'),
-                ),
-                MaterialButton(
-                  color: Colors.green,
-                  onPressed: () {
-                    setState(() {
-                      final (method, data) = randomPacket();
-                      sendMethod = method;
-                      send = data;
-                      recv = {{.LibClassName}}.callNativeMethod(sendMethod, data: send);
-                    });
-                  },
-                  child: const Text('Call native method'),
-                ),
+                buildButton('Call go', Colors.blue, (method, data) {
+                  recv = {{.LibClassName}}.callGoMethod(sendMethod, data: send);
+                }),
+                buildButton('Call native', Colors.green, (method, data) {
+                  recv = {{.LibClassName}}.callNativeMethod(sendMethod, data: send);
+                }),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                buildButton('Call go async', Colors.blueAccent,
+                    (method, data) async {
+                  recv = await {{.LibClassName}}.callGoMethodAsync(sendMethod, data: send);
+                }),
+                buildButton('Call native async', Colors.greenAccent,
+                    (method, data) async {
+                  recv = await {{.LibClassName}}.callNativeMethodAsync(sendMethod, data: send);
+                }),
               ],
             )
           ],

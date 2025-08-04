@@ -8,8 +8,16 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'loader.dart';
 
-typedef Error = String?;
 typedef {{.LibClassName}}MethodHandle = void Function(String method, Uint8List? data);
+
+class {{.LibClassName}}Exception implements Exception {
+  final String message;
+
+  const {{.LibClassName}}Exception(this.message);
+
+  @override
+  String toString() => '${{.LibClassName}}Exception: $message';
+}
 
 class {{.LibClassName}} {
   static final _api = _bridge();
@@ -94,7 +102,7 @@ class _bridge {
     final response = _fgCallGoMethod(request);
     final (result, error) = _mapFromFgResponse(response);
     if (error != null) {
-      throw Exception(error);
+      throw {{.LibClassName}}Exception(error);
     }
     return result;
   }
@@ -110,7 +118,7 @@ class _bridge {
     final (result, error) = _mapFromFgResponse(responsePtr[0]);
     malloc.free(responsePtr);
     if (error != null) {
-      throw Exception(error);
+      throw {{.LibClassName}}Exception(error);
     }
     return result;
   }
@@ -120,7 +128,7 @@ class _bridge {
     final response = _fgCallNativeMethod(request);
     final (result, error) = _mapFromFgResponse(response);
     if (error != null) {
-      throw Exception(error);
+      throw {{.LibClassName}}Exception(error);
     }
     return result;
   }
@@ -137,11 +145,13 @@ class _bridge {
     final (result, error) = _mapFromFgResponse(responsePtr[0]);
     malloc.free(responsePtr);
     if (error != null) {
-      throw Exception(error);
+      throw {{.LibClassName}}Exception(error);
     }
     return result;
   }
 }
+
+typedef _fgError = String?;
 
 final class _fgData extends ffi.Struct {
   external ffi.Pointer<ffi.Void> data;
@@ -180,14 +190,14 @@ _fgRequest _mapToFgRequest(String method, Uint8List? data) {
   return (method, data);
 }
 
-_fgResponse _mapToFgResponse(Uint8List? data, Error error) {
+_fgResponse _mapToFgResponse(Uint8List? data, _fgError error) {
   final result = _fgEmptyResponse();
   result.data = _mapFgDataFromBytes(data);
   result.error = _mapFgDataFromError(error);
   return result;
 }
 
-(Uint8List? data, Error error) _mapFromFgResponse(_fgResponse from) {
+(Uint8List? data, _fgError error) _mapFromFgResponse(_fgResponse from) {
   final data = _mapFgDataToBytes(from.data);
   final error = _mapFgDataToError(from.error);
   return (data, error);
@@ -223,12 +233,12 @@ _fgData _mapFgDataFromString(String from) {
   return _mapFgDataFromBytes(bytes);
 }
 
-Error _mapFgDataToError(_fgData from) {
+_fgError _mapFgDataToError(_fgData from) {
   if (from.data == ffi.nullptr) return null;
   return _mapFgDataToString(from);
 }
 
-_fgData _mapFgDataFromError(Error from) {
+_fgData _mapFgDataFromError(_fgError from) {
   if (from == null) {
     return _fgEmptyData();
   }
