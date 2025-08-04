@@ -3,7 +3,6 @@ package {{.PackageName}}
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 
 class {{.PluginClassName}} : FlutterPlugin, FgBridgeDelegate {
-
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         FgBridge.sharedInstance().delegate = this
     }
@@ -12,8 +11,8 @@ class {{.PluginClassName}} : FlutterPlugin, FgBridgeDelegate {
     }
 
     // Implementation of FgBridgeDelegate
-    override fun methodHandle(method: String, data: ByteArray?): ByteArray? {
+    override fun methodHandle(method: String, data: ByteArray?): Result<ByteArray?> {
         println("[{{.LibClassName}}] Native Received: $method ${data?.joinToString(separator = " ") { "%02x".format(it) } ?: "null"}")
-        return data
+        return Result.success(data)
     }
 }

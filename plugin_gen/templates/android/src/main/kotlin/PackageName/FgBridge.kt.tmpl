@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets
 typealias Error = String?
 
 interface FgBridgeDelegate {
-    fun methodHandle(method: String, data: ByteArray?): ByteArray?
+    fun methodHandle(method: String, data: ByteArray?): Result<ByteArray?>
 }
 
 abstract class FgBridge {
@@ -30,7 +30,7 @@ abstract class FgBridge {
 
     var delegate: FgBridgeDelegate? = null
 
-    abstract fun callGoMethod(method: String, data: ByteArray? = null): ByteArray?
+    abstract fun callGoMethod(method: String, data: ByteArray? = null): Result<ByteArray?>
     abstract fun callDartMethod(method: String, data: ByteArray? = null)
 }
 
@@ -48,8 +48,8 @@ private class Bridge : FgBridge() {
     }
 
     override
-    fun callGoMethod(method: String, data: ByteArray?): ByteArray? {
-        if (method.isEmpty()) return null
+    fun callGoMethod(method: String, data: ByteArray?): Result<ByteArray?> {
+        if (method.isEmpty()) return Result.success(null)
 
         val request = FgRequest.ByValue()
         request.method = mapFgDataFromString(method)
@@ -60,9 +60,9 @@ private class Bridge : FgBridge() {
         val result = mapFgDataToBytes(response.data)
         val error = mapFgDataToError(response.error)
         if (error != null) {
-            throw Exception(error)
+            return Result.failure(Exception(error))
         }
-        return result
+        return Result.success(result)
     }
 
     override
@@ -126,16 +126,24 @@ private class Bridge : FgBridge() {
         val method = mapFgDataToString(request.method)
         val data = mapFgDataToBytes(request.data)
 
-        var error: Error = null
-        val handleData = try {
-            delegate?.methodHandle(method, data)
-        } catch (e: Exception) {
-            error = "call native method: $method, error: ${e.message}"
-            null
+        if (delegate == null) {
+            response.error =
+                mapFgDataFromError("call native method: $method, error: delegate is null")
+            return
         }
 
-        response.data = mapFgDataFromBytes(handleData)
-        response.error = mapFgDataFromError(error)
+        try {
+            val result = delegate!!.methodHandle(method, data)
+            if (result.isSuccess) {
+                response.data = mapFgDataFromBytes(result.getOrNull())
+            } else {
+                response.error =
+                    mapFgDataFromError("call native method: $method, error: ${result.exceptionOrNull()?.message}")
+            }
+        } catch (e: Throwable) {
+            response.error =
+                mapFgDataFromError("call native method: $method, caught err: ${e.message}")
+        }
     }
 }
 
