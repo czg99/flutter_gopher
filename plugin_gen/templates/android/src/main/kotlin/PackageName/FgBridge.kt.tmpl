@@ -7,8 +7,6 @@ import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import java.nio.charset.StandardCharsets
 
-typealias Error = String?
-
 interface FgBridgeDelegate {
     fun methodHandle(method: String, data: ByteArray?): Result<ByteArray?>
 }
@@ -112,12 +110,12 @@ private class Bridge : FgBridge() {
         return String(bytes, StandardCharsets.UTF_8)
     }
 
-    private fun mapFgDataFromError(from: Error): FgData.ByValue {
+    private fun mapFgDataFromError(from: FgError): FgData.ByValue {
         if (from == null) return FgData.ByValue()
         return mapFgDataFromString(from)
     }
 
-    private fun mapFgDataToError(from: FgData): Error {
+    private fun mapFgDataToError(from: FgData): FgError {
         if (from.data == null) return null
         return mapFgDataToString(from)
     }
@@ -143,6 +141,8 @@ private class Bridge : FgBridge() {
         }
     }
 }
+
+private typealias FgError = String?
 
 @Structure.FieldOrder("data", "size")
 private open class FgData private constructor() : Structure() {
