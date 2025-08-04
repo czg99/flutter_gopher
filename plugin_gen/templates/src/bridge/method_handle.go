@@ -2,7 +2,6 @@
 package bridge
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -12,7 +11,7 @@ var goMethodHandle MethodHandle = nil
 
 func callGoMethod(method string, data []byte) (result []byte, err error) {
 	if goMethodHandle == nil {
-		return nil, errors.New("go method handle not init")
+		return nil, fmt.Errorf("call go method: %s, error: go method handle not init", method)
 	}
 	defer func() {
 		if r := recover(); r != nil {

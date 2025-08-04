@@ -7,12 +7,13 @@ package bridge
 import "C"
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 )
 
 func callNativeMethod(method string, data []byte) ([]byte, error) {
 	if fgNativeMethodHandle == nil {
-		return nil, errors.New("native method handle not init")
+		return nil, fmt.Errorf("call native method: %s, error: native method handle not init", method)
 	}
 	request := mapToFgRequest(method, data)
 	response := C.FgResponse{}
@@ -87,9 +88,8 @@ func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest)
 func fg_call_native_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	response := C.FgResponse{}
 	if fgNativeMethodHandle == nil {
-		freeFgData(&request.method)
-		freeFgData(&request.data)
-		response.error = mapFgDataFromString("native method handle not init")
+		method, _ := mapFromFgRequest(request)
+		response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, error: native method handle not init", method))
 		return response
 	}
 

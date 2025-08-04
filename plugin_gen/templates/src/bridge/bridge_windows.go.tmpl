@@ -13,6 +13,7 @@ import (
 )
 
 func init() {
+	fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.fg_native_method_handle)
 	nwb.CallGoMethod = callGoMethod
 	nwb.CallDartMethod = callDartMethod
 	nwb.InitMethodHandle = initNativeMethodHandle
@@ -25,7 +26,7 @@ var winNativeMethodHandle MethodHandle
 func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
 	if winNativeMethodHandle == nil {
-		response.error = mapFgDataFromString("native method handle not init")
+		response.error = mapFgDataFromString(fmt.Sprintf("call native method: %s, error: native method handle not init", method))
 		return
 	}
 
@@ -45,9 +46,4 @@ func fg_native_method_handle(request C.FgRequest, response *C.FgResponse) {
 
 func initNativeMethodHandle(handle func(method string, data []byte) ([]byte, error)) {
 	winNativeMethodHandle = handle
-	if handle != nil {
-		fgNativeMethodHandle = (C.FgNativeMethodHandle)(C.fg_native_method_handle)
-		return
-	}
-	fgNativeMethodHandle = nil
 }
