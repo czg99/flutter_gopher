@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	plugingen "github.com/czg99/flutter_gopher/plugin_gen"
 	"github.com/spf13/cobra"
@@ -29,19 +30,28 @@ Example usage:
 	},
 }
 
+// isValidProjectName 检查项目名称是否合法
+func isValidProjectName(name string) bool {
+	if name == "" {
+		return false
+	}
+	// 正则：只能包含字母、数字和下划线，且必须以字母开头，不能以下划线结尾
+	pattern := `^[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z0-9]+$`
+	return regexp.MustCompile(pattern).MatchString(name)
+}
+
 // validateAndGeneratePlugin 处理输入验证和插件生成
 func validateAndGeneratePlugin(projectName string) error {
-	// 验证项目名称
-	if projectName == "" {
-		return fmt.Errorf("project name is required")
-	}
-
-	outputDir := projectName
-
 	// 确保输出目录存在
-	outputPath, err := filepath.Abs(outputDir)
+	outputPath, err := filepath.Abs(projectName)
 	if err != nil {
 		return fmt.Errorf("failed to resolve output path: %v", err)
+	}
+
+	// 检查项目名称是否合法
+	projectName = filepath.Base(outputPath)
+	if !isValidProjectName(projectName) {
+		return fmt.Errorf("invalid project name: %s", projectName)
 	}
 
 	// 如果输出目录不存在则创建
