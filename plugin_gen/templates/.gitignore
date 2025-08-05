@@ -30,6 +30,7 @@ build/
 
 .last_build_time
 android/libs
+android/.cxx
 ios/*.xcframework
 windows/*.dll
 macos/*.dylib
