@@ -42,7 +42,9 @@ case "$(uname -s)" in
         ;;
 esac
 
-protoc --go_out=. --proto_path=protos protos/proto/*.proto
+ProtoDir="protos/proto"
+
+protoc --go_out=. --proto_path=$ProtoDir $ProtoDir/*.proto
 go mod -C protos tidy
 
 if [ -d "src" ]; then
@@ -61,26 +63,26 @@ if [ -d "lib" ]; then
     if [ ! -d "lib/protos" ]; then
         mkdir -p lib/protos
     fi
-    protoc --dart_out=lib/protos --proto_path=protos protos/proto/*.proto
+    protoc --dart_out=lib/protos --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
 
 if [ -d "android" ]; then
     if [ ! -d "android/src/main/java" ]; then
         mkdir -p android/src/main/java
     fi
-    protoc --java_out=android/src/main/java --proto_path=protos protos/proto/*.proto
+    protoc --java_out=android/src/main/java --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
 
 if [ -d "ios" ]; then
     if [ ! -d "ios/Classes/protos" ]; then
         mkdir -p ios/Classes/protos
     fi
-    protoc --objc_out=ios/Classes/protos --proto_path=protos protos/proto/*.proto
+    protoc --objc_out=ios/Classes/protos --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
 
 if [ -d "macos" ]; then
     if [ ! -d "macos/Classes/protos" ]; then
         mkdir -p macos/Classes/protos
     fi
-    protoc --objc_out=macos/Classes/protos --proto_path=protos protos/proto/*.proto
+    protoc --objc_out=macos/Classes/protos --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
