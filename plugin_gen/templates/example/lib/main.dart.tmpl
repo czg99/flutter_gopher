@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:{{.ProjectName}}/{{.ProjectName}}.dart';
 
@@ -30,53 +28,26 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-typedef MethodCallback = FutureOr<void> Function(
-    String method, Uint8List? data);
-
 class _MyHomePageState extends State<MyHomePage> {
-  String sendMethod = '';
-  Uint8List? send;
-  Uint8List? recv;
-
-  (String, Uint8List?) randomPacket() {
-    final r = Random(DateTime.now().millisecondsSinceEpoch);
-    final method = '/app/${r.nextInt(99999)}';
-    final count = r.nextInt(10);
-    if (count < 3) {
-      return (method, null);
-    }
-    final data = Uint8List(count);
-    for (var i = 0; i < count; i++) {
-      data[i] = r.nextInt(255);
-    }
-    return (method, data);
-  }
-
-  String bytesToHex(Uint8List? data) => data != null
-      ? data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')
-      : 'null';
+  final lib = {{.LibClassName}}();
+  String method = '';
+  String send = '';
+  String recv = '';
 
   @override
   void initState() {
     super.initState();
-    {{.LibClassName}}.setMethodHandle((method, data) {
-      print('[{{.LibClassName}}] Dart Received: $method ${bytesToHex(data)}');
-    });
   }
 
-  Widget buildButton(String text, Color color, MethodCallback onTap) {
+  Widget buildButton(String text, Color color, FutureOr<void> Function() onTap) {
     return MaterialButton(
       color: color,
       onPressed: () async {
-        final (method, data) = randomPacket();
-        sendMethod = method;
-        send = data;
         try {
-          await onTap(method, data);
+          await onTap();
         } catch (e) {
           showToast(e.toString());
         }
-        setState(() {});
       },
       child: Text(text),
     );
@@ -87,6 +58,14 @@ class _MyHomePageState extends State<MyHomePage> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(text)));
     }
+  }
+
+  void updateState(String method, String send, String recv) {
+    setState(() {
+      this.method = method;
+      this.send = send;
+      this.recv = recv;
+    });
   }
 
   @override
@@ -102,18 +81,20 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Text('Method: $sendMethod'),
-            Text('Send: ${bytesToHex(send)}'),
-            Text('Recv: ${bytesToHex(recv)}'),
+            Text('Method: $method'),
+            Text('Send: $send'),
+            Text('Recv: $recv'),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                buildButton('Call go', Colors.blue, (method, data) {
-                  recv = {{.LibClassName}}.callGoMethod(sendMethod, data: send);
+                buildButton('Call go', Colors.blue, () {
+                  final (method, send, recv) = lib.callGoMethod();
+                  updateState(method, send, recv);
                 }),
-                buildButton('Call platform', Colors.green, (method, data) {
-                  recv = {{.LibClassName}}.callPlatformMethod(sendMethod, data: send);
+                buildButton('Call platform', Colors.green, () {
+                  final (method, send, recv) = lib.callPlatformMethod();
+                  updateState(method, send, recv);
                 }),
               ],
             ),
@@ -122,12 +103,14 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 buildButton('Call go async', Colors.blueAccent,
-                    (method, data) async {
-                  recv = await {{.LibClassName}}.callGoMethodAsync(sendMethod, data: send);
+                    () async {
+                  final (method, send, recv) = await lib.callGoMethodAsync();
+                  updateState(method, send, recv);
                 }),
                 buildButton('Call platform async', Colors.greenAccent,
-                    (method, data) async {
-                  recv = await {{.LibClassName}}.callPlatformMethodAsync(sendMethod, data: send);
+                    () async {
+                  final (method, send, recv) = await lib.callPlatformMethodAsync();
+                  updateState(method, send, recv);
                 }),
               ],
             )
