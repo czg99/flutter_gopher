@@ -19,11 +19,16 @@ flutter:
       android:
         package: {{.PackageName}}
         pluginClass: {{.PluginClassName}}
+        dartPluginClass: {{.LibClassName}}
       ios:
         pluginClass: {{.PluginClassName}}
+        dartPluginClass: {{.LibClassName}}
       linux:
         ffiPlugin: true
+        dartPluginClass: {{.LibClassName}}
       macos:
         pluginClass: {{.PluginClassName}}
+        dartPluginClass: {{.LibClassName}}
       windows:
         ffiPlugin: true
+        dartPluginClass: {{.LibClassName}}

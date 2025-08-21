@@ -27,7 +27,7 @@ class {{.LibClassName}} {
     });
   }
 
-  static void init() => FgBridge.init();
+  static void registerWith() => FgBridge.init();
 
   (String method, String send, String recv) callGoMethod() {
     final (method, send) = randomPacket();
