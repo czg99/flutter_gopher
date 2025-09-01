@@ -18,23 +18,37 @@ A new Flutter project.
     sp.requires_arc = false
   end
 
-  s.dependency 'FlutterMacOS'
+  s.ios.dependency 'Flutter'
+  s.osx.dependency 'FlutterMacOS'
+
   s.dependency 'Protobuf'
 
-  s.platform = :osx, '10.11'
+  s.ios.deployment_target = '11.0'
+  s.osx.deployment_target = '10.11'
+
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
 
-  s.script_phases = [
+  s.ios.script_phases = [
     {
       :name => 'Run Pre-Build Script',
-      :script => "sh '#{__dir__}/build_dylib.sh'",
+      :script => "sh '#{__dir__}/build_ios.sh'",
+      :execution_position => 'before_compile'
+    }
+  ]
+
+  s.osx.script_phases = [
+    {
+      :name => 'Run Pre-Build Script',
+      :script => "sh '#{__dir__}/build_macos_shared.sh'",
       :execution_position => 'before_compile'
     }
   ]
 
   s.prepare_command = <<-CMD
-    sh ./build_dylib.sh
+    sh ./build_ios.sh
+    sh ./build_macos_shared.sh
   CMD
 
-  s.vendored_libraries = 'lib{{.LibName}}.dylib'
+  s.ios.vendored_frameworks = '{{.LibName}}.xcframework'
+  s.osx.vendored_libraries = 'lib{{.LibName}}.dylib'
 end

@@ -11,9 +11,9 @@ OUTPUT_NAME="{{.LibName}}"
 OUTPUT_FILE="lib${OUTPUT_NAME}.a"
 OUTPUT_DIR="$(pwd)"
 GO_SRC="../src"
-TIMESTAMP_FILE=".last_build_time"
+TIMESTAMP_FILE=".last_build_time_ios"
 
-MIN_VERSION=10.11
+MIN_VERSION=11
 
 # Check if source code has been updated
 check_source_changes() {
@@ -50,33 +50,35 @@ if ! check_source_changes; then
 fi
 
 export CGO_ENABLED=1
-export GOOS=darwin
+export GOOS=ios
 
-LIB_FILES=""
+SIMULATOR_LIBS=""
+DEVICE_LIBS=""
 
-for ARCH in "amd64:x86_64" "arm64:arm64"
+for ARCH in "amd64:x86_64:iphonesimulator:simulator" "arm64:arm64:iphonesimulator:simulator" "arm64:arm64:iphoneos:"
 do
-    IFS=: read GOARCH CARCH <<< "$ARCH"
+    IFS=: read GOARCH CARCH SDK SIMULATOR <<< "$ARCH"
     
     export GOARCH=$GOARCH
-    TARGET="$CARCH-apple-macos$MIN_VERSION"
+    TARGET="$CARCH-apple-ios$MIN_VERSION"
+    if [ -n "$SIMULATOR" ]; then
+        TARGET="$TARGET-$SIMULATOR"
+    fi
     
-    SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
-    CLANG_PATH=$(xcrun --sdk macosx --find clang)
+    SDK_PATH=$(xcrun --sdk "$SDK" --show-sdk-path)
+    CLANG_PATH=$(xcrun --sdk "$SDK" --find clang)
     
     export CC="$CLANG_PATH -target $TARGET -isysroot $SDK_PATH $@"
     export CXX="$CLANG_PATH++ -target $TARGET -isysroot $SDK_PATH $@"
-    
-    echo "Compiling $GOARCH architecture..."
 
-    if [ "$GOARCH" = "amd64" ]; then
-        OUTPUT_FILE_TMP="macos-x86_64/${OUTPUT_FILE}"
+    if [ "$SDK" = "iphonesimulator" ]; then
+        OUTPUT_FILE_TMP="ios-simulator/${GOARCH}_${OUTPUT_FILE}"
+        SIMULATOR_LIBS="$SIMULATOR_LIBS $OUTPUT_FILE_TMP"
     else
-        OUTPUT_FILE_TMP="macos-arm64/${OUTPUT_FILE}"
+        OUTPUT_FILE_TMP="ios-arm64/${GOARCH}_${OUTPUT_FILE}"
+        DEVICE_LIBS="$DEVICE_LIBS $OUTPUT_FILE_TMP"
     fi
-
-    LIB_FILES="$LIB_FILES $OUTPUT_FILE_TMP"
-
+    
     go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-archive -o "$OUTPUT_DIR/$OUTPUT_FILE_TMP"
 
     if [ $? -ne 0 ]; then
@@ -88,21 +90,26 @@ do
     fi
 done
 
-echo "Merging all architecture library files..."
-lipo -create $LIB_FILES -output ${OUTPUT_FILE}
+echo "Creating fat libraries for simulator and device..."
+if [ ! -z "$SIMULATOR_LIBS" ]; then
+    lipo -create $SIMULATOR_LIBS -output ios-simulator/${OUTPUT_FILE}
+fi
 
-rm -rf macos-arm64
-rm -rf macos-x86_64
+if [ ! -z "$DEVICE_LIBS" ]; then
+    lipo -create $DEVICE_LIBS -output ios-arm64/${OUTPUT_FILE}
+fi
 
 echo "Creating XCFramework..."
 
 rm -rf ${OUTPUT_NAME}.xcframework
 
 xcodebuild -create-xcframework \
-    -library ${OUTPUT_FILE} \
+    -library ios-simulator/${OUTPUT_FILE} \
+    -library ios-arm64/${OUTPUT_FILE} \
     -output ${OUTPUT_NAME}.xcframework
 
-rm -rf ${OUTPUT_FILE}
+rm -rf ios-arm64
+rm -rf ios-simulator
 
 # Save current build timestamp
 save_build_time

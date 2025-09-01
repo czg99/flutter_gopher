@@ -73,16 +73,9 @@ if [ -d "android" ]; then
     protoc --java_out=android/src/main/java --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
 
-if [ -d "ios" ]; then
-    if [ ! -d "ios/Classes/protos" ]; then
-        mkdir -p ios/Classes/protos
+if [ -d "darwin" ]; then
+    if [ ! -d "darwin/Classes/protos" ]; then
+        mkdir -p darwin/Classes/protos
     fi
-    protoc --objc_out=ios/Classes/protos --proto_path=$ProtoDir $ProtoDir/*.proto
-fi
-
-if [ -d "macos" ]; then
-    if [ ! -d "macos/Classes/protos" ]; then
-        mkdir -p macos/Classes/protos
-    fi
-    protoc --objc_out=macos/Classes/protos --proto_path=$ProtoDir $ProtoDir/*.proto
+    protoc --objc_out=darwin/Classes/protos --proto_path=$ProtoDir $ProtoDir/*.proto
 fi

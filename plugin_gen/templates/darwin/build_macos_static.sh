@@ -7,11 +7,11 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
-OUTPUT_NAME="{{.LibName}}"
-OUTPUT_FILE="lib${OUTPUT_NAME}.dylib"
+OUTPUT_NAME="{{.LibName}}MacOS"
+OUTPUT_FILE="lib${OUTPUT_NAME}.a"
 OUTPUT_DIR="$(pwd)"
 GO_SRC="../src"
-TIMESTAMP_FILE=".last_build_time"
+TIMESTAMP_FILE=".last_build_time_macos"
 
 MIN_VERSION=10.11
 
@@ -31,7 +31,7 @@ check_source_changes() {
     if [ "${NEWEST_TIMESTAMP}" -gt "${LAST_BUILD_TIME}" ]; then
         return 0
     else
-        if [ ! -f "${OUTPUT_DIR}/${OUTPUT_FILE}" ]; then
+        if [ ! -d "${OUTPUT_DIR}/${OUTPUT_NAME}.xcframework" ]; then
             return 0
         fi
         return 1
@@ -77,7 +77,7 @@ do
 
     LIB_FILES="$LIB_FILES $OUTPUT_FILE_TMP"
 
-    go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-shared -o "$OUTPUT_DIR/$OUTPUT_FILE_TMP"
+    go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-archive -o "$OUTPUT_DIR/$OUTPUT_FILE_TMP"
 
     if [ $? -ne 0 ]; then
         echo "Error: Go compilation failed, error code: $?"
@@ -88,18 +88,23 @@ do
     fi
 done
 
-rm -rf ${OUTPUT_FILE}
-
-
 echo "Merging all architecture library files..."
 lipo -create $LIB_FILES -output ${OUTPUT_FILE}
-
-install_name_tool -id @rpath/${OUTPUT_FILE} ${OUTPUT_FILE}
 
 rm -rf macos-arm64
 rm -rf macos-x86_64
 
+echo "Creating XCFramework..."
+
+rm -rf ${OUTPUT_NAME}.xcframework
+
+xcodebuild -create-xcframework \
+    -library ${OUTPUT_FILE} \
+    -output ${OUTPUT_NAME}.xcframework
+
+rm -rf ${OUTPUT_FILE}
+
 # Save current build timestamp
 save_build_time
 
-echo "Created ${OUTPUT_FILE}"
+echo "Created ${OUTPUT_NAME}.xcframework"

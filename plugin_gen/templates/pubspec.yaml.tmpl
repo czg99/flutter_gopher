@@ -23,12 +23,14 @@ flutter:
       ios:
         pluginClass: {{.PluginClassName}}
         dartPluginClass: {{.LibClassName}}
+        sharedDarwinSource: true
       linux:
         ffiPlugin: true
         dartPluginClass: {{.LibClassName}}
       macos:
         pluginClass: {{.PluginClassName}}
         dartPluginClass: {{.LibClassName}}
+        sharedDarwinSource: true
       windows:
         ffiPlugin: true
         dartPluginClass: {{.LibClassName}}

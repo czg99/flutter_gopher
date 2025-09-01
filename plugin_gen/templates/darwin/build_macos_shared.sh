@@ -8,12 +8,12 @@ if ! command -v go &> /dev/null; then
 fi
 
 OUTPUT_NAME="{{.LibName}}"
-OUTPUT_FILE="lib${OUTPUT_NAME}.a"
+OUTPUT_FILE="lib${OUTPUT_NAME}.dylib"
 OUTPUT_DIR="$(pwd)"
 GO_SRC="../src"
-TIMESTAMP_FILE=".last_build_time"
+TIMESTAMP_FILE=".last_build_time_macos"
 
-MIN_VERSION=11
+MIN_VERSION=10.11
 
 # Check if source code has been updated
 check_source_changes() {
@@ -31,7 +31,7 @@ check_source_changes() {
     if [ "${NEWEST_TIMESTAMP}" -gt "${LAST_BUILD_TIME}" ]; then
         return 0
     else
-        if [ ! -d "${OUTPUT_DIR}/${OUTPUT_NAME}.xcframework" ]; then
+        if [ ! -f "${OUTPUT_DIR}/${OUTPUT_FILE}" ]; then
             return 0
         fi
         return 1
@@ -50,36 +50,34 @@ if ! check_source_changes; then
 fi
 
 export CGO_ENABLED=1
-export GOOS=ios
+export GOOS=darwin
 
-SIMULATOR_LIBS=""
-DEVICE_LIBS=""
+LIB_FILES=""
 
-for ARCH in "amd64:x86_64:iphonesimulator:simulator" "arm64:arm64:iphonesimulator:simulator" "arm64:arm64:iphoneos:"
+for ARCH in "amd64:x86_64" "arm64:arm64"
 do
-    IFS=: read GOARCH CARCH SDK SIMULATOR <<< "$ARCH"
+    IFS=: read GOARCH CARCH <<< "$ARCH"
     
     export GOARCH=$GOARCH
-    TARGET="$CARCH-apple-ios$MIN_VERSION"
-    if [ -n "$SIMULATOR" ]; then
-        TARGET="$TARGET-$SIMULATOR"
-    fi
+    TARGET="$CARCH-apple-macos$MIN_VERSION"
     
-    SDK_PATH=$(xcrun --sdk "$SDK" --show-sdk-path)
-    CLANG_PATH=$(xcrun --sdk "$SDK" --find clang)
+    SDK_PATH=$(xcrun --sdk macosx --show-sdk-path)
+    CLANG_PATH=$(xcrun --sdk macosx --find clang)
     
     export CC="$CLANG_PATH -target $TARGET -isysroot $SDK_PATH $@"
     export CXX="$CLANG_PATH++ -target $TARGET -isysroot $SDK_PATH $@"
-
-    if [ "$SDK" = "iphonesimulator" ]; then
-        OUTPUT_FILE_TMP="ios-simulator/${GOARCH}_${OUTPUT_FILE}"
-        SIMULATOR_LIBS="$SIMULATOR_LIBS $OUTPUT_FILE_TMP"
-    else
-        OUTPUT_FILE_TMP="ios-arm64/${GOARCH}_${OUTPUT_FILE}"
-        DEVICE_LIBS="$DEVICE_LIBS $OUTPUT_FILE_TMP"
-    fi
     
-    go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-archive -o "$OUTPUT_DIR/$OUTPUT_FILE_TMP"
+    echo "Compiling $GOARCH architecture..."
+
+    if [ "$GOARCH" = "amd64" ]; then
+        OUTPUT_FILE_TMP="macos-x86_64/${OUTPUT_FILE}"
+    else
+        OUTPUT_FILE_TMP="macos-arm64/${OUTPUT_FILE}"
+    fi
+
+    LIB_FILES="$LIB_FILES $OUTPUT_FILE_TMP"
+
+    go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-shared -o "$OUTPUT_DIR/$OUTPUT_FILE_TMP"
 
     if [ $? -ne 0 ]; then
         echo "Error: Go compilation failed, error code: $?"
@@ -90,28 +88,18 @@ do
     fi
 done
 
-echo "Creating fat libraries for simulator and device..."
-if [ ! -z "$SIMULATOR_LIBS" ]; then
-    lipo -create $SIMULATOR_LIBS -output ios-simulator/${OUTPUT_FILE}
-fi
+rm -rf ${OUTPUT_FILE}
 
-if [ ! -z "$DEVICE_LIBS" ]; then
-    lipo -create $DEVICE_LIBS -output ios-arm64/${OUTPUT_FILE}
-fi
 
-echo "Creating XCFramework..."
+echo "Merging all architecture library files..."
+lipo -create $LIB_FILES -output ${OUTPUT_FILE}
 
-rm -rf ${OUTPUT_NAME}.xcframework
+install_name_tool -id @rpath/${OUTPUT_FILE} ${OUTPUT_FILE}
 
-xcodebuild -create-xcframework \
-    -library ios-simulator/${OUTPUT_FILE} \
-    -library ios-arm64/${OUTPUT_FILE} \
-    -output ${OUTPUT_NAME}.xcframework
-
-rm -rf ios-arm64
-rm -rf ios-simulator
+rm -rf macos-arm64
+rm -rf macos-x86_64
 
 # Save current build timestamp
 save_build_time
 
-echo "Created ${OUTPUT_NAME}.xcframework"
+echo "Created ${OUTPUT_FILE}"
