@@ -11,6 +11,12 @@ A new Flutter plugin project.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
+
+  s.subspec 'NoARC' do |sp|
+    sp.source_files = 'Classes/protos/**/*.{h,m}'
+    sp.requires_arc = false
+  end
+
   s.dependency 'Flutter'
   s.dependency 'Protobuf'
 
