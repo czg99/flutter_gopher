@@ -25,8 +25,6 @@ class FgLoader {
       return 'lib$libName.so';
     } else if (Platform.isWindows) {
       return '$libName.dll';
-    } else if (Platform.isMacOS) {
-      return 'lib$libName.dylib';
     } else {
       throw StateError('Unsupported platform: ${Platform.operatingSystem}');
     }
@@ -35,7 +33,7 @@ class FgLoader {
   /// 根据当前平台加载原生库
   void _loadLibrary() {
     try {
-      if (Platform.isIOS) {
+      if (Platform.isIOS || Platform.isMacOS) {
         _library = DynamicLibrary.executable();
       } else {
         final libFileName = _libraryFileName();
