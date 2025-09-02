@@ -81,7 +81,12 @@ void methodHandle(FgRequest request, FgResponse* response) {
     
     NSData* result = nil;
     NSError* error = nil;
-    result = [self.delegate methodHandle:method data:data error:&error];
+    @try {
+        result = [self.delegate methodHandle:method data:data error:&error];
+    } @catch (NSException *e) {
+        NSString *caughtErr = [NSString stringWithFormat:@"caught err: %@", [e reason]];
+        response->error = [self mapFgDataFromFgError:caughtErr];
+    }
     
     if (error != nil) {
         response->error = [self mapFgDataFromFgError:error.localizedDescription];
