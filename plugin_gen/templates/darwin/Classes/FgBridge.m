@@ -126,7 +126,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
         .data = [self mapFgDataFromNSData:data],
     };
     
-    fg_call_go_method_{{.Timestamp}}(request);
+    fg_call_dart_method_{{.Timestamp}}(request);
 }
 
 @end
