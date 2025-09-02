@@ -8,7 +8,7 @@
     dispatch_once(&onceToken, ^{
         instance = [[self alloc] init];
     });
-    [FgBridge sharedInstance].delegate = instance;
+    [FgBridge setDelegate:instance];
 }
 
 // Implementation of FgBridgeDelegate

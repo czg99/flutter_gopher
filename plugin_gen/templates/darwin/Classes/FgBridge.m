@@ -7,22 +7,22 @@
 
 typedef NSString FgError;
 
+__weak id<FgBridgeDelegate> globalDelegate = nil;
+
 void methodHandle(FgRequest request, FgResponse* response) {
-    [[FgBridge sharedInstance] methodHandle:request response:response];
+    [FgBridge methodHandle:request response:response];
 }
 
-+ (instancetype)sharedInstance {
-    static FgBridge *sharedInstance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[self alloc] init];
-        fg_enforce_binding_{{.Timestamp}}();
-        fg_init_platform_method_handle_{{.Timestamp}}(methodHandle);
-    });
-    return sharedInstance;
++ (void)load {
+    fg_enforce_binding_{{.Timestamp}}();
+    fg_init_platform_method_handle_{{.Timestamp}}(methodHandle);
 }
 
-- (FgData)mapFgDataFromNSData:(NSData*)from {
++ (void)setDelegate:(id<FgBridgeDelegate>)delegate {
+    globalDelegate = delegate;
+}
+
++ (FgData)mapFgDataFromNSData:(NSData*)from {
     FgData result = {};
     if (from != nil) {
         NSUInteger dataLen = [from length];
@@ -34,35 +34,35 @@ void methodHandle(FgRequest request, FgResponse* response) {
     return result;
 }
 
-- (NSData*)mapFgDataToNSData:(FgData)from {
++ (NSData*)mapFgDataToNSData:(FgData)from {
     if (from.data == nil) return nil;
     NSData* result = [[NSData alloc] initWithBytes:from.data length:from.size];
     [self freeFgData:&from];
     return result;
 }
 
-- (FgData)mapFgDataFromNSString:(NSString*)from {
++ (FgData)mapFgDataFromNSString:(NSString*)from {
     NSData* data = from != nil ? [from dataUsingEncoding:NSUTF8StringEncoding] : nil;
     return [self mapFgDataFromNSData:data];
 }
 
-- (NSString*)mapFgDataToNSString:(FgData)from {
++ (NSString*)mapFgDataToNSString:(FgData)from {
     if (from.data == nil) return @"";
     NSString* result = [[NSString alloc] initWithBytes:from.data length:from.size encoding:NSUTF8StringEncoding];
     [self freeFgData:&from];
     return result;
 }
 
-- (FgData)mapFgDataFromFgError:(FgError*)from {
++ (FgData)mapFgDataFromFgError:(FgError*)from {
     return [self mapFgDataFromNSString:from];
 }
 
-- (FgError*)mapFgDataToFgError:(FgData)from {
++ (FgError*)mapFgDataToFgError:(FgData)from {
     if (from.data == nil) return nil;
     return [self mapFgDataToNSString:from];
 }
 
-- (void)freeFgData:(FgData*)value {
++ (void)freeFgData:(FgData*)value {
     if (value->data != nil) {
         free(value->data);
         value->data = nil;
@@ -70,11 +70,11 @@ void methodHandle(FgRequest request, FgResponse* response) {
     }
 }
 
-- (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
++ (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
     NSString* method = [self mapFgDataToNSString:request.method];
     NSData* data = [self mapFgDataToNSData:request.data];
 
-    if (self.delegate == nil) {
+    if (globalDelegate == nil) {
         response->error = [self mapFgDataFromFgError:@"init err: delegate is nil"];
         return;
     }
@@ -82,7 +82,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     NSData* result = nil;
     NSError* error = nil;
     @try {
-        result = [self.delegate methodHandle:method data:data error:&error];
+        result = [globalDelegate methodHandle:method data:data error:&error];
     } @catch (NSException *e) {
         NSString *caughtErr = [NSString stringWithFormat:@"caught err: %@", [e reason]];
         response->error = [self mapFgDataFromFgError:caughtErr];
@@ -95,7 +95,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     response->data = [self mapFgDataFromNSData:result];
 }
 
-- (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error {
++ (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error {
     if (method == nil) {
         return nil;
     }
@@ -116,7 +116,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     return result;
 }
 
-- (void)callDartMethod:(NSString*)method data:(NSData*)data {
++ (void)callDartMethod:(NSString*)method data:(NSData*)data {
     if (method == nil) {
         return;
     }
