@@ -28,9 +28,10 @@ migrate_working_dir/
 .dart_tool/
 build/
 
-.last_build_time
+.last_build_time*
 android/libs
 android/.cxx
-ios/*.xcframework
 windows/*.dll
-macos/*.dylib
+linux/*.so
+darwin/*.xcframework
+darwin/*.dylib
