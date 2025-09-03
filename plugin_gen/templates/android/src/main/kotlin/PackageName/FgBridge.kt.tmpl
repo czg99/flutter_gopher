@@ -13,131 +13,131 @@ interface FgBridgeDelegate {
 
 abstract class FgBridge {
     companion object {
-        @Volatile
-        private var instance: FgBridge? = null
+        init {
+            Bridge
+        }
+        
+        @JvmStatic
+        var delegate: FgBridgeDelegate? = null
 
         @JvmStatic
-        fun sharedInstance(): FgBridge {
-            return instance ?: synchronized(this) {
-                instance ?: Bridge().also {
-                    instance = it
-                }
-            }
+        fun callGoMethod(method: String, data: ByteArray? = null): Result<ByteArray?> {
+            return Bridge.callGoMethod(method, data)
+        }
+        
+        @JvmStatic
+        fun callDartMethod(method: String, data: ByteArray? = null) {
+            Bridge.callDartMethod(method, data)
         }
     }
-
-    var delegate: FgBridgeDelegate? = null
-
-    abstract fun callGoMethod(method: String, data: ByteArray? = null): Result<ByteArray?>
-    abstract fun callDartMethod(method: String, data: ByteArray? = null)
 }
 
 private class Bridge : FgBridge() {
-    private val bridgeLib: BridgeLib = Native.load("{{.LibName}}", BridgeLib::class.java)
-    private var methodHandle: FgPlatformMethodHandleCallback
+    companion object {
+        private val bridgeLib: BridgeLib = Native.load("{{.LibName}}", BridgeLib::class.java)
+        private var methodHandle: FgPlatformMethodHandleCallback
 
-    init {
-        methodHandle = object : FgPlatformMethodHandleCallback {
-            override fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference) {
-                methodHandle(request, response)
+        init {
+            methodHandle = object : FgPlatformMethodHandleCallback {
+                override fun invoke(request: FgRequest.ByValue, response: FgResponse.ByReference) {
+                    methodHandle(request, response)
+                }
+            }
+            bridgeLib.fg_init_platform_method_handle_{{.Timestamp}}(methodHandle)
+        }
+
+        fun callGoMethod(method: String, data: ByteArray?): Result<ByteArray?> {
+            if (method.isEmpty()) return Result.success(null)
+
+            val request = FgRequest.ByValue()
+            request.method = mapFgDataFromString(method)
+            request.data = mapFgDataFromBytes(data)
+
+            val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
+
+            val result = mapFgDataToBytes(response.data)
+            val error = mapFgDataToError(response.error)
+            if (error != null) {
+                return Result.failure(Exception(error))
+            }
+            return Result.success(result)
+        }
+
+        fun callDartMethod(method: String, data: ByteArray?) {
+            if (method.isEmpty()) return
+
+            val request = FgRequest.ByValue()
+            request.method = mapFgDataFromString(method)
+            request.data = mapFgDataFromBytes(data)
+
+            bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
+        }
+
+        private fun freeFgData(value: FgData) {
+            if (value.data != null) {
+                Native.free(Pointer.nativeValue(value.data))
+                value.data = null
+                value.size = 0
             }
         }
-        bridgeLib.fg_init_platform_method_handle_{{.Timestamp}}(methodHandle)
-    }
 
-    override
-    fun callGoMethod(method: String, data: ByteArray?): Result<ByteArray?> {
-        if (method.isEmpty()) return Result.success(null)
-
-        val request = FgRequest.ByValue()
-        request.method = mapFgDataFromString(method)
-        request.data = mapFgDataFromBytes(data)
-
-        val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
-
-        val result = mapFgDataToBytes(response.data)
-        val error = mapFgDataToError(response.error)
-        if (error != null) {
-            return Result.failure(Exception(error))
-        }
-        return Result.success(result)
-    }
-
-    override
-    fun callDartMethod(method: String, data: ByteArray?) {
-        if (method.isEmpty()) return
-
-        val request = FgRequest.ByValue()
-        request.method = mapFgDataFromString(method)
-        request.data = mapFgDataFromBytes(data)
-
-        bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
-    }
-
-    private fun freeFgData(value: FgData) {
-        if (value.data != null) {
-            Native.free(Pointer.nativeValue(value.data))
-            value.data = null
-            value.size = 0
-        }
-    }
-
-    private fun mapFgDataFromBytes(from: ByteArray?): FgData.ByValue {
-        val result = FgData.ByValue()
-        if (from != null) {
-            val memory = Pointer(Native.malloc(from.size.toLong()))
-            memory.write(0, from, 0, from.size)
-            result.data = memory
-            result.size = from.size
-        }
-        return result
-    }
-
-    private fun mapFgDataToBytes(from: FgData): ByteArray? {
-        if (from.data == null) return null
-        val result = from.data!!.getByteArray(0, from.size)
-        freeFgData(from)
-        return result
-    }
-
-    private fun mapFgDataFromString(from: String): FgData.ByValue {
-        val bytes = from.toByteArray(Charsets.UTF_8)
-        return mapFgDataFromBytes(bytes)
-    }
-
-    private fun mapFgDataToString(from: FgData): String {
-        val bytes = mapFgDataToBytes(from) ?: return ""
-        return String(bytes, StandardCharsets.UTF_8)
-    }
-
-    private fun mapFgDataFromError(from: FgError): FgData.ByValue {
-        if (from == null) return FgData.ByValue()
-        return mapFgDataFromString(from)
-    }
-
-    private fun mapFgDataToError(from: FgData): FgError {
-        if (from.data == null) return null
-        return mapFgDataToString(from)
-    }
-
-    private fun methodHandle(request: FgRequest.ByValue, response: FgResponse.ByReference) {
-        val method = mapFgDataToString(request.method)
-        val data = mapFgDataToBytes(request.data)
-
-        if (delegate == null) {
-            response.error = mapFgDataFromError("init err: delegate is null")
-            return
-        }
-
-        try {
-            val result = delegate!!.methodHandle(method, data)
-            if (result.isSuccess) {
-                response.data = mapFgDataFromBytes(result.getOrNull())
-            } else {
-                response.error = mapFgDataFromError("${result.exceptionOrNull()?.message}")
+        private fun mapFgDataFromBytes(from: ByteArray?): FgData.ByValue {
+            val result = FgData.ByValue()
+            if (from != null) {
+                val memory = Pointer(Native.malloc(from.size.toLong()))
+                memory.write(0, from, 0, from.size)
+                result.data = memory
+                result.size = from.size
             }
-        } catch (e: Throwable) {
-            response.error = mapFgDataFromError("caught err: ${e.message}")
+            return result
+        }
+
+        private fun mapFgDataToBytes(from: FgData): ByteArray? {
+            if (from.data == null) return null
+            val result = from.data!!.getByteArray(0, from.size)
+            freeFgData(from)
+            return result
+        }
+
+        private fun mapFgDataFromString(from: String): FgData.ByValue {
+            val bytes = from.toByteArray(Charsets.UTF_8)
+            return mapFgDataFromBytes(bytes)
+        }
+
+        private fun mapFgDataToString(from: FgData): String {
+            val bytes = mapFgDataToBytes(from) ?: return ""
+            return String(bytes, StandardCharsets.UTF_8)
+        }
+
+        private fun mapFgDataFromError(from: FgError): FgData.ByValue {
+            if (from == null) return FgData.ByValue()
+            return mapFgDataFromString(from)
+        }
+
+        private fun mapFgDataToError(from: FgData): FgError {
+            if (from.data == null) return null
+            return mapFgDataToString(from)
+        }
+
+        private fun methodHandle(request: FgRequest.ByValue, response: FgResponse.ByReference) {
+            val method = mapFgDataToString(request.method)
+            val data = mapFgDataToBytes(request.data)
+
+            if (delegate == null) {
+                response.error = mapFgDataFromError("init err: delegate is null")
+                return
+            }
+
+            try {
+                val result = delegate!!.methodHandle(method, data)
+                if (result.isSuccess) {
+                    response.data = mapFgDataFromBytes(result.getOrNull())
+                } else {
+                    response.error = mapFgDataFromError("${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Throwable) {
+                response.error = mapFgDataFromError("caught err: ${e.message}")
+            }
         }
     }
 }
