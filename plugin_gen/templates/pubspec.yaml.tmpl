@@ -19,18 +19,13 @@ flutter:
       android:
         package: {{.PackageName}}
         pluginClass: {{.PluginClassName}}
-        dartPluginClass: {{.LibClassName}}
       ios:
         pluginClass: {{.PluginClassName}}
-        dartPluginClass: {{.LibClassName}}
+        sharedDarwinSource: true
+      macos:
+        pluginClass: {{.PluginClassName}}
         sharedDarwinSource: true
       linux:
         ffiPlugin: true
-        dartPluginClass: {{.LibClassName}}
-      macos:
-        pluginClass: {{.PluginClassName}}
-        dartPluginClass: {{.LibClassName}}
-        sharedDarwinSource: true
       windows:
         ffiPlugin: true
-        dartPluginClass: {{.LibClassName}}

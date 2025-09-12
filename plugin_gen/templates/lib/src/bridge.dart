@@ -24,12 +24,14 @@ class FgBridge {
 
   static FgBridgeMethodHandle? methodHandle;
 
-  FgBridge._() {}
+  FgBridge._();
 
   static void init() => _api;
 
-  static void setMethodHandle(FgBridgeMethodHandle handle) =>
-      methodHandle = handle;
+  static void setMethodHandle(FgBridgeMethodHandle handle) {
+    _api;
+    methodHandle = handle;
+  }
 
   static Uint8List? callGoMethod(String method, {Uint8List? data}) =>
       _api.callGoMethod(method, data: data);
