@@ -44,11 +44,37 @@ esac
 
 ProtoDir="protos/proto"
 
-protoc --go_out=. --proto_path=$ProtoDir $ProtoDir/*.proto
-go mod -C protos tidy
+if [ -d "protos" ]; then
+    protoc --go_out=. --proto_path=$ProtoDir $ProtoDir/*.proto
+    go mod -C protos tidy
+fi
 
-if [ -d "src" ]; then
-    go mod -C src tidy
+if [ -d "lib" ]; then
+    outPath="lib/src/protos"
+    if [ ! -d $outPath ]; then
+        mkdir -p $outPath
+    fi
+    protoc --dart_out=$outPath --proto_path=$ProtoDir $ProtoDir/*.proto
+fi
+
+if [ -d "android" ]; then
+    outPath="android/src/main/java"
+    if [ ! -d $outPath ]; then
+        mkdir -p $outPath
+    fi
+    protoc --java_out=$outPath --proto_path=$ProtoDir $ProtoDir/*.proto
+fi
+
+if [ -d "darwin" ]; then
+    outPath="darwin/Classes/protos"
+    if [ ! -d $outPath ]; then
+        mkdir -p $outPath
+    fi
+    protoc --objc_out=$outPath --proto_path=$ProtoDir $ProtoDir/*.proto
+fi
+
+if [ -d "gosrc" ]; then
+    go mod -C gosrc tidy
 fi
 
 if [ -d "linux/src" ]; then
@@ -57,25 +83,4 @@ fi
 
 if [ -d "windows/src" ]; then
     go mod -C windows/src tidy
-fi
-
-if [ -d "lib" ]; then
-    if [ ! -d "lib/protos" ]; then
-        mkdir -p lib/protos
-    fi
-    protoc --dart_out=lib/protos --proto_path=$ProtoDir $ProtoDir/*.proto
-fi
-
-if [ -d "android" ]; then
-    if [ ! -d "android/src/main/java" ]; then
-        mkdir -p android/src/main/java
-    fi
-    protoc --java_out=android/src/main/java --proto_path=$ProtoDir $ProtoDir/*.proto
-fi
-
-if [ -d "darwin" ]; then
-    if [ ! -d "darwin/Classes/protos" ]; then
-        mkdir -p darwin/Classes/protos
-    fi
-    protoc --objc_out=darwin/Classes/protos --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
