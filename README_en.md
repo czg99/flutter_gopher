@@ -49,12 +49,11 @@ The plugin project structure generated using the `create` command is as follows:
 ```
 my_ffi/
 ├── android/          # Android platform code
-├── ios/              # iOS platform code
+├── darwin/           # iOS and macOS platform code
 ├── linux/            # Linux platform code
-├── macos/            # macOS platform code
 ├── windows/          # Windows platform code
 ├── lib/              # Dart code
-├── src/              # Go code
+├── gosrc/            # Go code
 ├── protos/           # Protobuf code
 │   ├── proto/        # Protobuf definition files
 │   ├── gen_protos.sh # Script to generate Protobuf code
@@ -67,7 +66,7 @@ my_ffi/
 
 You need to add the following rules to the main project’s `android/app/proguard-rules.pro` file:
 ```
--keep class com.sun.jna.** { *; }
--keep class * extends com.sun.jna.** { *; }
+-keep class com.sun.jna.** {*;}
+-keep class * extends com.sun.jna.** {*;}
 -keep interface * extends com.sun.jna.* {*;}
 ```

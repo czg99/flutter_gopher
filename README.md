@@ -49,12 +49,11 @@ fgo create my_ffi --example
 ```
 my_ffi/
 ├── android/          # Android 平台代码
-├── ios/              # iOS 平台代码
+├── darwin/           # iOS 和 macOS 平台代码
 ├── linux/            # Linux 平台代码
-├── macos/            # macOS 平台代码
 ├── windows/          # Windows 平台代码
 ├── lib/              # Dart 代码
-├── src/              # Go 代码
+├── gosrc/            # Go 代码
 ├── protos/           # Protobuf 代码
 │   ├── proto/        # Protobuf 定义文件
 │   ├── gen_protos.sh # 生成 Protobuf 代码的脚本
@@ -67,7 +66,7 @@ my_ffi/
 
 需要在主项目工程的 `android/app/proguard-rules.pro` 文件中添加以下规则：
 ```
--keep class com.sun.jna.** { *; }
--keep class * extends com.sun.jna.** { *; }
+-keep class com.sun.jna.** {*;}
+-keep class * extends com.sun.jna.** {*;}
 -keep interface * extends com.sun.jna.* {*;}
 ```
