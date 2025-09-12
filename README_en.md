@@ -60,3 +60,14 @@ my_ffi/
 │   ├── gen_protos.sh # Script to generate Protobuf code
 └── example/          # Example Flutter application (if using the --example option)
 ```
+
+## 🔧 Configuration
+
+### Configure Android ProGuard Rules
+
+You need to add the following rules to the main project’s `android/app/proguard-rules.pro` file:
+```
+-keep class com.sun.jna.** { *; }
+-keep class * extends com.sun.jna.** { *; }
+-keep interface * extends com.sun.jna.* {*;}
+```

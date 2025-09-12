@@ -60,3 +60,14 @@ my_ffi/
 │   ├── gen_protos.sh # 生成 Protobuf 代码的脚本
 └── example/          # 示例 Flutter 应用（如果使用 --example 选项）
 ```
+
+## 🔧 配置
+
+### 配置 Android 混淆过滤
+
+需要在主项目工程的 `android/app/proguard-rules.pro` 文件中添加以下规则：
+```
+-keep class com.sun.jna.** { *; }
+-keep class * extends com.sun.jna.** { *; }
+-keep interface * extends com.sun.jna.* {*;}
+```
