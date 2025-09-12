@@ -13,7 +13,7 @@ if (-not (Get-Command "zig" -ErrorAction SilentlyContinue)) {
 $OUTPUT_NAME = "{{.LibName}}"
 $OUTPUT_FILE = "$OUTPUT_NAME.dll"
 $OUTPUT_DIR = $PSScriptRoot
-$GO_SRC_DIRS = @("../src", "src")
+$GO_SRC_DIRS = @("../gosrc", "src")
 $TIMESTAMP_FILE = ".last_build_time"
 
 # Function to check if source code has been updated

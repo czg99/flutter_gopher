@@ -10,7 +10,7 @@ fi
 OUTPUT_NAME="{{.LibName}}MacOS"
 OUTPUT_FILE="lib${OUTPUT_NAME}.a"
 OUTPUT_DIR="$(pwd)"
-GO_SRC="../src"
+GO_SRC="../gosrc"
 TIMESTAMP_FILE=".last_build_time_macos"
 
 MIN_VERSION=10.11

@@ -15,7 +15,7 @@ fi
 OUTPUT_NAME="{{.LibName}}"
 OUTPUT_FILE="lib${OUTPUT_NAME}.so"
 OUTPUT_DIR="$(pwd)"
-GO_SRC="../src"
+GO_SRC="../gosrc"
 TIMESTAMP_FILE=".last_build_time"
 
 # Check if source code has been updated

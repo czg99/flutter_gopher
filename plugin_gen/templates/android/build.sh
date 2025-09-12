@@ -28,7 +28,7 @@ OUTPUT_NAME="{{.LibName}}"
 OUTPUT_FILE="lib${OUTPUT_NAME}.so"
 OUTPUT_HEADER="lib${OUTPUT_NAME}.h"
 OUTPUT_DIR="$(pwd)/libs"
-GO_SRC="../src"
+GO_SRC="../gosrc"
 TIMESTAMP_FILE=".last_build_time"
 
 mkdir -p "${OUTPUT_DIR}"
