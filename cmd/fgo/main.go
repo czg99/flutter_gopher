@@ -22,6 +22,9 @@ func main() {
 	createCmd.PersistentFlags().BoolP("help", "h", false, "")
 	createCmd.PersistentFlags().MarkHidden("help")
 
+	ffiCmd.PersistentFlags().BoolP("help", "h", false, "")
+	ffiCmd.PersistentFlags().MarkHidden("help")
+
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Fatalln("Error:", err)
