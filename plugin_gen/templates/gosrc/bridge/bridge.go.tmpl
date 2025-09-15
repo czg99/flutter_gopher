@@ -8,6 +8,7 @@ import "C"
 import (
 	"errors"
 	"unsafe"
+	"{{.ProjectName}}/dartapi"
 )
 
 func callPlatformMethod(method string, data []byte) ([]byte, error) {
@@ -43,12 +44,12 @@ func fg_empty_response_{{.Timestamp}}() C.FgResponse {
 	return C.FgResponse{}
 }
 
-var global_port C.int64_t = 0
+var global_port int64 = 0
 
 //export fg_init_dart_api_{{.Timestamp}}
 func fg_init_dart_api_{{.Timestamp}}(api unsafe.Pointer, port C.int64_t) {
-	init_dart_api(api)
-	global_port = port
+	dartapi.InitDartApi(api)
+	global_port = int64(port)
 }
 
 var fgPlatformMethodHandle C.FgPlatformMethodHandle = nil
@@ -65,7 +66,7 @@ func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
 		freeFgData(&request.data)
 		return
 	}
-	sendToPort(global_port, unsafe.Pointer(cValueToPtr(request)))
+	dartapi.SendToDartPort(global_port, unsafe.Pointer(cValueToPtr(request)))
 }
 
 //export fg_call_go_method_{{.Timestamp}}
@@ -79,7 +80,7 @@ func fg_call_go_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
 	go func() {
 		response := fg_call_go_method_{{.Timestamp}}(request)
-		sendToPort(port, unsafe.Pointer(cValueToPtr(response)))
+		dartapi.SendToDartPort(int64(port), unsafe.Pointer(cValueToPtr(response)))
 	}()
 }
 
@@ -101,7 +102,7 @@ func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
 	go func() {
 		response := fg_call_platform_method_{{.Timestamp}}(request)
-		sendToPort(port, unsafe.Pointer(cValueToPtr(response)))
+		dartapi.SendToDartPort(int64(port), unsafe.Pointer(cValueToPtr(response)))
 	}()
 }
 
