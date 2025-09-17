@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -39,7 +38,7 @@ func (g *PluginGenerator) Generate(destDir string) error {
 	}
 
 	// 创建 .timestamp 文件
-	if err := g.createTimestampFile(destDir); err != nil {
+	if err := g.CreateTimestampFile(destDir); err != nil {
 		return fmt.Errorf("failed to create .timestamp file: %w", err)
 	}
 
@@ -113,25 +112,6 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 
 	if err != nil {
 		return fmt.Errorf("failed to process example template files: %w", err)
-	}
-	return nil
-}
-
-// createTimestampFile 创建 .timestamp 文件
-func (g *PluginGenerator) createTimestampFile(destDir string) error {
-	timestampFile := filepath.Join(destDir, ".timestamp")
-	// 读取文件内容
-	content, _ := os.ReadFile(timestampFile)
-	if len(content) > 0 {
-		timestamp, _ := strconv.ParseInt(string(content), 10, 64)
-		if timestamp > 0 {
-			g.Timestamp = timestamp
-			return nil
-		}
-	}
-	// 创建文件
-	if err := os.WriteFile(timestampFile, []byte(fmt.Sprint(g.Timestamp)), 0644); err != nil {
-		return err
 	}
 	return nil
 }

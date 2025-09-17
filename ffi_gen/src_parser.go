@@ -51,6 +51,7 @@ func (p *GoSrcParser) Parse(path string, ignoreFileNames []string) (*models.Pack
 		return nil, err
 	}
 	p.ProjectNaming = models.NewProjectNaming(module)
+	p.CreateTimestampFile(".")
 
 	// 加载包
 	pkgs, err := p.loadPackages(path, fileInfo)
