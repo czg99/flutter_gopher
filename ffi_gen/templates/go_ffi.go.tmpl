@@ -34,7 +34,7 @@ typedef struct {{if .withTag}}{{$obj.CType}} {{end}}{
 	{{$field.CType}} {{$field.CName}};
 	{{- end}}
 	{{- if .isResults}}
-	FgData panic_err;
+	FgData err;
 	{{- end}}
 } {{$obj.CType}};
 {{- end}}
@@ -89,7 +89,7 @@ type {{.GoType}} struct {
 func {{$fn.CType}}({{if $fn.HasParams}}params {{$fn.Params.GoCType}}{{end}}) (result {{$fn.Results.GoCType}}) {
 	defer func() {
 		if r := recover(); r != nil {
-			result.panic_err = mapFromString(fmt.Sprintf("panic err: %v", r))
+			result.err = mapFromString(fmt.Sprintf("panic err: %v", r))
 		}
 	}()
 
@@ -98,10 +98,17 @@ func {{$fn.CType}}({{if $fn.HasParams}}params {{$fn.Params.GoCType}}{{end}}) (re
 	{{- end}}
 
 	{{range $i, $field := $fn.Results.Fields}}{{if gt $i 0}}, {{end -}} {{$field.GoName}} {{- end}}
-	{{- if $fn.HasResults}} := {{end -}}
+	{{- if $fn.HasErr}}{{if $fn.HasResults}}, {{end}}err{{end}} 
+	{{- if or $fn.HasResults $fn.HasErr}} := {{end -}}
 	{{$fn.GoType}}(
 		{{- range $i, $field := $fn.Params.Fields}} {{- if gt $i 0}}, {{end}}go_params.{{$field.GoName}}{{end -}}
 	)
+	{{- if $fn.HasErr}}
+	if err != nil {
+		result.err = mapFromString(err.Error())
+		return
+	}
+	{{- end}}
 
 	{{- if $fn.HasResults}}
 	go_result := {{$fn.Results.GoType}}{
@@ -116,7 +123,14 @@ func {{$fn.CType}}({{if $fn.HasParams}}params {{$fn.Params.GoCType}}{{end}}) (re
 func {{$fn.CType}}_async(port C.int64_t{{if $fn.HasParams}}, params {{$fn.Params.GoCType}}{{end}}) {
 	go func() {
 		result := {{$fn.CType}}({{if $fn.HasParams}}params{{end}})
-		dartapi.SendToDartPort(int64(port), unsafe.Pointer(cValueToPtr(result)))
+		ptr := unsafe.Pointer(cValueToPtr(result))
+		if suc := dartapi.SendToDartPort(int64(port), ptr); !suc {
+			{{- if $fn.HasResults}}
+			mapTo{{$fn.Results.MapName}}(result)
+			{{- end}}
+			C.free(result.err.data)
+			C.free(ptr)
+		}
 	}()
 }
 
@@ -132,7 +146,6 @@ func {{$fn.CType}}_callback({{if $fn.HasParams}}params {{$fn.Params.GoCType}}, {
 {{- define "generateMap"}}
 {{- $obj := .obj}}
 {{- $fields := $obj.Fields}}
-{{- if not .isResults}}
 func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	{{- range $field := $fields}}
 	{{- if not $field.NeedMap}}
@@ -143,7 +156,6 @@ func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	{{- end}}
 	return
 }
-{{end}}
 
 {{- if not .isParams}}
 func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
@@ -280,16 +292,8 @@ func mapToBytes(from C.FgData) []byte {
 	if from.data == nil {
 		return nil
 	}
-	defer freeFgData(&from)
+	defer C.free(from.data)
 	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
-}
-
-func freeFgData(value *C.FgData) {
-	if value != nil && value.data != nil {
-		C.free(value.data)
-		value.data = nil
-		value.size = 0
-	}
 }
 
 func cValueToPtr[T any](value T) *T {

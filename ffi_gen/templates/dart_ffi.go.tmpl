@@ -71,24 +71,18 @@ final class _FgFfi {
   {{- end}}
 
   {{$fn.DartResultType}} _{{$fn.DartType}}Result({{$fn.Results.DartCType}} c_result) {
-    if (c_result.panic_err.data != ffi.nullptr) {
-      final err = _mapToError(c_result.panic_err);
+    if (c_result.err.data != ffi.nullptr) {
+      final err = _mapToError(c_result.err);
       throw FgFfiException(err!);
     }
 
     {{- if $fn.HasResults}}
     final dart_result = _mapTo{{$fn.Results.DartType}}(c_result);
-    {{- end}}
-    {{- if $fn.HasErr}}
-    if (dart_result.err != null) {
-      throw FgFfiException(dart_result.err!);
-    }
-    {{- end}}
-
     {{- if gt $fn.ResultCount 1}}
     return dart_result;
     {{- else if eq $fn.ResultCount 1}}
     return dart_result.{{(index $fn.Results.Fields 0).DartName}};
+    {{- end}}
     {{- end}}
   }
 
@@ -112,17 +106,15 @@ final class _FgFfi {
       {{- range $i, $param := $fn.Params.Fields}}{{if gt $i 0}}, {{end}}{{$param.DartName}}{{end -}}
     );
     {{- end}}
-    final receivePort = ReceivePort();
-    {{$fn.DartCType}}Async(receivePort.sendPort.nativePort{{if $fn.HasParams}}, c_params{{end}});
+    final receive_port = ReceivePort();
+    {{$fn.DartCType}}Async(receive_port.sendPort.nativePort{{if $fn.HasParams}}, c_params{{end}});
 
-    final resultAddr = await receivePort.first;
-    final c_result_ptr = ffi.Pointer.fromAddress(resultAddr).cast<{{$fn.Results.DartCType}}>();
+    final result_addr = await receive_port.first;
+    final c_result_ptr = ffi.Pointer.fromAddress(result_addr).cast<{{$fn.Results.DartCType}}>();
 
-    try {
-      return _{{$fn.DartType}}Result(c_result_ptr[0]);
-    } finally {
-      malloc.free(c_result_ptr);
-    }
+    final result = _{{$fn.DartType}}Result(c_result_ptr[0]);
+    malloc.free(c_result_ptr);
+    return result;
   }
 {{end -}}
 }
@@ -189,7 +181,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- end}}
 {{- end}}
 {{- if .isResults}}
-  external _fgData panic_err;
+  external _fgData err;
 {{- end}}
 }
 {{- end}}
@@ -249,7 +241,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- else}}
   final result = _mapTo{{$obj.Inner.MapName}}(from[0]);
   {{- end}}
-  calloc.free(from);
+  malloc.free(from);
   return result;
 }
 
@@ -260,7 +252,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- else}}
   final cValue = _mapFrom{{$obj.Inner.MapName}}(from);
   {{- end}}
-  final result = calloc<{{$obj.Inner.DartCType}}>();
+  final result = malloc<{{$obj.Inner.DartCType}}>();
   result[0] = cValue;
   return result;
 }
@@ -276,7 +268,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
     {{- else}} _mapTo{{$obj.Inner.MapName}}(data[i])
     {{- end -}}
   );
-  calloc.free(data);
+  malloc.free(data);
   return result;
 }
 
@@ -284,7 +276,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   final result = ffi.Struct.create<{{$obj.DartCType}}>();
   if (from.isEmpty) return result;
   
-  final data = calloc<{{$obj.Inner.DartCType}}>(from.length);
+  final data = malloc<{{$obj.Inner.DartCType}}>(from.length);
   for (var i = 0; i < from.length; i++) {
     {{- if not $obj.Inner.NeedMap}}
     data[i] = from[i];
