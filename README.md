@@ -15,7 +15,7 @@ Flutter Gopher 用于快速创建基于 Golang 的 Flutter 插件，并生成了
 ### 前置条件
 
 - Go 1.23.0 或更高版本
-- Flutter 3.10.0 或更高版本 
+- Flutter 3.22.0 或更高版本 
 - Zig 0.14.0 或更高版本 (编译为 Windows 或 Linux 的库需要)
 
 ### 安装步骤

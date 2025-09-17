@@ -33,57 +33,34 @@ class FgBridge {
     methodHandle = handle;
   }
 
-  static Uint8List? callGoMethod(String method, {Uint8List? data}) =>
-      _api.callGoMethod(method, data: data);
-  static Future<Uint8List?> callGoMethodAsync(String method,
-          {Uint8List? data}) =>
+  static Uint8List? callGoMethod(String method, {Uint8List? data}) => _api.callGoMethod(method, data: data);
+  static Future<Uint8List?> callGoMethodAsync(String method, {Uint8List? data}) =>
       _api.callGoMethodAsync(method, data: data);
-  static Uint8List? callPlatformMethod(String method, {Uint8List? data}) =>
-      _api.callPlatformMethod(method, data: data);
-  static Future<Uint8List?> callPlatformMethodAsync(String method,
-          {Uint8List? data}) =>
+  static Uint8List? callPlatformMethod(String method, {Uint8List? data}) => _api.callPlatformMethod(method, data: data);
+  static Future<Uint8List?> callPlatformMethodAsync(String method, {Uint8List? data}) =>
       _api.callPlatformMethodAsync(method, data: data);
 
-  static Uint8List stringToUint8List(String value) =>
-      const Utf8Encoder().convert(value);
-  static String uint8ListToString(Uint8List value) =>
-      const Utf8Decoder().convert(value);
+  static Uint8List stringToUint8List(String value) => const Utf8Encoder().convert(value);
+  static String uint8ListToString(Uint8List value) => const Utf8Decoder().convert(value);
 }
 
 final _lib = FgLoader('{{.LibName}}');
-final _fgData Function() _fgEmptyData = _lib
-    .lookup<ffi.NativeFunction<_fgData Function()>>(
-        'fg_empty_data_{{.Timestamp}}')
-    .asFunction();
-final _fgRequest Function() _fgEmptyRequest = _lib
-    .lookup<ffi.NativeFunction<_fgRequest Function()>>(
-        'fg_empty_request_{{.Timestamp}}')
-    .asFunction();
-final _fgResponse Function() _fgEmptyResponse = _lib
-    .lookup<ffi.NativeFunction<_fgResponse Function()>>(
-        'fg_empty_response_{{.Timestamp}}')
-    .asFunction();
 final void Function(ffi.Pointer<ffi.Void>, int) _fgInitDartApi = _lib
-    .lookup<
-        ffi.NativeFunction<
-            ffi.Void Function(ffi.Pointer<ffi.Void>,
-                ffi.Int64)>>('fg_init_dart_api_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Int64)>>('fg_init_dart_api_{{.Timestamp}}')
     .asFunction();
 final _fgResponse Function(_fgRequest) _fgCallGoMethod = _lib
-    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>(
-        'fg_call_go_method_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>('fg_call_go_method_{{.Timestamp}}')
     .asFunction();
 final void Function(int, _fgRequest) _fgCallGoMethodAsync = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
-        'fg_call_go_method_async_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>('fg_call_go_method_async_{{.Timestamp}}')
     .asFunction();
 final _fgResponse Function(_fgRequest) _fgCallPlatformMethod = _lib
-    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>(
-        'fg_call_platform_method_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>('fg_call_platform_method_{{.Timestamp}}')
     .asFunction();
 final void Function(int, _fgRequest) _fgCallPlatformMethodAsync = _lib
     .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
-        'fg_call_platform_method_async_{{.Timestamp}}')
+      'fg_call_platform_method_async_{{.Timestamp}}',
+    )
     .asFunction();
 
 class _bridge {
@@ -98,8 +75,7 @@ class _bridge {
         FgBridge.methodHandle!(method, data);
       }
     });
-    _fgInitDartApi(
-        ffi.NativeApi.initializeApiDLData, receivePort.sendPort.nativePort);
+    _fgInitDartApi(ffi.NativeApi.initializeApiDLData, receivePort.sendPort.nativePort);
   }
 
   Uint8List? callGoMethod(String method, {Uint8List? data}) {
@@ -117,8 +93,7 @@ class _bridge {
     final request = _mapToFgRequest(method, data);
     _fgCallGoMethodAsync(receivePort.sendPort.nativePort, request);
     final responseAddr = await receivePort.first;
-    final responsePtr =
-        ffi.Pointer.fromAddress(responseAddr).cast<_fgResponse>();
+    final responsePtr = ffi.Pointer.fromAddress(responseAddr).cast<_fgResponse>();
 
     final (result, error) = _mapFromFgResponse(responsePtr[0]);
     malloc.free(responsePtr);
@@ -138,14 +113,12 @@ class _bridge {
     return result;
   }
 
-  Future<Uint8List?> callPlatformMethodAsync(String method,
-      {Uint8List? data}) async {
+  Future<Uint8List?> callPlatformMethodAsync(String method, {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final request = _mapToFgRequest(method, data);
     _fgCallPlatformMethodAsync(receivePort.sendPort.nativePort, request);
     final responseAddr = await receivePort.first;
-    final responsePtr =
-        ffi.Pointer.fromAddress(responseAddr).cast<_fgResponse>();
+    final responsePtr = ffi.Pointer.fromAddress(responseAddr).cast<_fgResponse>();
 
     final (result, error) = _mapFromFgResponse(responsePtr[0]);
     malloc.free(responsePtr);
@@ -174,16 +147,8 @@ final class _fgResponse extends ffi.Struct {
   external _fgData error;
 }
 
-void _freeFgData(_fgData value) {
-  if (value.data != ffi.nullptr) {
-    malloc.free(value.data);
-    value.data = ffi.nullptr;
-    value.size = 0;
-  }
-}
-
 _fgRequest _mapToFgRequest(String method, Uint8List? data) {
-  final result = _fgEmptyRequest();
+  final result = ffi.Struct.create<_fgRequest>();
   result.method = _mapFgDataFromString(method);
   result.data = _mapFgDataFromBytes(data);
   return result;
@@ -196,7 +161,7 @@ _fgRequest _mapToFgRequest(String method, Uint8List? data) {
 }
 
 _fgResponse _mapToFgResponse(Uint8List? data, _fgError error) {
-  final result = _fgEmptyResponse();
+  final result = ffi.Struct.create<_fgResponse>();
   result.data = _mapFgDataFromBytes(data);
   result.error = _mapFgDataFromError(error);
   return result;
@@ -212,12 +177,12 @@ Uint8List? _mapFgDataToBytes(_fgData from) {
   if (from.data == ffi.nullptr) return null;
   final data = from.data.cast<ffi.Uint8>();
   final result = Uint8List.fromList(data.asTypedList(from.size));
-  _freeFgData(from);
+  malloc.free(from.data);
   return result;
 }
 
 _fgData _mapFgDataFromBytes(Uint8List? from) {
-  final result = _fgEmptyData();
+  final result = ffi.Struct.create<_fgData>();
   if (from != null) {
     final data = malloc<ffi.Uint8>(from.length);
     data.asTypedList(from.length).setAll(0, from);
@@ -245,7 +210,7 @@ _fgError _mapFgDataToError(_fgData from) {
 
 _fgData _mapFgDataFromError(_fgError from) {
   if (from == null) {
-    return _fgEmptyData();
+    return ffi.Struct.create<_fgData>();
   }
   return _mapFgDataFromString(from);
 }

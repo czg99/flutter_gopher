@@ -15,7 +15,7 @@ Flutter Gopher is used to quickly create Golang-based Flutter plugins and genera
 ### Prerequisites
 
 - Go 1.23.0 or higher
-- Flutter 3.10.0 or higher
+- Flutter 3.22.0 or higher
 - Zig 0.14.0 or higher (required for compiling libraries for Windows or Linux)
 
 ### Installation Steps
