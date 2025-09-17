@@ -27,12 +27,12 @@ func GenerateFfiCode(goffiDir, dartOutDir string) error {
 	// 解析源代码
 	log.Println("Parsing source code")
 	parser := NewGoSrcParser()
-	pkg, err := parser.Parse(goffiDir)
+	pkg, err := parser.Parse(goffiDir, []string{"ffi.export.go"})
 	if err != nil {
 		return fmt.Errorf("failed to parse source code: %w", err)
 	}
 
-	goOut := filepath.Join(goffiDir, "exports.go")
+	goOut := filepath.Join(goffiDir, "ffi.export.go")
 	dartOut := filepath.Join(dartOutDir, "ffi.dart")
 
 	// 如果指定了输出路径则生成Go代码

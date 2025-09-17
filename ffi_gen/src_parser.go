@@ -6,7 +6,9 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
+	"slices"
 	"unicode"
 
 	"github.com/czg99/flutter_gopher/models"
@@ -36,7 +38,7 @@ func NewGoSrcParser() *GoSrcParser {
 }
 
 // Parse 实现了 GoParser 的 Parser 接口
-func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
+func (p *GoSrcParser) Parse(path string, ignoreFileNames []string) (*models.Package, error) {
 	// 验证路径
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -58,7 +60,7 @@ func (p *GoSrcParser) Parse(path string) (*models.Package, error) {
 
 	// 开始解析
 	log.Println("Starting package parsing")
-	if err := p.parsePackages(pkgs); err != nil {
+	if err := p.parsePackages(pkgs, ignoreFileNames); err != nil {
 		return nil, err
 	}
 
@@ -106,11 +108,17 @@ func (p *GoSrcParser) loadPackages(path string, fileInfo os.FileInfo) ([]*packag
 }
 
 // parsePackages 处理所有包及其文件
-func (p *GoSrcParser) parsePackages(pkgs []*packages.Package) error {
+func (p *GoSrcParser) parsePackages(pkgs []*packages.Package, ignoreFileNames []string) error {
 	for _, pkg := range pkgs {
 		log.Println(" - Processing package:", pkg.Name)
-
 		for i, file := range pkg.CompiledGoFiles {
+			if len(ignoreFileNames) > 0 {
+				// 检查文件名是否在忽略列表中
+				fileName := filepath.Base(file)
+				if slices.Contains(ignoreFileNames, fileName) {
+					continue
+				}
+			}
 			log.Println("   - Analyzing file:", file)
 			syntax := pkg.Syntax[i]
 			if err := p.collectNodes(syntax); err != nil {
@@ -190,6 +198,12 @@ func (p *GoSrcParser) processNodes() error {
 // processTypeNode 处理类型声明
 func (p *GoSrcParser) processTypeNode(typeSpec *ast.TypeSpec) error {
 	name := typeSpec.Name.Name
+
+	// 跳过未导出的类型
+	if unicode.IsLower(rune(name[0])) {
+		return nil
+	}
+
 	log.Println(" - Processing type:", name)
 
 	if typeSpec.TypeParams != nil {
@@ -300,7 +314,7 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}
 
 		if len(fields) == 0 {
-			return nil, fmt.Errorf("struct with no fields is not supported")
+			return nil, fmt.Errorf("struct %s with no public fields is not supported", name)
 		}
 
 		return &models.GoStructType{
@@ -332,12 +346,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 				Type:   &models.GoIdentType{Name: strcase.ToLowerCamel(name) + "Params"},
 				Fields: params,
 			},
-			HasParams: len(params) > 0,
 			Results: &models.GoStructType{
 				Type:   &models.GoIdentType{Name: strcase.ToLowerCamel(name) + "Results"},
 				Fields: results,
 			},
-			HasResults: len(results) > 0,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported type expression: %v (%T)", expr, expr)
@@ -429,8 +441,11 @@ func processFunctionReturnValues(funcType *models.GoFuncType) {
 	// 结果数量不含错误
 	if hasErr {
 		resultCount--
+		funcType.Results.Fields = fields[:resultCount]
 	}
 
+	funcType.HasParams = len(funcType.Params.Fields) > 0
+	funcType.HasResults = len(funcType.Results.Fields) > 0
 	funcType.ResultCount = resultCount
 	funcType.HasErr = hasErr
 }
