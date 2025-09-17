@@ -7,6 +7,7 @@ package bridge
 import "C"
 import (
 	"errors"
+	"sync"
 	"unsafe"
 	"{{.ProjectName}}/dartapi"
 )
@@ -22,34 +23,22 @@ func callPlatformMethod(method string, data []byte) ([]byte, error) {
 }
 
 func callDartMethod(method string, data []byte) {
-	if global_port == 0 {
+	if len(global_port) == 0 {
 		return
 	}
 	request := mapToFgRequest(method, data)
 	fg_call_dart_method_{{.Timestamp}}(request)
 }
 
-//export fg_empty_data_{{.Timestamp}}
-func fg_empty_data_{{.Timestamp}}() C.FgData {
-	return C.FgData{}
-}
-
-//export fg_empty_request_{{.Timestamp}}
-func fg_empty_request_{{.Timestamp}}() C.FgRequest {
-	return C.FgRequest{}
-}
-
-//export fg_empty_response_{{.Timestamp}}
-func fg_empty_response_{{.Timestamp}}() C.FgResponse {
-	return C.FgResponse{}
-}
-
-var global_port int64 = 0
+var global_port = make(map[int64]struct{})
+var global_lock = sync.Mutex{}
 
 //export fg_init_dart_api_{{.Timestamp}}
 func fg_init_dart_api_{{.Timestamp}}(api unsafe.Pointer, port C.int64_t) {
 	dartapi.InitDartApi(api)
-	global_port = int64(port)
+	global_lock.Lock()
+	defer global_lock.Unlock()
+	global_port[int64(port)] = struct{}{}
 }
 
 var fgPlatformMethodHandle C.FgPlatformMethodHandle = nil
@@ -61,12 +50,28 @@ func fg_init_platform_method_handle_{{.Timestamp}}(handle C.FgPlatformMethodHand
 
 //export fg_call_dart_method_{{.Timestamp}}
 func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
-	if global_port == 0 {
-		freeFgData(&request.method)
-		freeFgData(&request.data)
+	if len(global_port) == 0 {
+		freeFgRequest(&request, true)
 		return
 	}
-	dartapi.SendToDartPort(global_port, unsafe.Pointer(cValueToPtr(request)))
+	global_lock.Lock()
+	defer global_lock.Unlock()
+	count := len(global_port)
+	for port, _ := range global_port {
+		value := request
+		if (count > 1) {
+			value = C.FgRequest {
+				method: copyFgData(request.method),
+				data: copyFgData(request.data),
+			}
+		}
+		ptr := cValueToPtr(value)
+		if suc := dartapi.SendToDartPort(port, unsafe.Pointer(ptr)); !suc {
+			freeFgRequest(ptr, false)
+			delete(global_port, port)
+		}
+		count--
+	}
 }
 
 //export fg_call_go_method_{{.Timestamp}}
@@ -80,7 +85,10 @@ func fg_call_go_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
 	go func() {
 		response := fg_call_go_method_{{.Timestamp}}(request)
-		dartapi.SendToDartPort(int64(port), unsafe.Pointer(cValueToPtr(response)))
+		ptr := cValueToPtr(response)
+		if suc := dartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
+			freeFgResponse(ptr, false)
+		}
 	}()
 }
 
@@ -88,8 +96,7 @@ func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest)
 func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	response := C.FgResponse{}
 	if fgPlatformMethodHandle == nil {
-		freeFgData(&request.method)
-		freeFgData(&request.data)
+		freeFgRequest(&request, true)
 		response.error = mapFgDataFromString("init err: platform method handle not init")
 		return response
 	}
@@ -102,16 +109,16 @@ func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
 	go func() {
 		response := fg_call_platform_method_{{.Timestamp}}(request)
-		dartapi.SendToDartPort(int64(port), unsafe.Pointer(cValueToPtr(response)))
+		ptr := cValueToPtr(response)
+		if suc := dartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
+			freeFgResponse(ptr, false)
+		}
 	}()
 }
 
 //export fg_enforce_binding_{{.Timestamp}}
 func fg_enforce_binding_{{.Timestamp}}() {
 	var ptr uintptr
-	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_data_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_request_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_empty_response_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.Timestamp}}))
 	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.Timestamp}}))
@@ -193,8 +200,37 @@ func mapFgDataToBytes(from C.FgData) []byte {
 	if from.data == nil {
 		return nil
 	}
-	defer freeFgData(&from)
+	defer C.free(from.data)
 	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
+}
+
+func freeFgRequest(value *C.FgRequest, freeInnerOnly bool) {
+	C.free(value.method.data)
+	C.free(value.data.data)
+	if !freeInnerOnly {
+		C.free(unsafe.Pointer(value))
+	}
+}
+
+func freeFgResponse(value *C.FgResponse, freeInnerOnly bool) {
+	C.free(value.data.data)
+	C.free(value.error.data)
+	if !freeInnerOnly {
+		C.free(unsafe.Pointer(value))
+	}
+}
+
+func copyFgData(src C.FgData) C.FgData {
+	if src.data == nil || src.size <= 0 {
+		return C.FgData{}
+	}
+
+	dstData := C.malloc(C.size_t(src.size))
+	C.memcpy(dstData, src.data, C.size_t(src.size))
+	return C.FgData{
+		data: dstData,
+		size: src.size,
+	}
 }
 
 func cValueToPtr[T any](value T) *T {
@@ -202,12 +238,4 @@ func cValueToPtr[T any](value T) *T {
 	data := C.malloc(C.size_t(size))
 	*(*T)(data) = value
 	return (*T)(data)
-}
-
-func freeFgData(value *C.FgData) {
-	if value != nil && value.data != nil {
-		C.free(value.data)
-		value.data = nil
-		value.size = 0
-	}
 }
