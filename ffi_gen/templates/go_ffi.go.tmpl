@@ -7,9 +7,9 @@ import (
 	"unsafe"
 	{{- if gt (len $bridge.Funcs) 0}}
 	"fmt"
+	"{{.ProjectName}}/dartapi"
 	{{- end}}
 
-	"{{.ProjectName}}/dartapi"
 	_ "{{$bridge.Module}}/mobileinit"
 )
 
@@ -321,10 +321,12 @@ func goValueFromPtr[T any](ptr *T) T {
 	return *ptr
 }
 
-//export fg_ffi_binding
-func fg_ffi_binding() {
+//export fg_ffi_binding_{{.Timestamp}}
+func fg_ffi_binding_{{.Timestamp}}() {
+	{{- if gt (len $bridge.Funcs) 0}}
 	var ptr uintptr
 	{{- range $fn := $bridge.Funcs}}
 	ptr ^= uintptr(unsafe.Pointer(C.{{$fn.CType}}))
+	{{- end}}
 	{{- end}}
 }

@@ -42,6 +42,4 @@ extern DLLEXPORT void fg_call_go_method_async_{{.Timestamp}}(int64_t port, FgReq
 extern DLLEXPORT FgResponse fg_call_platform_method_{{.Timestamp}}(FgRequest request);
 extern DLLEXPORT void fg_call_platform_method_async_{{.Timestamp}}(int64_t port, FgRequest request);
 
-extern DLLEXPORT void fg_enforce_binding_{{.Timestamp}}(void);
-
 #endif

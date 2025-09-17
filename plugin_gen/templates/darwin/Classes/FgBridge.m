@@ -3,6 +3,9 @@
 
 #include "../../src/bridge/include/bridge.h"
 
+extern void fg_bridge_binding_{{.Timestamp}}(void);
+extern void fg_ffi_binding_{{.Timestamp}}(void);
+
 @implementation FgBridge
 
 typedef NSString FgError;
@@ -14,7 +17,8 @@ void methodHandle(FgRequest request, FgResponse* response) {
 }
 
 + (void)load {
-    fg_enforce_binding_{{.Timestamp}}();
+    fg_bridge_binding_{{.Timestamp}}();
+    fg_ffi_binding_{{.Timestamp}}();
     fg_init_platform_method_handle_{{.Timestamp}}(methodHandle);
 }
 

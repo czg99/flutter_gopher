@@ -116,18 +116,6 @@ func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRe
 	}()
 }
 
-//export fg_enforce_binding_{{.Timestamp}}
-func fg_enforce_binding_{{.Timestamp}}() {
-	var ptr uintptr
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_async_{{.Timestamp}}))
-}
-
 func mapFromFgRequest(from C.FgRequest) (string, []byte) {
 	method := mapFgDataToString(from.method)
 	data := mapFgDataToBytes(from.data)
@@ -238,4 +226,16 @@ func cValueToPtr[T any](value T) *T {
 	data := C.malloc(C.size_t(size))
 	*(*T)(data) = value
 	return (*T)(data)
+}
+
+//export fg_bridge_binding_{{.Timestamp}}
+func fg_bridge_binding_{{.Timestamp}}() {
+	var ptr uintptr
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_async_{{.Timestamp}}))
 }
