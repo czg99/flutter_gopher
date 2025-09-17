@@ -14,10 +14,7 @@ import (
 var ffiCmd = &cobra.Command{
 	Use:   "ffi",
 	Short: "Generate Go and Dart FFI code from Go source files",
-	Long: `Generate Go and Dart FFI code from Go source files.
-
-This command parses Go source files and generates the corresponding FFI code
-for both Go and Dart to enable Flutter-Go interoperability.
+	Long: `This command parses Go source files and generates the corresponding FFI code.
 
 Example usage:
   fgo ffi`,

@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 
@@ -55,8 +57,8 @@ func validateAndGeneratePlugin(projectName string) error {
 	}
 
 	// 如果输出目录不存在则创建
-	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
-		fmt.Println("Creating output directory:", outputPath)
+	if _, err = os.Stat(outputPath); os.IsNotExist(err) {
+		log.Println("Creating output directory:", outputPath)
 		if err = os.MkdirAll(outputPath, 0755); err != nil {
 			return fmt.Errorf("failed to create output directory: %v", err)
 		}
@@ -65,18 +67,32 @@ func validateAndGeneratePlugin(projectName string) error {
 	}
 
 	// 初始化插件生成器
-	fmt.Printf("Initializing plugin generator for '%s'...\n", projectName)
+	log.Printf("Initializing plugin generator for '%s'...\n", projectName)
 	generator := plugingen.NewPluginGenerator(projectName)
 
 	// 生成插件项目结构
-	fmt.Println("Generating plugin project structure...")
-	if err := generator.Generate(outputPath); err != nil {
+	log.Println("Generating plugin project structure...")
+	if err = generator.Generate(outputPath); err != nil {
 		return fmt.Errorf("failed to generate plugin project: %v", err)
 	}
 
 	// 切换到输出目录
-	if err := os.Chdir(outputPath); err != nil {
+	if err = os.Chdir(outputPath); err != nil {
 		return fmt.Errorf("failed to change directory: %v", err)
+	}
+
+	// 运行自身的ffi命令
+	exePath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %v", err)
+	}
+
+	cmd := exec.Command(exePath, "ffi")
+	cmd.Dir = outputPath
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run fgo ffi: %w", err)
 	}
 
 	if withExample {

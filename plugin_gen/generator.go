@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -80,7 +81,7 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	fmt.Println("Creating Flutter example project...")
+	log.Println("Creating Flutter example project...")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create flutter example project: %w", err)
 	}
@@ -136,10 +137,10 @@ func (g *PluginGenerator) createTimestampFile(destDir string) error {
 }
 
 // processTemplateFile 处理模板文件或目录
-func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) error {
+func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDir bool) error {
 	// 获取相对于 templates 目录的路径
 	var relPath string
-	relPath, err := filepath.Rel("templates", path)
+	relPath, err := filepath.Rel("templates", templatePath)
 	if err != nil {
 		return err
 	}
@@ -163,13 +164,17 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		return nil
 	}
 
-	fmt.Println("Processing template file:", strings.TrimSuffix(relPath, ".tmpl"))
+	// 替换占位符
+	relPath = strings.ReplaceAll(relPath, "PluginClassName", g.PluginClassName)
+	relPath = strings.ReplaceAll(relPath, "ProjectName", g.ProjectName)
+	relPath = strings.ReplaceAll(relPath, "LibName", g.LibName)
+	relPath = strings.TrimSuffix(relPath, ".tmpl")
+	relPath = filepath.FromSlash(relPath)
 
-	// 处理文件
-	destPath := filepath.Join(destDir, relPath)
+	log.Println("Processing template file:", relPath)
 
 	// 读取模板文件内容
-	content, err := templateFiles.ReadFile(path)
+	content, err := templateFiles.ReadFile(templatePath)
 	if err != nil {
 		return fmt.Errorf("failed to read template file %s: %w", relPath, err)
 	}
@@ -177,7 +182,7 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 	// 处理包含模板变量的文件
 	if bytes.Contains(content, []byte("{{.")) {
 		var tmpl *template.Template
-		tmpl, err = template.New(filepath.Base(relPath)).Parse(string(content))
+		tmpl, err = template.New(relPath).Parse(string(content))
 		if err != nil {
 			return fmt.Errorf("failed to parse template %s: %w", relPath, err)
 		}
@@ -190,22 +195,8 @@ func (g *PluginGenerator) processTemplateFile(path, destDir string, isDir bool) 
 		content = buffer.Bytes()
 	}
 
-	// 去除目标路径中的 .tmpl 后缀
-	destPath = strings.TrimSuffix(destPath, ".tmpl")
-
-	// 替换占位符文件名为实际名称
-	fileName := filepath.Base(destPath)
-	dir := filepath.Dir(destPath)
-	if strings.HasPrefix(fileName, "PluginClassName") {
-		fileName = strings.Replace(fileName, "PluginClassName", g.PluginClassName, 1)
-	} else if strings.HasPrefix(fileName, "ProjectName") {
-		fileName = strings.Replace(fileName, "ProjectName", g.ProjectName, 1)
-	} else if strings.HasPrefix(fileName, "LibName") {
-		fileName = strings.Replace(fileName, "LibName", g.LibName, 1)
-	}
-
 	// 写入处理后的内容到目标文件
-	destPath = filepath.Join(dir, fileName)
+	destPath := filepath.Join(destDir, relPath)
 	err = os.WriteFile(destPath, content, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %w", destPath, err)
