@@ -21,6 +21,7 @@ class FgFfiException implements Exception {
 }
 
 final class FgFfi {
+  FgFfi._();
   static final _api = _FgFfi();
 
 {{range $fn := $bridge.Funcs}}
