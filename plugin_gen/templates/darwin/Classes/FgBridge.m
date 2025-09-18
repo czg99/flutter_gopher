@@ -16,7 +16,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     [FgBridge methodHandle:request response:response];
 }
 
-+ (void)load {
++ (void)initialize {
     fg_bridge_binding_{{.Timestamp}}();
     fg_ffi_binding_{{.Timestamp}}();
     fg_init_platform_method_handle_{{.Timestamp}}(methodHandle);
