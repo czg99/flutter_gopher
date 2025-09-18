@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 
@@ -82,18 +81,7 @@ func validateAndGeneratePlugin(projectName string) error {
 	}
 
 	// 运行自身的ffi命令
-	exePath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("failed to get executable path: %v", err)
-	}
-
-	cmd := exec.Command(exePath, "ffi")
-	cmd.Dir = outputPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to run fgo ffi: %w", err)
-	}
+	ffiCmd.Run(nil, nil)
 
 	if withExample {
 		fmt.Println()
