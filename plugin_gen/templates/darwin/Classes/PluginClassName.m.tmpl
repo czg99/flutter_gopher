@@ -12,7 +12,7 @@
 }
 
 // Implementation of FgBridgeDelegate
-- (NSData *)methodHandle:(NSString *)method data:(NSData *)data error:(NSError**)error {
+- (NSData *)methodHandle:(int)method data:(NSData *)data error:(NSError**)error {
     NSString *hexString = @"null";
     
     if (data != nil) {
@@ -27,7 +27,7 @@
         hexString = mutableHexString;
     }
     
-    NSLog(@"[{{.LibClassName}}] Platform Received: %@ %@", method, hexString);
+    NSLog(@"[{{.LibClassName}}] Platform Received: %d %@", method, hexString);
     return data;
 }
 

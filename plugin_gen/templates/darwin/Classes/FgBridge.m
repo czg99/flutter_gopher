@@ -75,7 +75,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
 }
 
 + (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
-    NSString* method = [self mapFgDataToNSString:request.method];
+    int method = request.method;
     NSData* data = [self mapFgDataToNSData:request.data];
 
     if (globalDelegate == nil) {
@@ -99,13 +99,9 @@ void methodHandle(FgRequest request, FgResponse* response) {
     response->data = [self mapFgDataFromNSData:result];
 }
 
-+ (NSData*)callGoMethod:(NSString*)method data:(NSData*)data error:(NSError**)error {
-    if (method == nil) {
-        return nil;
-    }
-    
++ (NSData*)callGoMethod:(int)method data:(NSData*)data error:(NSError**)error {    
     FgRequest request = {
-        .method = [self mapFgDataFromNSString:method],
+        .method = method,
         .data = [self mapFgDataFromNSData:data],
     };
     
@@ -120,13 +116,9 @@ void methodHandle(FgRequest request, FgResponse* response) {
     return result;
 }
 
-+ (void)callDartMethod:(NSString*)method data:(NSData*)data {
-    if (method == nil) {
-        return;
-    }
-    
++ (void)callDartMethod:(int)method data:(NSData*)data {    
     FgRequest request = {
-        .method = [self mapFgDataFromNSString:method],
+        .method = method,
         .data = [self mapFgDataFromNSData:data],
     };
     

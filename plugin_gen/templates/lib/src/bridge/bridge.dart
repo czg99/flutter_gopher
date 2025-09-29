@@ -8,7 +8,7 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'loader.dart';
 
-typedef FgBridgeMethodHandle = void Function(String method, Uint8List? data);
+typedef FgBridgeMethodHandle = void Function(int method, Uint8List? data);
 
 class FgBridgeException implements Exception {
   final String message;
@@ -33,11 +33,11 @@ class FgBridge {
     methodHandle = handle;
   }
 
-  static Uint8List? callGoMethod(String method, {Uint8List? data}) => _api.callGoMethod(method, data: data);
-  static Future<Uint8List?> callGoMethodAsync(String method, {Uint8List? data}) =>
+  static Uint8List? callGoMethod(int method, {Uint8List? data}) => _api.callGoMethod(method, data: data);
+  static Future<Uint8List?> callGoMethodAsync(int method, {Uint8List? data}) =>
       _api.callGoMethodAsync(method, data: data);
-  static Uint8List? callPlatformMethod(String method, {Uint8List? data}) => _api.callPlatformMethod(method, data: data);
-  static Future<Uint8List?> callPlatformMethodAsync(String method, {Uint8List? data}) =>
+  static Uint8List? callPlatformMethod(int method, {Uint8List? data}) => _api.callPlatformMethod(method, data: data);
+  static Future<Uint8List?> callPlatformMethodAsync(int method, {Uint8List? data}) =>
       _api.callPlatformMethodAsync(method, data: data);
 
   static Uint8List stringToUint8List(String value) => const Utf8Encoder().convert(value);
@@ -78,7 +78,7 @@ class _bridge {
     _fgInitDartApi(ffi.NativeApi.initializeApiDLData, receivePort.sendPort.nativePort);
   }
 
-  Uint8List? callGoMethod(String method, {Uint8List? data}) {
+  Uint8List? callGoMethod(int method, {Uint8List? data}) {
     final request = _mapToFgRequest(method, data);
     final response = _fgCallGoMethod(request);
     final (result, error) = _mapFromFgResponse(response);
@@ -88,7 +88,7 @@ class _bridge {
     return result;
   }
 
-  Future<Uint8List?> callGoMethodAsync(String method, {Uint8List? data}) async {
+  Future<Uint8List?> callGoMethodAsync(int method, {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final request = _mapToFgRequest(method, data);
     _fgCallGoMethodAsync(receivePort.sendPort.nativePort, request);
@@ -103,7 +103,7 @@ class _bridge {
     return result;
   }
 
-  Uint8List? callPlatformMethod(String method, {Uint8List? data}) {
+  Uint8List? callPlatformMethod(int method, {Uint8List? data}) {
     final request = _mapToFgRequest(method, data);
     final response = _fgCallPlatformMethod(request);
     final (result, error) = _mapFromFgResponse(response);
@@ -113,7 +113,7 @@ class _bridge {
     return result;
   }
 
-  Future<Uint8List?> callPlatformMethodAsync(String method, {Uint8List? data}) async {
+  Future<Uint8List?> callPlatformMethodAsync(int method, {Uint8List? data}) async {
     final receivePort = ReceivePort();
     final request = _mapToFgRequest(method, data);
     _fgCallPlatformMethodAsync(receivePort.sendPort.nativePort, request);
@@ -138,7 +138,8 @@ final class _fgData extends ffi.Struct {
 }
 
 final class _fgRequest extends ffi.Struct {
-  external _fgData method;
+  @ffi.Int()
+  external int method;
   external _fgData data;
 }
 
@@ -147,15 +148,15 @@ final class _fgResponse extends ffi.Struct {
   external _fgData error;
 }
 
-_fgRequest _mapToFgRequest(String method, Uint8List? data) {
+_fgRequest _mapToFgRequest(int method, Uint8List? data) {
   final result = ffi.Struct.create<_fgRequest>();
-  result.method = _mapFgDataFromString(method);
+  result.method = method;
   result.data = _mapFgDataFromBytes(data);
   return result;
 }
 
-(String method, Uint8List? data) _mapFromFgRequest(_fgRequest from) {
-  final method = _mapFgDataToString(from.method);
+(int method, Uint8List? data) _mapFromFgRequest(_fgRequest from) {
+  final method = from.method;
   final data = _mapFgDataToBytes(from.data);
   return (method, data);
 }

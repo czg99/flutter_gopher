@@ -11,7 +11,7 @@ class {{.PluginClassName}} : FlutterPlugin, FgBridgeDelegate {
     }
 
     // Implementation of FgBridgeDelegate
-    override fun methodHandle(method: String, data: ByteArray?): Result<ByteArray?> {
+    override fun methodHandle(method: Int, data: ByteArray?): Result<ByteArray?> {
         println("[{{.LibClassName}}] Platform Received: $method ${data?.joinToString(separator = " ") { "%02x".format(it) } ?: "null"}")
         return Result.success(data)
     }

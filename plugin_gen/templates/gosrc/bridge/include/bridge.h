@@ -12,7 +12,7 @@ typedef struct {
 } FgData;
 
 typedef struct {
-	FgData method;
+	int method;
 	FgData data;
 } FgRequest;
 

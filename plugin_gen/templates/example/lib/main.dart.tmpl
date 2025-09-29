@@ -29,7 +29,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final lib = {{.LibClassName}}();
-  String method = '';
+  int method = 0;
   String send = '';
   String recv = '';
 
@@ -59,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void updateState(String method, String send, String recv) {
+  void updateState(int method, String send, String recv) {
     setState(() {
       this.method = method;
       this.send = send;

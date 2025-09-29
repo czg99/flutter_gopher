@@ -44,6 +44,6 @@ func fg_platform_method_handle(request C.FgRequest, response *C.FgResponse) {
 	response.data = mapFgDataFromBytes(result)
 }
 
-func initPlatformMethodHandle(handle func(method string, data []byte) ([]byte, error)) {
+func initPlatformMethodHandle(handle func(method int, data []byte) ([]byte, error)) {
 	winPlatformMethodHandle = handle
 }

@@ -5,7 +5,7 @@ import com.sun.jna.*
 import java.nio.charset.StandardCharsets
 
 interface FgBridgeDelegate {
-    fun methodHandle(method: String, data: ByteArray?): Result<ByteArray?>
+    fun methodHandle(method: Int, data: ByteArray?): Result<ByteArray?>
 }
 
 abstract class FgBridge {
@@ -18,12 +18,12 @@ abstract class FgBridge {
         var delegate: FgBridgeDelegate? = null
 
         @JvmStatic
-        fun callGoMethod(method: String, data: ByteArray? = null): Result<ByteArray?> {
+        fun callGoMethod(method: Int, data: ByteArray? = null): Result<ByteArray?> {
             return Bridge.callGoMethod(method, data)
         }
         
         @JvmStatic
-        fun callDartMethod(method: String, data: ByteArray? = null) {
+        fun callDartMethod(method: Int, data: ByteArray? = null) {
             Bridge.callDartMethod(method, data)
         }
     }
@@ -43,11 +43,9 @@ private class Bridge : FgBridge() {
             bridgeLib.fg_init_platform_method_handle_{{.Timestamp}}(methodHandle)
         }
 
-        fun callGoMethod(method: String, data: ByteArray?): Result<ByteArray?> {
-            if (method.isEmpty()) return Result.success(null)
-
+        fun callGoMethod(method: Int, data: ByteArray?): Result<ByteArray?> {
             val request = FgRequest.ByValue()
-            request.method = mapFgDataFromString(method)
+            request.method = method
             request.data = mapFgDataFromBytes(data)
 
             val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
@@ -60,11 +58,9 @@ private class Bridge : FgBridge() {
             return Result.success(result)
         }
 
-        fun callDartMethod(method: String, data: ByteArray?) {
-            if (method.isEmpty()) return
-
+        fun callDartMethod(method: Int, data: ByteArray?) {
             val request = FgRequest.ByValue()
-            request.method = mapFgDataFromString(method)
+            request.method = method
             request.data = mapFgDataFromBytes(data)
 
             bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
@@ -117,7 +113,7 @@ private class Bridge : FgBridge() {
         }
 
         private fun methodHandle(request: FgRequest.ByValue, response: FgResponse.ByReference) {
-            val method = mapFgDataToString(request.method)
+            val method = request.method
             val data = mapFgDataToBytes(request.data)
 
             if (delegate == null) {
@@ -158,7 +154,7 @@ private open class FgRequest private constructor() : Structure() {
     class ByReference : FgRequest(), Structure.ByReference
 
     @JvmField
-    var method: FgData.ByValue = FgData.ByValue()
+    var method: Int = 0
 
     @JvmField
     var data: FgData.ByValue = FgData.ByValue()

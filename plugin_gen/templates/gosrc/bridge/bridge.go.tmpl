@@ -12,7 +12,7 @@ import (
 	"{{.ProjectName}}/dartapi"
 )
 
-func callPlatformMethod(method string, data []byte) ([]byte, error) {
+func callPlatformMethod(method int, data []byte) ([]byte, error) {
 	if fgPlatformMethodHandle == nil {
 		return nil, errors.New("init err: platform method handle not init")
 	}
@@ -22,7 +22,7 @@ func callPlatformMethod(method string, data []byte) ([]byte, error) {
 	return mapFromFgResponse(response)
 }
 
-func callDartMethod(method string, data []byte) {
+func callDartMethod(method int, data []byte) {
 	if len(global_port) == 0 {
 		return
 	}
@@ -61,7 +61,7 @@ func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
 		value := request
 		if (count > 1) {
 			value = C.FgRequest {
-				method: copyFgData(request.method),
+				method: request.method,
 				data: copyFgData(request.data),
 			}
 		}
@@ -116,15 +116,15 @@ func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRe
 	}()
 }
 
-func mapFromFgRequest(from C.FgRequest) (string, []byte) {
-	method := mapFgDataToString(from.method)
+func mapFromFgRequest(from C.FgRequest) (int, []byte) {
+	method := int(from.method)
 	data := mapFgDataToBytes(from.data)
 	return method, data
 }
 
-func mapToFgRequest(method string, data []byte) C.FgRequest {
+func mapToFgRequest(method int, data []byte) C.FgRequest {
 	return C.FgRequest{
-		method: mapFgDataFromString(method),
+		method: C.int(method),
 		data:   mapFgDataFromBytes(data),
 	}
 }
@@ -193,7 +193,6 @@ func mapFgDataToBytes(from C.FgData) []byte {
 }
 
 func freeFgRequest(value *C.FgRequest, freeInnerOnly bool) {
-	C.free(value.method.data)
 	C.free(value.data.data)
 	if !freeInnerOnly {
 		C.free(unsafe.Pointer(value))
