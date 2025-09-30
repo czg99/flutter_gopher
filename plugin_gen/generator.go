@@ -12,7 +12,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/czg99/flutter_gopher/locales"
 	"github.com/czg99/flutter_gopher/models"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 //go:embed templates/*
@@ -34,12 +36,18 @@ func NewPluginGenerator(projectName string) *PluginGenerator {
 func (g *PluginGenerator) Generate(destDir string) error {
 	// 确保目标目录存在
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return fmt.Errorf("failed to create target directory: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.target.createdir.error",
+			Other: "创建目标目录失败: %w",
+		}), err)
 	}
 
 	// 创建 .timestamp 文件
 	if err := g.CreateTimestampFile(destDir); err != nil {
-		return fmt.Errorf("failed to create .timestamp file: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.target.createtimestamp.error",
+			Other: "创建.timestamp文件失败: %w",
+		}), err)
 	}
 
 	// 遍历嵌入的模板文件
@@ -57,7 +65,10 @@ func (g *PluginGenerator) Generate(destDir string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to process template files: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.target.template.error",
+			Other: "处理模板文件失败: %w",
+		}), err)
 	}
 
 	return nil
@@ -67,11 +78,17 @@ func (g *PluginGenerator) Generate(destDir string) error {
 func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	// 创建 example 目录
 	if err := os.RemoveAll(destDir); err != nil {
-		return fmt.Errorf("failed to remove example directory: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.example.remove.error",
+			Other: "删除example目录失败: %w",
+		}), err)
 	}
 
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return fmt.Errorf("failed to recreate example directory: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.example.createdir.error",
+			Other: "创建example目录失败: %w",
+		}), err)
 	}
 
 	// 执行 flutter create 命令创建示例项目
@@ -80,16 +97,25 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	log.Println("Creating Flutter example project...")
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "plugingen.example.create.info",
+		Other: "正在创建Flutter example项目...",
+	}))
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to create flutter example project: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.example.create.error",
+			Other: "创建Flutter example项目失败: %w",
+		}), err)
 	}
 
 	pubspecFile := filepath.Join(destDir, "pubspec.yaml")
 	// 读取 pubspec.yaml 文件内容
 	content, err := os.ReadFile(pubspecFile)
 	if err != nil {
-		return fmt.Errorf("failed to read pubspec.yaml file: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.example.readpubspec.error",
+			Other: "读取example项目的pubspec.yaml文件失败: %w",
+		}), err)
 	}
 
 	// 加入项目依赖
@@ -98,7 +124,10 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 
 	// 写入修改后的内容
 	if err = os.WriteFile(pubspecFile, content, 0644); err != nil {
-		return fmt.Errorf("failed to write pubspec.yaml file: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.example.writepubspec.error",
+			Other: "写入example项目的pubspec.yaml文件失败: %w",
+		}), err)
 	}
 
 	// 从模板复制 example 文件
@@ -111,7 +140,10 @@ func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to process example template files: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.example.template.error",
+			Other: "处理example模板文件失败: %w",
+		}), err)
 	}
 	return nil
 }
@@ -122,7 +154,10 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 	var relPath string
 	relPath, err := filepath.Rel("templates", templatePath)
 	if err != nil {
-		return err
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.template.relpath.error",
+			Other: "获取模板文件相对路径失败: %w",
+		}), err)
 	}
 
 	if relPath == "." {
@@ -139,7 +174,10 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 		// 在目标位置创建目录
 		destPath := filepath.Join(destDir, relPath)
 		if err = os.MkdirAll(destPath, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", destPath, err)
+			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "plugingen.template.createdir.error",
+				Other: "创建目录 %s 失败: %w",
+			}), destPath, err)
 		}
 		return nil
 	}
@@ -151,12 +189,18 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 	relPath = strings.TrimSuffix(relPath, ".tmpl")
 	relPath = filepath.FromSlash(relPath)
 
-	log.Println("Processing template file:", relPath)
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "plugingen.template.process.file",
+		Other: "处理模板文件:",
+	}), relPath)
 
 	// 读取模板文件内容
 	content, err := templateFiles.ReadFile(templatePath)
 	if err != nil {
-		return fmt.Errorf("failed to read template file %s: %w", relPath, err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.template.read.error",
+			Other: "读取模板文件 %s 失败: %w",
+		}), relPath, err)
 	}
 
 	// 处理包含模板变量的文件
@@ -164,12 +208,18 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 		var tmpl *template.Template
 		tmpl, err = template.New(relPath).Parse(string(content))
 		if err != nil {
-			return fmt.Errorf("failed to parse template %s: %w", relPath, err)
+			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "plugingen.template.parse.error",
+				Other: "解析模板文件 %s 失败: %w",
+			}), relPath, err)
 		}
 
 		buffer := bytes.NewBuffer(nil)
 		if err = tmpl.Execute(buffer, g); err != nil {
-			return fmt.Errorf("failed to execute template %s: %w", relPath, err)
+			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "plugingen.template.execute.error",
+				Other: "执行模板文件 %s 失败: %w",
+			}), relPath, err)
 		}
 
 		content = buffer.Bytes()
@@ -179,7 +229,10 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 	destPath := filepath.Join(destDir, relPath)
 	err = os.WriteFile(destPath, content, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to write file %s: %w", destPath, err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "plugingen.template.writefile.error",
+			Other: "写入文件 %s 失败: %w",
+		}), destPath, err)
 	}
 	return nil
 }

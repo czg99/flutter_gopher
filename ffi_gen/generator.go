@@ -3,6 +3,7 @@ package ffigen
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,7 +11,9 @@ import (
 	"regexp"
 	"text/template"
 
+	"github.com/czg99/flutter_gopher/locales"
 	"github.com/czg99/flutter_gopher/models"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 //go:embed templates/*
@@ -21,15 +24,24 @@ var templateFiles embed.FS
 func GenerateFfiCode(goffiDir, dartOutDir string) error {
 	// 验证输出路径
 	if dartOutDir == "" {
-		return fmt.Errorf("no dart output path specified")
+		return errors.New(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.target.nodartpath.error",
+			Other: "未指定Dart输出路径",
+		}))
 	}
 
-	// 解析源代码
-	log.Println("Parsing source code")
+	// 解析Go源代码
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "ffigen.target.parse.info",
+		Other: "解析Go源文件...",
+	}))
 	parser := NewGoSrcParser()
 	pkg, err := parser.Parse(goffiDir, []string{"ffi.export.go"})
 	if err != nil {
-		return fmt.Errorf("failed to parse source code: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.target.parse.error",
+			Other: "解析Go源文件失败: %w",
+		}), err)
 	}
 
 	goOut := filepath.Join(goffiDir, "ffi.export.go")
@@ -37,17 +49,29 @@ func GenerateFfiCode(goffiDir, dartOutDir string) error {
 
 	// 如果指定了输出路径则生成Go代码
 	if goOut != "" {
-		log.Println("Generating Go code")
+		log.Println(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.target.gen.go.info",
+			Other: "生成CGO代码...",
+		}))
 		if err = NewGoGenerator(*pkg).Generate(goOut); err != nil {
-			return fmt.Errorf("failed to generate Go code: %w", err)
+			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.target.gen.go.error",
+				Other: "生成CGO代码失败: %w",
+			}), err)
 		}
 	}
 
 	// 如果指定了输出路径则生成Dart代码
 	if dartOut != "" {
-		log.Println("Generating Dart code")
+		log.Println(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.target.gen.dart.info",
+			Other: "生成Dart代码...",
+		}))
 		if err = NewDartGenerator(*pkg).Generate(dartOut); err != nil {
-			return fmt.Errorf("failed to generate Dart code: %w", err)
+			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.target.gen.dart.error",
+				Other: "生成Dart代码失败: %w",
+			}), err)
 		}
 	}
 
@@ -101,7 +125,10 @@ func (g *FfiGenerator) Generate(dest string) error {
 	// 使用生成器数据执行模板
 	buffer := bytes.NewBuffer(nil)
 	if err = tmpl.Execute(buffer, g); err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.template.exec.error",
+			Other: "执行模板失败: %w",
+		}), err)
 	}
 
 	// 清理生成的代码，移除多余的空行
@@ -112,7 +139,10 @@ func (g *FfiGenerator) Generate(dest string) error {
 		return err
 	}
 
-	log.Println("Generated code for", dest)
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "ffigen.template.write.success",
+		Other: "生成代码成功:",
+	}), dest)
 	return nil
 }
 
@@ -120,7 +150,10 @@ func (g *FfiGenerator) Generate(dest string) error {
 func (g *FfiGenerator) parseTemplate() (*template.Template, error) {
 	templateContent, err := templateFiles.ReadFile(g.templatePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read template file: %w", err)
+		return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.template.read.error",
+			Other: "读取模板文件失败: %w",
+		}), err)
 	}
 
 	tmpl, err := template.New(g.templatePath).Funcs(template.FuncMap{
@@ -128,7 +161,10 @@ func (g *FfiGenerator) parseTemplate() (*template.Template, error) {
 	}).Parse(string(templateContent))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse template: %w", err)
+		return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.template.parse.error",
+			Other: "解析模板失败: %w",
+		}), err)
 	}
 
 	return tmpl, nil
@@ -139,12 +175,18 @@ func (g *FfiGenerator) writeToFile(dest string) error {
 	// 确保输出目录存在
 	dir := filepath.Dir(dest)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.writefile.createdir.error",
+			Other: "创建输出目录失败: %w",
+		}), err)
 	}
 
 	// 将生成的代码写入文件
 	if err := os.WriteFile(dest, g.generatedCode, 0644); err != nil {
-		return fmt.Errorf("failed to write generated code to file: %w", err)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.writefile.write.error",
+			Other: "写入文件失败: %w",
+		}), err)
 	}
 
 	return nil

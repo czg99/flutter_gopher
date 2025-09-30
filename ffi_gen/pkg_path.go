@@ -1,10 +1,14 @@
 package ffigen
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/czg99/flutter_gopher/locales"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 // ParsePkgPath 返回给定文件路径的包路径，查找最近的go.mod文件并提取模块名称
@@ -16,14 +20,20 @@ func ParsePkgPath(path string) (module, pkgPath string, err error) {
 	// 转换为绝对路径
 	path, err = filepath.Abs(path)
 	if err != nil {
-		err = fmt.Errorf("failed to get absolute path: %w", err)
+		err = fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.pkgpath.absolutepath.error",
+			Other: "获取绝对路径失败: %w",
+		}), err)
 		return
 	}
 
 	// 检查路径是否存在
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		err = fmt.Errorf("failed to stat path: %w", err)
+		err = fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.pkgpath.statpath.error",
+			Other: "路径访问失败: %w",
+		}), err)
 		return
 	}
 
@@ -43,7 +53,10 @@ func ParsePkgPath(path string) (module, pkgPath string, err error) {
 			// 找到go.mod，读取其内容
 			data, readErr := os.ReadFile(goModPath)
 			if readErr != nil {
-				err = fmt.Errorf("failed to read go.mod file: %w", readErr)
+				err = fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+					ID:    "ffigen.pkgpath.readmod.error",
+					Other: "读取go.mod文件失败: %w",
+				}), readErr)
 				return
 			}
 
@@ -67,7 +80,10 @@ func ParsePkgPath(path string) (module, pkgPath string, err error) {
 				}
 			}
 
-			err = fmt.Errorf("module declaration not found in go.mod")
+			err = errors.New(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.pkgpath.modulenotfound.error",
+				Other: "go.mod文件中未找到模块声明",
+			}))
 			return
 		}
 
@@ -75,7 +91,10 @@ func ParsePkgPath(path string) (module, pkgPath string, err error) {
 		parentDir := filepath.Dir(currentDir)
 		if parentDir == currentDir {
 			// 到达文件系统根目录仍未找到go.mod
-			err = fmt.Errorf("no go.mod file found in directory hierarchy")
+			err = errors.New(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.pkgpath.nogomod.error",
+				Other: "未在目录层次结构中找到go.mod文件",
+			}))
 			break
 		}
 		currentDir = parentDir

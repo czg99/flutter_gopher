@@ -1,6 +1,7 @@
 package ffigen
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -11,8 +12,10 @@ import (
 	"slices"
 	"unicode"
 
+	"github.com/czg99/flutter_gopher/locales"
 	"github.com/czg99/flutter_gopher/models"
 	"github.com/iancoleman/strcase"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -42,7 +45,10 @@ func (p *GoSrcParser) Parse(path string, ignoreFileNames []string) (*models.Pack
 	// 验证路径
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to access path: %w", err)
+		return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.access.error",
+			Other: "访问路径失败: %w",
+		}), err)
 	}
 
 	// 获取包路径
@@ -60,7 +66,10 @@ func (p *GoSrcParser) Parse(path string, ignoreFileNames []string) (*models.Pack
 	}
 
 	// 开始解析
-	log.Println("Starting package parsing")
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "ffigen.srcparser.parse.start",
+		Other: "解析Package...",
+	}))
 	if err := p.parsePackages(pkgs, ignoreFileNames); err != nil {
 		return nil, err
 	}
@@ -98,11 +107,17 @@ func (p *GoSrcParser) loadPackages(path string, fileInfo os.FileInfo) ([]*packag
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to load packages: %w", err)
+		return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.load.error",
+			Other: "加载Package失败: %w",
+		}), err)
 	}
 
 	if len(pkgs) == 0 {
-		return nil, fmt.Errorf("no packages found in the specified path")
+		return nil, errors.New(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.nopackage.error",
+			Other: "指定路径下没有找到Package",
+		}))
 	}
 
 	return pkgs, nil
@@ -111,7 +126,10 @@ func (p *GoSrcParser) loadPackages(path string, fileInfo os.FileInfo) ([]*packag
 // parsePackages 处理所有包及其文件
 func (p *GoSrcParser) parsePackages(pkgs []*packages.Package, ignoreFileNames []string) error {
 	for _, pkg := range pkgs {
-		log.Println(" - Processing package:", pkg.Name)
+		log.Println(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.parse.package",
+			Other: " - 正在解析Package:",
+		}), pkg.Name)
 		for i, file := range pkg.CompiledGoFiles {
 			if len(ignoreFileNames) > 0 {
 				// 检查文件名是否在忽略列表中
@@ -120,7 +138,10 @@ func (p *GoSrcParser) parsePackages(pkgs []*packages.Package, ignoreFileNames []
 					continue
 				}
 			}
-			log.Println("   - Analyzing file:", file)
+			log.Println(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.parse.file",
+				Other: "   - 正在解析文件:",
+			}), file)
 			syntax := pkg.Syntax[i]
 			if err := p.collectNodes(syntax); err != nil {
 				return err
@@ -145,7 +166,10 @@ func (p *GoSrcParser) collectNodes(file *ast.File) error {
 			p.funcNodes = append(p.funcNodes, node)
 
 		default:
-			return fmt.Errorf("unexpected declaration type: %v", reflect.TypeOf(decl))
+			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.parse.decltype.unexpected",
+				Other: "意外的声明类型: %v",
+			}), reflect.TypeOf(decl))
 		}
 	}
 
@@ -160,24 +184,30 @@ func (p *GoSrcParser) handleGenDecl(decl *ast.GenDecl) error {
 		return nil
 	case token.TYPE:
 		if len(decl.Specs) != 1 {
-			return fmt.Errorf("expected exactly one type specification, got %d", len(decl.Specs))
+			return nil
 		}
 
 		typeSpec, ok := (decl.Specs[0]).(*ast.TypeSpec)
 		if !ok {
-			return fmt.Errorf("type specification is not *ast.TypeSpec")
+			return nil
 		}
 
 		p.typeNodes = append(p.typeNodes, typeSpec)
 		return nil
 	default:
-		return fmt.Errorf("unexpected declaration token: %v", decl.Tok)
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.parse.decltoken.unexpected",
+			Other: "意外的声明令牌: %v",
+		}), decl.Tok)
 	}
 }
 
-// processNodes 处理所有收集的 AST 节点
+// processNodes 解析所有收集的 AST 节点
 func (p *GoSrcParser) processNodes() error {
-	log.Println("Processing collected nodes")
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "ffigen.srcparser.process.astnodes",
+		Other: "解析收集的AST节点...",
+	}))
 
 	// 处理类型
 	for _, spec := range p.typeNodes {
@@ -205,10 +235,16 @@ func (p *GoSrcParser) processTypeNode(typeSpec *ast.TypeSpec) error {
 		return nil
 	}
 
-	log.Println(" - Processing type:", name)
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "ffigen.srcparser.process.type.info",
+		Other: " - 正在解析类型:",
+	}), name)
 
 	if typeSpec.TypeParams != nil {
-		return fmt.Errorf("generic types with type parameters are not supported")
+		return errors.New(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.process.type.error",
+			Other: "不支持泛型类型参数",
+		}))
 	}
 
 	goType, err := p.parseTypeExpr(name, typeSpec.Type)
@@ -218,7 +254,10 @@ func (p *GoSrcParser) processTypeNode(typeSpec *ast.TypeSpec) error {
 
 	structType, ok := goType.(*models.GoStructType)
 	if !ok {
-		return fmt.Errorf("expected struct type, got %v", reflect.TypeOf(goType))
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.process.struct.error",
+			Other: "预期为Struct类型, 但得到 %v",
+		}), reflect.TypeOf(goType))
 	}
 
 	p.structs = append(p.structs, structType)
@@ -238,7 +277,10 @@ func (p *GoSrcParser) processFunctionNode(funcDecl *ast.FuncDecl) error {
 		return nil
 	}
 
-	log.Println(" - Processing function:", name)
+	log.Println(locales.MustLocalizeMessage(&i18n.Message{
+		ID:    "ffigen.srcparser.process.func.info",
+		Other: " - 正在解析函数:",
+	}), name)
 
 	goType, err := p.parseTypeExpr(name, funcDecl.Type)
 	if err != nil {
@@ -247,7 +289,10 @@ func (p *GoSrcParser) processFunctionNode(funcDecl *ast.FuncDecl) error {
 
 	funcType, ok := goType.(*models.GoFuncType)
 	if !ok {
-		return fmt.Errorf("expected function type, got %v", reflect.TypeOf(goType))
+		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.process.func.error",
+			Other: "预期为函数类型, 但得到 %v",
+		}), reflect.TypeOf(goType))
 	}
 
 	// 处理函数返回值
@@ -267,7 +312,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}
 
 		if e.Name == "any" {
-			return nil, fmt.Errorf("unsupported type: any")
+			return nil, errors.New(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.process.anytype.unsupported",
+				Other: "不支持的类型: any",
+			}))
 		}
 
 		return &models.GoIdentType{
@@ -275,7 +323,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}, nil
 
 	case *ast.SelectorExpr:
-		return nil, fmt.Errorf("imported types are not supported: %v.%v", e.X, e.Sel)
+		return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.process.selector.unsupported",
+			Other: "不支持导入类型: %v.%v",
+		}), e.X, e.Sel)
 
 	case *ast.StarExpr:
 		// 处理指针类型
@@ -286,7 +337,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 
 		switch inner.(type) {
 		case *models.GoPointerType:
-			return nil, fmt.Errorf("double pointer types are not supported")
+			return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.process.pointer.unsupported",
+				Other: "不支持的指针类型: %v",
+			}), &models.GoPointerType{Inner: inner})
 		}
 
 		return &models.GoPointerType{
@@ -296,7 +350,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 	case *ast.ArrayType:
 		// 处理切片类型
 		if e.Len != nil {
-			return nil, fmt.Errorf("fixed-size arrays are not supported")
+			return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.process.array.unsupported",
+				Other: "不支持固定大小的数组: %v",
+			}), e.Len)
 		}
 
 		inner, err := p.parseTypeExpr("", e.Elt)
@@ -315,7 +372,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		}
 
 		if len(fields) == 0 {
-			return nil, fmt.Errorf("struct %s with no public fields is not supported", name)
+			return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.process.struct.unsupported",
+				Other: "结构体 %s 没有公共字段, 不支持",
+			}), name)
 		}
 
 		return &models.GoStructType{
@@ -328,7 +388,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 	case *ast.FuncType:
 		// 处理函数类型
 		if e.TypeParams != nil {
-			return nil, fmt.Errorf("generic functions with type parameters are not supported")
+			return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+				ID:    "ffigen.srcparser.process.func.unsupported",
+				Other: "不支持泛型函数: %v",
+			}), e.TypeParams)
 		}
 
 		params, err := p.parseFields(e.Params, false)
@@ -353,7 +416,10 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 			},
 		}, nil
 	default:
-		return nil, fmt.Errorf("unsupported type expression: %v (%T)", expr, expr)
+		return nil, fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
+			ID:    "ffigen.srcparser.process.type.unsupported",
+			Other: "不支持该类型: %v (%T)",
+		}), expr, expr)
 	}
 }
 
