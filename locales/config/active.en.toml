@@ -1,0 +1,339 @@
+["ffigen.pkgpath.absolutepath.error"]
+hash = "sha1-bae7120ba8a3bddea03f2a92c7c5e6a780293754"
+other = "Failed to get absolute path: %w"
+
+["ffigen.pkgpath.modulenotfound.error"]
+hash = "sha1-0d2597ddac0c00e2de5db804e4cc79dfe2f51d6e"
+other = "Module declaration not found in go.mod file"
+
+["ffigen.pkgpath.nogomod.error"]
+hash = "sha1-8d986d3acd48b32dc12bd3eafb80c328afb63f6f"
+other = "go.mod file not found in directory hierarchy"
+
+["ffigen.pkgpath.readmod.error"]
+hash = "sha1-8b428e39d4616c94493e0c91be6d7de787229d3b"
+other = "Failed to read go.mod file: %w"
+
+["ffigen.pkgpath.statpath.error"]
+hash = "sha1-f05d2be175b4d5c6f3222989973aedd4418043f9"
+other = "Failed to access path: %w"
+
+["ffigen.srcparser.access.error"]
+hash = "sha1-ec995976b01f76e8f7e6f9429aad3bdfa6e9bfec"
+other = "Failed to access path: %w"
+
+["ffigen.srcparser.load.error"]
+hash = "sha1-c7f2ebbc5b394c6f8cd7443923111523d33473ca"
+other = "Failed to load Package: %w"
+
+["ffigen.srcparser.nopackage.error"]
+hash = "sha1-e3ec55910d446e7bfc166efb4d1600ec0d6a6cf6"
+other = "No Package found at the specified path"
+
+["ffigen.srcparser.parse.decltoken.unexpected"]
+hash = "sha1-8b09a22e352cebbfd08574a66a0499f7a6dc08fc"
+other = "Unexpected declaration token: %v"
+
+["ffigen.srcparser.parse.decltype.unexpected"]
+hash = "sha1-0037638ecfce96c1b5f6ec0d821dfe1f2e4d23d0"
+other = "Unexpected declaration type: %v"
+
+["ffigen.srcparser.parse.file"]
+hash = "sha1-34263cfc72ce0f76e0ba4d7e6c5f2617d885184a"
+other = "   - Parsing file:"
+
+["ffigen.srcparser.parse.package"]
+hash = "sha1-a26940ee761f87eaa656eeaab1e1f119b951841b"
+other = " - Parsing Package:"
+
+["ffigen.srcparser.parse.start"]
+hash = "sha1-fe3f8192d8bf8bbc8f7588238e1dec46a8a77591"
+other = "Parsing Package..."
+
+["ffigen.srcparser.process.anytype.unsupported"]
+hash = "sha1-f6f46745f9ce2880853194444b3a7c9946af300b"
+other = "Unsupported type: any"
+
+["ffigen.srcparser.process.array.unsupported"]
+hash = "sha1-22b6498bb115a049be162b4b7553860194c392be"
+other = "Fixed-size arrays are not supported: %v"
+
+["ffigen.srcparser.process.astnodes"]
+hash = "sha1-1d4e7a697c671682738e5ba08e87742f2c9ec1e3"
+other = "Parsing collected AST nodes..."
+
+["ffigen.srcparser.process.func.error"]
+hash = "sha1-ba92126455deaea2596a7bf559fff9ac4f215641"
+other = "Expected function type, but got %v"
+
+["ffigen.srcparser.process.func.info"]
+hash = "sha1-865acca206497a25ac81567f40e9fee6526b33c7"
+other = " - Parsing function:"
+
+["ffigen.srcparser.process.func.unsupported"]
+hash = "sha1-6813e1346602f05532d07ac69fe0392dfb5b17ec"
+other = "Generic functions are not supported: %v"
+
+["ffigen.srcparser.process.pointer.unsupported"]
+hash = "sha1-da9f6e342f98b8ff54b9cd8029f5d095215df47a"
+other = "Unsupported pointer type: %v"
+
+["ffigen.srcparser.process.selector.unsupported"]
+hash = "sha1-ad2903934ec2da955a167e259b2457ff3deea7f3"
+other = "Unsupported imported type: %v.%v"
+
+["ffigen.srcparser.process.struct.error"]
+hash = "sha1-482d907bb6e00042d54d1ff8c43218312dc98f8a"
+other = "Expected struct type, but got %v"
+
+["ffigen.srcparser.process.struct.unsupported"]
+hash = "sha1-0219e952007f3ffde4fa09857dcba23e53495da9"
+other = "Struct %s has no public fields, unsupported"
+
+["ffigen.srcparser.process.type.error"]
+hash = "sha1-b0b7c7ddc0826a6385c38004dfcaeb7e73f2640b"
+other = "Generic type parameters are not supported"
+
+["ffigen.srcparser.process.type.info"]
+hash = "sha1-98a44e4f15c59d47ac3fa0ea83a764bbf48dd355"
+other = " - Parsing type:"
+
+["ffigen.srcparser.process.type.unsupported"]
+hash = "sha1-b621f2ba7a91e3a23f17fc4326ab92140f3713db"
+other = "Unsupported type: %v (%T)"
+
+["ffigen.target.gen.dart.error"]
+hash = "sha1-d751fa4e21d41a0712481b03578d89369b688da0"
+other = "Failed to generate Dart code: %w"
+
+["ffigen.target.gen.dart.info"]
+hash = "sha1-db6201397fe7af01feaee4c33d631c75e9572836"
+other = "Generating Dart code..."
+
+["ffigen.target.gen.go.error"]
+hash = "sha1-505522f61b7c4bf2ed159da67c5729358ffff096"
+other = "Failed to generate CGO code: %w"
+
+["ffigen.target.gen.go.info"]
+hash = "sha1-91236b77810784eb38e010a21021ae6272f74023"
+other = "Generating CGO code..."
+
+["ffigen.target.nodartpath.error"]
+hash = "sha1-a0dc7cc231d5908b75e5798b2ff61161308a0704"
+other = "Dart output path not specified"
+
+["ffigen.target.parse.error"]
+hash = "sha1-0171838b59eeb6a256d092781d05e9b100268e2e"
+other = "Failed to parse Go source file: %w"
+
+["ffigen.target.parse.info"]
+hash = "sha1-07e46b4fe128ea2394ff5863ebbfbc13108c2c6a"
+other = "Parsing Go source file..."
+
+["ffigen.template.exec.error"]
+hash = "sha1-44d35ddb40f1f17b3d571404586a5b8c93dcde0c"
+other = "Failed to execute template: %w"
+
+["ffigen.template.parse.error"]
+hash = "sha1-e7075b91c483b724818859896ce97e4a20437be1"
+other = "Failed to parse template: %w"
+
+["ffigen.template.read.error"]
+hash = "sha1-b1eb5a53035b1a22d68b241e788cd8fe7de8663e"
+other = "Failed to read template file: %w"
+
+["ffigen.template.write.success"]
+hash = "sha1-8f2845df48a49fde377f188282c02abd6ed0d95f"
+other = "Code generation successful:"
+
+["ffigen.writefile.createdir.error"]
+hash = "sha1-8fab71512a8c7ac10c82ea2ddacdf32f3a2584d4"
+other = "Failed to create output directory: %w"
+
+["ffigen.writefile.write.error"]
+hash = "sha1-b72291d29f06e560ad352b7331aed135c06d5152"
+other = "Failed to write file: %w"
+
+["fgo.create.accessdir.error"]
+hash = "sha1-fdaeafdb864bb7c6c69ffe46faa8395220720351"
+other = "Failed to access output directory: %w"
+
+["fgo.create.chdir.error"]
+hash = "sha1-a6926fb1110a48f03aff4164e3b020e776c44e13"
+other = "Failed to change to output directory: %w"
+
+["fgo.create.createdir.error"]
+hash = "sha1-8fab71512a8c7ac10c82ea2ddacdf32f3a2584d4"
+other = "Failed to create output directory: %w"
+
+["fgo.create.createdir.info"]
+hash = "sha1-14dc652a65853c134ada7c58a26c4173422eab2a"
+other = "Creating output directory:"
+
+["fgo.create.example.flag"]
+hash = "sha1-403e81d503dce8eb6b279fd02735d31cbfbe671a"
+other = "Generate an example app demonstrating the use of Flutter plugin"
+
+["fgo.create.genexample.error"]
+hash = "sha1-4840ce34c824306266b4797160565cf53b313377"
+other = "Failed to generate Flutter example app: %w"
+
+["fgo.create.genstruct.error"]
+hash = "sha1-7f7aa9f0a1b487c7b5d6a5c59d11154ca84e9b73"
+other = "Failed to generate plugin project structure: %w"
+
+["fgo.create.genstruct.info"]
+hash = "sha1-e1d4871a961837fa7f7b011abec0b5fa0239d481"
+other = "Generating plugin project structure..."
+
+["fgo.create.initgen.info"]
+hash = "sha1-1d6eb4fe03c5a9c4f862fe5883e3d79fde47195c"
+other = "Initializing plugin generator:"
+
+["fgo.create.invalidname.error"]
+hash = "sha1-684ffce01a45ef277f17a01bb175cb9010de6a3c"
+other = "Invalid project name: %s"
+
+["fgo.create.long"]
+hash = "sha1-6bd020c91c6ebcfecb2525d486650cc6deaa35f2"
+other = "This command generates a complete Flutter plugin project structure, simplifying data interaction between Flutter, Go, and the platform\n\nExample usage:\nfgo create my_ffi\nfgo create my_ffi --example"
+
+["fgo.create.pluginloc.info"]
+hash = "sha1-51087bee3bdde921ef2395e0b957f5d00b1764f9"
+other = "📁 Project location:"
+
+["fgo.create.pluginname.info"]
+hash = "sha1-58fa32c3ff18fcc842362e2f2b1e535a83b26450"
+other = "📦 Plugin name:"
+
+["fgo.create.resolvepath.error"]
+hash = "sha1-bb117dc8d418f600e079465961a0a92401292731"
+other = "Failed to resolve output path: %w"
+
+["fgo.create.short"]
+hash = "sha1-28419da9e5baadaf9c0a82b446dc9ee7752ff89c"
+other = "Create a Flutter plugin project with Go bindings"
+
+["fgo.create.success.info"]
+hash = "sha1-3095cdb16363652b31183c7c94cd3b6409bf41f0"
+other = "✅ Plugin project successfully created!"
+
+["fgo.ffi.gen.chdir.error"]
+hash = "sha1-2b5ad8971afa1d979cfbc95394e85ed3580d5a01"
+other = "Failed to change to project root directory: %w"
+
+["fgo.ffi.gen.error"]
+hash = "sha1-3dc60cc61cb6893a292a69836a6c72d7cb38d92d"
+other = "Failed to generate FFI code: %w"
+
+["fgo.ffi.gen.findproject.check.gosrc.error"]
+hash = "sha1-fc63393a8c8a79ad8591113df6596767e660e5a6"
+other = "gosrc directory not found: %w"
+
+["fgo.ffi.gen.findproject.check.pubspec.error"]
+hash = "sha1-059ee48604c2f66ef9a4769ed29017d2d5f865f3"
+other = "pubspec.yaml file not found: %w"
+
+["fgo.ffi.gen.findproject.error"]
+hash = "sha1-f8728c803305c7933e206a373555b05c273cbb3c"
+other = "Failed to find project root directory: %w"
+
+["fgo.ffi.gen.findproject.getwd.error"]
+hash = "sha1-5a8df3a42c7f2e6dc7e8910d8e788bd0c441fcad"
+other = "Failed to get current directory: %w"
+
+["fgo.ffi.gen.findproject.info"]
+hash = "sha1-a1f707cb7ba320f5c74e5e053fb007d71eebe554"
+other = "Found project root directory:"
+
+["fgo.ffi.gen.findproject.notfound.error"]
+hash = "sha1-a51c6e9f168abdd861eda22906bcc9f1230b1ae1"
+other = "Could not find pubspec.yaml or gosrc directory in any parent directory"
+
+["fgo.ffi.gen.start"]
+hash = "sha1-6128cac94ab0e5d33fea6cc3adcd97d55352d154"
+other = "Starting to generate FFI code..."
+
+["fgo.ffi.long"]
+hash = "sha1-ec3c04372d49f5125b0fbadc73bc0482e3a42b81"
+other = "This command parses source files in the gosrc/ffi directory and generates corresponding FFI code, allowing Dart to directly call Go functions\n\nExample usage:\nfgo ffi\n"
+
+["fgo.ffi.short"]
+hash = "sha1-5d148fd4aba01add29b7ff2a4d43b8a76da2ac22"
+other = "Parse gosrc/ffi directory and generate CGO and Dart FFI code"
+
+["fgo.main.desc"]
+hash = "sha1-7722c9616ed0a8cbd640358d755e34a9bbb05392"
+other = "Flutter Gopher - A Flutter, Go, and Platform bridging code generation tool"
+
+["fgo.main.help"]
+hash = "sha1-40f176caa30744e22ddf8dda420695b5046d6093"
+other = "Help for fgo"
+
+["plugingen.example.create.error"]
+hash = "sha1-bc4f52bc868a259ca410146ec1e653b90db4a1a0"
+other = "Failed to create Flutter example project: %w"
+
+["plugingen.example.create.info"]
+hash = "sha1-5dd32f938104ebff2f479669a3da6ade5f25643b"
+other = "Creating Flutter example project..."
+
+["plugingen.example.createdir.error"]
+hash = "sha1-720d4397094a1afc776f56cc86f051f8a425bc0f"
+other = "Failed to create example directory: %w"
+
+["plugingen.example.readpubspec.error"]
+hash = "sha1-51b43d947179b417bb5ba25d7eb85f0a27caab59"
+other = "Failed to read pubspec.yaml of example project: %w"
+
+["plugingen.example.remove.error"]
+hash = "sha1-677729c663a0836992e706b66c87d6efeb69b355"
+other = "Failed to remove example directory: %w"
+
+["plugingen.example.template.error"]
+hash = "sha1-14bfc15d3340d20c8e87a0e4562a864f01d7dc0a"
+other = "Failed to process example template file: %w"
+
+["plugingen.example.writepubspec.error"]
+hash = "sha1-32d6a44c797e5c763595adb3997ea455efc59d1b"
+other = "Failed to write pubspec.yaml for example project: %w"
+
+["plugingen.target.createdir.error"]
+hash = "sha1-3c417c968f076dd66e4914ef0a69f36a9fdc322f"
+other = "Failed to create target directory: %w"
+
+["plugingen.target.createtimestamp.error"]
+hash = "sha1-4f169e6a827aa7adf639db9b48bbcff887376a97"
+other = "Failed to create .timestamp file: %w"
+
+["plugingen.target.template.error"]
+hash = "sha1-95c93af9b904eee0a4e99e0c986e5e375e0bd547"
+other = "Failed to process template file: %w"
+
+["plugingen.template.createdir.error"]
+hash = "sha1-3d480fa39f2cd6def3ea956d7f5508531dfd86e7"
+other = "Failed to create directory %s: %w"
+
+["plugingen.template.execute.error"]
+hash = "sha1-f324e46fdc85079500265fb732a29f8164c95ad0"
+other = "Failed to execute template file %s: %w"
+
+["plugingen.template.parse.error"]
+hash = "sha1-b9d891349dbb56a12a00ca815cb38fe03275bcd3"
+other = "Failed to parse template file %s: %w"
+
+["plugingen.template.process.file"]
+hash = "sha1-ff56704fd29c986e4d7fd3a88c735e2bf267a7e9"
+other = "Processing template file:"
+
+["plugingen.template.read.error"]
+hash = "sha1-1859962442f806040b424a5eae7e07ccfc8c515a"
+other = "Failed to read template file %s: %w"
+
+["plugingen.template.relpath.error"]
+hash = "sha1-bf30213d00522d078fdbfacdfa70076db095b97e"
+other = "Failed to get relative path of template file: %w"
+
+["plugingen.template.writefile.error"]
+hash = "sha1-75e18cf65213dfa67a55a002dc0811422d3c1a28"
+other = "Failed to write file %s: %w"
