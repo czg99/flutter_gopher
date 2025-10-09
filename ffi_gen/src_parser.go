@@ -129,19 +129,22 @@ func (p *GoSrcParser) parsePackages(pkgs []*packages.Package, ignoreFileNames []
 		log.Println(locales.MustLocalizeMessage(&i18n.Message{
 			ID:    "ffigen.srcparser.parse.package",
 			Other: " - 正在解析Package:",
-		}), pkg.Name)
+		}), pkg.Dir)
 		for i, file := range pkg.CompiledGoFiles {
+			relPath, err := filepath.Rel(pkg.Dir, file)
+			if err != nil {
+				continue
+			}
 			if len(ignoreFileNames) > 0 {
 				// 检查文件名是否在忽略列表中
-				fileName := filepath.Base(file)
-				if slices.Contains(ignoreFileNames, fileName) {
+				if slices.Contains(ignoreFileNames, filepath.Base(file)) {
 					continue
 				}
 			}
 			log.Println(locales.MustLocalizeMessage(&i18n.Message{
 				ID:    "ffigen.srcparser.parse.file",
 				Other: "   - 正在解析文件:",
-			}), file)
+			}), relPath)
 			syntax := pkg.Syntax[i]
 			if err := p.collectNodes(syntax); err != nil {
 				return err
