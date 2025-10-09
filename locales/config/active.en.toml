@@ -123,12 +123,12 @@ hash = "sha1-a0dc7cc231d5908b75e5798b2ff61161308a0704"
 other = "Dart output path not specified"
 
 ["ffigen.target.parse.error"]
-hash = "sha1-0171838b59eeb6a256d092781d05e9b100268e2e"
-other = "Failed to parse Go source file: %w"
+hash = "sha1-f15eae81be6a06f5bb4bbbc1cc31de07eee20b41"
+other = "Failed to parse the ffi directory file in gosrc: %w"
 
 ["ffigen.target.parse.info"]
-hash = "sha1-07e46b4fe128ea2394ff5863ebbfbc13108c2c6a"
-other = "Parsing Go source file..."
+hash = "sha1-a92810e8f53dbb35ab4de67c4c97b00f0986862d"
+other = "Parsing the ffi directory file in gosrc..."
 
 ["ffigen.template.exec.error"]
 hash = "sha1-44d35ddb40f1f17b3d571404586a5b8c93dcde0c"

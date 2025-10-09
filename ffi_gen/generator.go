@@ -30,17 +30,17 @@ func GenerateFfiCode(goffiDir, dartOutDir string) error {
 		}))
 	}
 
-	// 解析Go源代码
+	// 解析gosrc的ffi目录文件
 	log.Println(locales.MustLocalizeMessage(&i18n.Message{
 		ID:    "ffigen.target.parse.info",
-		Other: "解析Go源文件...",
+		Other: "解析gosrc的ffi目录文件...",
 	}))
 	parser := NewGoSrcParser()
 	pkg, err := parser.Parse(goffiDir, []string{"ffi.export.go"})
 	if err != nil {
 		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
 			ID:    "ffigen.target.parse.error",
-			Other: "解析Go源文件失败: %w",
+			Other: "解析gosrc的ffi目录文件失败: %w",
 		}), err)
 	}
 
