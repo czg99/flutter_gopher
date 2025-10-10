@@ -70,9 +70,9 @@ final class _FgFfi {
   {{- end}}
 
   {{$fn.DartResultType}} _{{$fn.DartType}}Result({{$fn.Results.DartCType}} c_result) {
-    if (c_result.err.data != ffi.nullptr) {
-      final err = _mapToError(c_result.err);
-      throw FgFfiException(err!);
+    final err = _mapToError(c_result.err);
+    if (err != null) {
+      throw FgFfiException(err);
     }
 
     {{- if $fn.HasResults}}
@@ -142,12 +142,6 @@ final class {{$obj.DartType}} {
     {{$field.DartName}} = {{$field.DartName}}
     {{- end -}}
   {{- end}};
-
-  @override
-  String toString() => '{{$obj.DartType}}{
-{{- range $i, $field := $obj.Fields -}}
-{{if gt $i 0}}, {{end}}{{$field.DartName}}: ${{$field.DartName}}
-{{- end -}} }';
 }
 {{- end}}
 
@@ -200,7 +194,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
 
 {{- define "generateMap"}}
 {{- $obj := .obj}}
-{{- if not .isParams}}
+{{if not .isParams}}
 {{$obj.DartType}} _mapTo{{$obj.MapName}}({{$obj.DartCType}} from) {
   final result = {{$obj.DartType}}();
   {{- range $i, $field := $obj.Fields}}
@@ -208,9 +202,9 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- end}}
   return result;
 }
-{{- end}}
+{{end}}
 
-{{- if not .isResults}}
+{{if not .isResults}}
 {{$obj.DartCType}} _mapFrom{{$obj.MapName}}({{$obj.DartType}} from) {
   final result = ffi.Struct.create<{{$obj.DartCType}}>();
   {{- range $field := $obj.Fields}}    
@@ -218,7 +212,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
   {{- end}}
   return result;
 }
-{{- end}}
+{{end}}
 {{- end}}
 
 {{- range $obj := $bridge.Structs}}
@@ -291,28 +285,27 @@ final class {{$obj.DartCType}} extends ffi.Struct {
 }
 {{end}}
 
-Uint8List? _mapToBytes(_fgData from) {
-  if (from.data == ffi.nullptr) return null;
+Uint8List _mapToBytes(_fgData from) {
+  if (from.data == ffi.nullptr) return Uint8List(0);
   final data = from.data.cast<ffi.Uint8>();
   final result = Uint8List.fromList(data.asTypedList(from.size));
   malloc.free(from.data);
   return result;
 }
 
-_fgData _mapFromBytes(Uint8List? from) {
+_fgData _mapFromBytes(Uint8List from) {
   final result = ffi.Struct.create<_fgData>();
-  if (from != null) {
-    final data = malloc<ffi.Uint8>(from.length);
-    data.asTypedList(from.length).setAll(0, from);
-    result.data = data.cast();
-    result.size = from.length;
-  }
+  if (from.isEmpty) return result;
+  final data = malloc<ffi.Uint8>(from.length);
+  data.asTypedList(from.length).setAll(0, from);
+  result.data = data.cast();
+  result.size = from.length;
   return result;
 }
 
 String _mapToString(_fgData from) {
   final bytes = _mapToBytes(from);
-  if (bytes == null) return '';
+  if (bytes.isEmpty) return '';
   return const Utf8Decoder().convert(bytes);
 }
 

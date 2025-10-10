@@ -363,6 +363,11 @@ func (p *GoSrcParser) parseTypeExpr(name string, expr ast.Expr) (models.GoType, 
 		if err != nil {
 			return nil, err
 		}
+
+		if inner.GoType() == "byte" {
+			return models.BasicTypeMap["[]byte"], nil
+		}
+
 		return &models.GoSliceType{
 			Inner: inner,
 		}, nil

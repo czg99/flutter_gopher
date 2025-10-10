@@ -145,9 +145,8 @@ func {{$fn.CType}}_callback({{if $fn.HasParams}}params {{$fn.Params.GoCType}}, {
 
 {{- define "generateMap"}}
 {{- $obj := .obj}}
-{{- $fields := $obj.Fields}}
 func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
-	{{- range $field := $fields}}
+	{{- range $field := $obj.Fields}}
 	{{- if not $field.NeedMap}}
 	result.{{$field.GoName}} = {{$field.GoType}}(from.{{$field.CName}})
 	{{- else}}
@@ -157,9 +156,9 @@ func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) (result {{$obj.GoType}}) {
 	return
 }
 
-{{- if not .isParams}}
+{{if not .isParams}}
 func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) (result {{$obj.GoCType}}) {
-	{{- range $field := $fields}}
+	{{- range $field := $obj.Fields}}
 	{{- if not $field.NeedMap}}
 	result.{{$field.CName}} = {{$field.GoCType}}(from.{{$field.GoName}})
 	{{- else}}

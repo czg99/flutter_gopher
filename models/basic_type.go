@@ -1,12 +1,15 @@
 package models
 
-import "github.com/iancoleman/strcase"
+import (
+	"github.com/iancoleman/strcase"
+)
 
 var BasicTypeMap = map[string]*GoBasicType{
 	"bool": {cType: "bool", goType: "bool", goCType: "C.bool", dartCType: "ffi.Bool", dartType: "bool", dartDefault: "false"},
 
 	"string": {cType: "FgData", goType: "string", goCType: "C.FgData", dartCType: "_fgData", dartType: "String", dartDefault: "''", needMap: true},
-	"error":  {cType: "FgData", goType: "error", goCType: "C.FgData", dartCType: "_fgData", dartType: "FgError", dartDefault: "null", needMap: true},
+	"error":  {cType: "FgData", goType: "error", goCType: "C.FgData", dartCType: "_fgData", dartType: "String?", dartDefault: "null", needMap: true},
+	"[]byte": {cType: "FgData", goType: "[]byte", goCType: "C.FgData", dartCType: "_fgData", dartType: "Uint8List", dartDefault: "Uint8List(0)", needMap: true, mapName: "Bytes"},
 
 	"int8":  {cType: "int8_t", goType: "int8", goCType: "C.int8_t", dartCType: "ffi.Int8", dartType: "int", dartDefault: "0"},
 	"int16": {cType: "int16_t", goType: "int16", goCType: "C.int16_t", dartCType: "ffi.Int16", dartType: "int", dartDefault: "0"},
@@ -38,6 +41,7 @@ type GoBasicType struct {
 	dartCType   string
 	dartDefault string
 
+	mapName string
 	needMap bool
 }
 
@@ -64,6 +68,9 @@ func (t *GoBasicType) DartDefault() string {
 	return t.dartDefault
 }
 func (t *GoBasicType) MapName() string {
+	if t.mapName != "" {
+		return t.mapName
+	}
 	return strcase.ToCamel(t.goType)
 }
 func (t *GoBasicType) NeedMap() bool {
