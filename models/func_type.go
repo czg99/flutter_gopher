@@ -1,15 +1,20 @@
 package models
 
-import "github.com/iancoleman/strcase"
+import (
+	"strings"
+
+	"github.com/iancoleman/strcase"
+)
 
 type GoFuncType struct {
-	Name        string
-	Params      *GoStructType
-	Results     *GoStructType
-	HasParams   bool
-	HasResults  bool
-	ResultCount int
-	HasErr      bool
+	Name               string        //函数名
+	Params             *GoStructType //参数
+	Results            *GoStructType //返回值
+	HasParams          bool          //是否存在参数
+	HasResults         bool          //是否存在返回
+	ResultCount        int           //返回数量
+	IsAnonymousResults bool          //是否匿名的返回
+	HasErr             bool          //是否存在错误字段
 }
 
 func (t *GoFuncType) String() string {
@@ -42,7 +47,20 @@ func (t *GoFuncType) DartDefault() string {
 
 func (t *GoFuncType) DartResultType() string {
 	if t.ResultCount > 1 {
-		return t.Results.DartType()
+		builder := strings.Builder{}
+		builder.WriteString("(")
+		for i, field := range t.Results.Fields {
+			if i > 0 {
+				builder.WriteString(", ")
+			}
+			builder.WriteString(field.DartType())
+			if !t.IsAnonymousResults {
+				builder.WriteString(" ")
+				builder.WriteString(field.DartName())
+			}
+		}
+		builder.WriteString(")")
+		return builder.String()
 	} else if t.ResultCount == 1 {
 		return t.Results.Fields[0].DartType()
 	}

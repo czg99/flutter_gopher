@@ -1,6 +1,10 @@
 package models
 
-import "github.com/iancoleman/strcase"
+import (
+	"unicode"
+
+	"github.com/iancoleman/strcase"
+)
 
 type GoIdentType struct {
 	Name string
@@ -23,6 +27,9 @@ func (t *GoIdentType) GoCType() string {
 }
 
 func (t *GoIdentType) DartType() string {
+	if unicode.IsLower(rune(t.Name[0])) {
+		return "_" + strcase.ToLowerCamel(t.Name)
+	}
 	return strcase.ToCamel(t.Name)
 }
 

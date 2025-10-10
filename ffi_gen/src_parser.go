@@ -487,6 +487,7 @@ func processFunctionReturnValues(funcType *models.GoFuncType) {
 	}
 
 	hasErr := false
+	isAnonymousResults := false
 	resultCount := len(fields)
 	// 为未命名的返回值命名并确保错误类型有名称
 	for idx, field := range fields {
@@ -505,6 +506,7 @@ func processFunctionReturnValues(funcType *models.GoFuncType) {
 		// 如果字段没有名称，给它一个默认名称
 		if field.Name == "" {
 			field.Name = fmt.Sprintf("res%d", idx)
+			isAnonymousResults = true
 		}
 	}
 
@@ -517,5 +519,6 @@ func processFunctionReturnValues(funcType *models.GoFuncType) {
 	funcType.HasParams = len(funcType.Params.Fields) > 0
 	funcType.HasResults = len(funcType.Results.Fields) > 0
 	funcType.ResultCount = resultCount
+	funcType.IsAnonymousResults = isAnonymousResults
 	funcType.HasErr = hasErr
 }

@@ -9,8 +9,6 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import '../bridge/loader.dart';
 
-typedef FgError = String?;
-
 class FgFfiException implements Exception {
   final String message;
 
@@ -78,9 +76,11 @@ final class _FgFfi {
     }
 
     {{- if $fn.HasResults}}
-    final dart_result = _mapTo{{$fn.Results.DartType}}(c_result);
+    final dart_result = _mapTo{{$fn.Results.MapName}}(c_result);
     {{- if gt $fn.ResultCount 1}}
-    return dart_result;
+    return (
+      {{- range $i, $param := $fn.Results.Fields}}{{if gt $i 0}}, {{end}}dart_result.{{$param.DartName}}{{end -}}
+    );
     {{- else if eq $fn.ResultCount 1}}
     return dart_result.{{(index $fn.Results.Fields 0).DartName}};
     {{- end}}
@@ -321,12 +321,12 @@ _fgData _mapFromString(String from) {
   return _mapFromBytes(bytes);
 }
 
-FgError _mapToError(_fgData from) {
+String? _mapToError(_fgData from) {
   if (from.data == ffi.nullptr) return null;
   return _mapToString(from);
 }
 
-_fgData _mapFromError(FgError from) {
+_fgData _mapFromError(String? from) {
   if (from == null) {
     return ffi.Struct.create<_fgData>();
   }
