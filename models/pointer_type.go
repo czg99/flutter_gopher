@@ -33,7 +33,7 @@ func (t *GoPointerType) DartDefault() string {
 }
 
 func (t *GoPointerType) MapName() string {
-	return "Null" + t.Inner.MapName()
+	return "Nullable" + t.Inner.MapName()
 }
 
 func (t *GoPointerType) NeedMap() bool {
