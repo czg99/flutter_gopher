@@ -78,6 +78,7 @@ if (-not $needCompile) {
 }
 
 $env:CGO_ENABLED = 1
+$env:CGO_LDFLAGS = "$env:CGO_LDFLAGS -Wl,-z,max-page-size=16384"
 $env:GOOS = "android"
 
 $HOST_OS = "windows"

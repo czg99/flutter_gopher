@@ -70,6 +70,7 @@ if ! check_source_changes; then
 fi
 
 export CGO_ENABLED=1
+export CGO_LDFLAGS="$CGO_LDFLAGS -Wl,-z,max-page-size=16384"
 export GOOS=android
 
 HOST_OS="linux"
