@@ -3,12 +3,12 @@ import 'dart:typed_data';
 import 'bridge/bridge.dart';
 
 class {{.LibClassName}} {
-  (int, Uint8List?) randomPacket() {
+  (int, Uint8List) randomPacket() {
     final r = Random(DateTime.now().millisecondsSinceEpoch);
     final method = r.nextInt(99999);
     final count = r.nextInt(10);
     if (count < 3) {
-      return (method, null);
+      return (method, Uint8List(0));
     }
     final data = Uint8List(count);
     for (var i = 0; i < count; i++) {
@@ -17,9 +17,8 @@ class {{.LibClassName}} {
     return (method, data);
   }
 
-  String bytesToHex(Uint8List? data) => data != null
-      ? data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')
-      : 'null';
+  String bytesToHex(Uint8List data) =>
+      '[${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(',')}]';
 
   {{.LibClassName}}() {
     FgBridge.setMethodHandle((method, data) {
