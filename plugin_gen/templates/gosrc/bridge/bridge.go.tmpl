@@ -97,7 +97,7 @@ func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	response := C.FgResponse{}
 	if fgPlatformMethodHandle == nil {
 		freeFgRequest(&request, true)
-		response.error = mapFgDataFromString("init err: platform method handle not init")
+		response.error = mapFromString("init err: platform method handle not init")
 		return response
 	}
 
@@ -118,62 +118,61 @@ func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRe
 
 func mapFromFgRequest(from C.FgRequest) (int, []byte) {
 	method := int(from.method)
-	data := mapFgDataToBytes(from.data)
+	data := mapToBytes(from.data)
 	return method, data
 }
 
 func mapToFgRequest(method int, data []byte) C.FgRequest {
 	return C.FgRequest{
 		method: C.int(method),
-		data:   mapFgDataFromBytes(data),
+		data:   mapFromBytes(data),
 	}
 }
 
 func mapFromFgResponse(from C.FgResponse) ([]byte, error) {
-	data := mapFgDataToBytes(from.data)
-	err := mapFgDataToError(from.error)
+	data := mapToBytes(from.data)
+	err := mapToError(from.error)
 	return data, err
 }
 
 func mapToFgResponse(data []byte, err error) C.FgResponse {
 	response := C.FgResponse{
-		data: mapFgDataFromBytes(data),
+		data: mapFromBytes(data),
 	}
 	if err != nil {
-		response.error = mapFgDataFromError(err)
+		response.error = mapFromError(err)
 	}
 	return response
 }
 
-func mapFgDataFromString(from string) C.FgData {
-	return mapFgDataFromBytes([]byte(from))
+func mapFromString(from string) C.FgData {
+	return mapFromBytes([]byte(from))
 }
 
-func mapFgDataToString(from C.FgData) string {
-	data := mapFgDataToBytes(from)
+func mapToString(from C.FgData) string {
+	data := mapToBytes(from)
 	if data == nil {
 		return ""
 	}
 	return string(data)
 }
 
-func mapFgDataFromError(from error) C.FgData {
+func mapFromError(from error) C.FgData {
 	if from == nil {
 		return C.FgData{}
 	}
-	return mapFgDataFromString(from.Error())
+	return mapFromString(from.Error())
 }
 
-func mapFgDataToError(from C.FgData) error {
-	data := mapFgDataToBytes(from)
-	if data == nil {
+func mapToError(from C.FgData) error {
+	if from.data == nil {
 		return nil
 	}
-	return errors.New(string(data))
+	return errors.New(mapToString(from))
 }
 
-func mapFgDataFromBytes(from []byte) C.FgData {
-	if from == nil {
+func mapFromBytes(from []byte) C.FgData {
+	if len(from) == 0 {
 		return C.FgData{}
 	}
 	data := C.CBytes(from)
@@ -184,7 +183,7 @@ func mapFgDataFromBytes(from []byte) C.FgData {
 	}
 }
 
-func mapFgDataToBytes(from C.FgData) []byte {
+func mapToBytes(from C.FgData) []byte {
 	if from.data == nil {
 		return nil
 	}

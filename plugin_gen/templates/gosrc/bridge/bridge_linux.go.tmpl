@@ -26,22 +26,22 @@ var linuxPlatformMethodHandle MethodHandle
 func fg_platform_method_handle(request C.FgRequest, response *C.FgResponse) {
 	method, data := mapFromFgRequest(request)
 	if linuxPlatformMethodHandle == nil {
-		response.error = mapFgDataFromString("init err: platform method handle not init")
+		response.error = mapFromString("init err: platform method handle not init")
 		return
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			response.error = mapFgDataFromString(fmt.Sprintf("panic err: %v", r))
+			response.error = mapFromString(fmt.Sprintf("panic err: %v", r))
 		}
 	}()
 
 	result, err := linuxPlatformMethodHandle(method, data)
 	if err != nil {
-		response.error = mapFgDataFromString(err.Error())
+		response.error = mapFromString(err.Error())
 		return
 	}
-	response.data = mapFgDataFromBytes(result)
+	response.data = mapFromBytes(result)
 }
 
 func initPlatformMethodHandle(handle func(method int, data []byte) ([]byte, error)) {
