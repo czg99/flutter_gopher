@@ -31,6 +31,7 @@ build/
 .last_build_time*
 android/libs
 android/.cxx
+android/.gradle
 windows/*.dll
 linux/*.so
 darwin/*.xcframework
