@@ -79,7 +79,7 @@ private class Bridge : FgBridge() {
 
         private fun mapToBytes(from: FgData): ByteArray? {
             if (from.data == Pointer.NULL) return null
-            val result = from.data.getByteArray(0, from.size)
+            val result = from.data!!.getByteArray(0, from.size)
             Native.free(Pointer.nativeValue(from.data))
             return result
         }
@@ -132,7 +132,7 @@ private open class FgData private constructor() : Structure() {
     class ByValue : FgData(), Structure.ByValue
 
     @JvmField
-    var data: Pointer = Pointer.NULL
+    var data: Pointer? = Pointer.NULL
 
     @JvmField
     var size: Int = 0
