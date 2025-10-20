@@ -26,9 +26,9 @@ void methodHandle(FgRequest request, FgResponse* response) {
     globalDelegate = delegate;
 }
 
-+ (FgData)mapFgDataFromNSData:(NSData*)from {
++ (FgData)mapFromNSData:(NSData*)from {
     FgData result = {};
-    if (from != nil) {
+    if (from != nil && from.length > 0) {
         NSUInteger dataLen = [from length];
         void* data = malloc(dataLen);
         [from getBytes:data length:dataLen];
@@ -38,48 +38,40 @@ void methodHandle(FgRequest request, FgResponse* response) {
     return result;
 }
 
-+ (NSData*)mapFgDataToNSData:(FgData)from {
++ (NSData*)mapToNSData:(FgData)from {
     if (from.data == nil) return nil;
     NSData* result = [[NSData alloc] initWithBytes:from.data length:from.size];
-    [self freeFgData:&from];
+    free(from.data);
     return result;
 }
 
-+ (FgData)mapFgDataFromNSString:(NSString*)from {
++ (FgData)mapFromNSString:(NSString*)from {
     NSData* data = from != nil ? [from dataUsingEncoding:NSUTF8StringEncoding] : nil;
-    return [self mapFgDataFromNSData:data];
+    return [self mapFromNSData:data];
 }
 
-+ (NSString*)mapFgDataToNSString:(FgData)from {
++ (NSString*)mapToNSString:(FgData)from {
     if (from.data == nil) return @"";
     NSString* result = [[NSString alloc] initWithBytes:from.data length:from.size encoding:NSUTF8StringEncoding];
-    [self freeFgData:&from];
+    free(from.data);
     return result;
 }
 
-+ (FgData)mapFgDataFromFgError:(FgError*)from {
-    return [self mapFgDataFromNSString:from];
++ (FgData)mapFromFgError:(FgError*)from {
+    return [self mapFromNSString:from];
 }
 
-+ (FgError*)mapFgDataToFgError:(FgData)from {
++ (FgError*)mapToFgError:(FgData)from {
     if (from.data == nil) return nil;
-    return [self mapFgDataToNSString:from];
-}
-
-+ (void)freeFgData:(FgData*)value {
-    if (value->data != nil) {
-        free(value->data);
-        value->data = nil;
-        value->size = 0;
-    }
+    return [self mapToNSString:from];
 }
 
 + (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
     int method = request.method;
-    NSData* data = [self mapFgDataToNSData:request.data];
+    NSData* data = [self mapToNSData:request.data];
 
     if (globalDelegate == nil) {
-        response->error = [self mapFgDataFromFgError:@"init err: delegate is nil"];
+        response->error = [self mapFromFgError:@"init err: delegate is nil"];
         return;
     }
     
@@ -89,26 +81,26 @@ void methodHandle(FgRequest request, FgResponse* response) {
         result = [globalDelegate methodHandle:method data:data error:&error];
     } @catch (NSException *e) {
         NSString *caughtErr = [NSString stringWithFormat:@"caught err: %@", [e reason]];
-        response->error = [self mapFgDataFromFgError:caughtErr];
+        response->error = [self mapFromFgError:caughtErr];
     }
     
     if (error != nil) {
-        response->error = [self mapFgDataFromFgError:error.localizedDescription];
+        response->error = [self mapFromFgError:error.localizedDescription];
         return;
     }
-    response->data = [self mapFgDataFromNSData:result];
+    response->data = [self mapFromNSData:result];
 }
 
 + (NSData*)callGoMethod:(int)method data:(NSData*)data error:(NSError**)error {    
     FgRequest request = {
         .method = method,
-        .data = [self mapFgDataFromNSData:data],
+        .data = [self mapFromNSData:data],
     };
     
     FgResponse response = fg_call_go_method_{{.Timestamp}}(request);
     
-    NSData* result = [self mapFgDataToNSData:response.data];
-    FgError* err = [self mapFgDataToFgError:response.error];
+    NSData* result = [self mapToNSData:response.data];
+    FgError* err = [self mapToFgError:response.error];
     if (err != nil) {
         *error = [NSError errorWithDomain:@"{{.PackageName}}" code:1 userInfo:@{NSLocalizedDescriptionKey: err}];
         return nil;
@@ -119,7 +111,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
 + (void)callDartMethod:(int)method data:(NSData*)data {    
     FgRequest request = {
         .method = method,
-        .data = [self mapFgDataFromNSData:data],
+        .data = [self mapFromNSData:data],
     };
     
     fg_call_dart_method_{{.Timestamp}}(request);
