@@ -94,7 +94,7 @@ type FfiGenerator struct {
 func NewGoGenerator(pkg models.Package) *FfiGenerator {
 	return &FfiGenerator{
 		Package:      pkg,
-		templatePath: "templates/go_ffi.go.tmpl",
+		templatePath: "templates/ffi.go.tmpl",
 	}
 }
 
@@ -103,7 +103,7 @@ func NewGoGenerator(pkg models.Package) *FfiGenerator {
 func NewDartGenerator(pkg models.Package) *FfiGenerator {
 	return &FfiGenerator{
 		Package:      pkg,
-		templatePath: "templates/dart_ffi.go.tmpl",
+		templatePath: "templates/ffi.dart.tmpl",
 	}
 }
 

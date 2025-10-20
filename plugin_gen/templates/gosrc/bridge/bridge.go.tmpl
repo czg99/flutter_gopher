@@ -150,11 +150,10 @@ func mapFromString(from string) C.FgData {
 }
 
 func mapToString(from C.FgData) string {
-	data := mapToBytes(from)
-	if data == nil {
+	if from.data == nil {
 		return ""
 	}
-	return string(data)
+	return string(mapToBytes(from))
 }
 
 func mapFromError(from error) C.FgData {

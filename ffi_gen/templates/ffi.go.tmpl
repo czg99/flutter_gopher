@@ -209,7 +209,7 @@ func mapFrom{{$obj.MapName}}(from {{$obj.GoType}}) {{$obj.GoCType}} {
 
 {{range $obj := $bridge.Slices}}
 func mapTo{{$obj.MapName}}(from {{$obj.GoCType}}) {{$obj.GoType}} {
-	if from.size <= 0 {
+	if from.data == nil {
 		return nil
 	}
 
@@ -253,11 +253,10 @@ func mapFromString(from string) C.FgData {
 }
 
 func mapToString(from C.FgData) string {
-	data := mapToBytes(from)
-	if data == nil {
+	if from.data == nil {
 		return ""
 	}
-	return string(data)
+	return string(mapToBytes(from))
 }
 
 func mapFromError(from error) C.FgData {
@@ -268,15 +267,14 @@ func mapFromError(from error) C.FgData {
 }
 
 func mapToError(from C.FgData) error {
-	data := mapToBytes(from)
-	if data == nil {
+	if from.data == nil {
 		return nil
 	}
-	return errors.New(string(data))
+	return errors.New(mapToString(from))
 }
 
 func mapFromBytes(from []byte) C.FgData {
-	if from == nil {
+	if len(from) == 0 {
 		return C.FgData{}
 	}
 	data := C.CBytes(from)

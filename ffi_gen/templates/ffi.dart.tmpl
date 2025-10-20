@@ -255,7 +255,7 @@ final class {{$obj.DartCType}} extends ffi.Struct {
 
 {{range $obj := $bridge.Slices}}
 {{$obj.DartType}} _mapTo{{$obj.MapName}}({{$obj.DartCType}} from) {
-  if (from.size <= 0) return [];
+  if (from.data == ffi.nullptr) return [];
   
   final data = from.data.cast<{{$obj.Inner.DartCType}}>();
   final result = List.generate(from.size, (i) =>
