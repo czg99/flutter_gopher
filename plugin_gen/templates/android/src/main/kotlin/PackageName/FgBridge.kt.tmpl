@@ -46,12 +46,12 @@ private class Bridge : FgBridge() {
         fun callGoMethod(method: Int, data: ByteArray?): Result<ByteArray?> {
             val request = FgRequest.ByValue()
             request.method = method
-            request.data = mapFgDataFromBytes(data)
+            request.data = mapFromBytes(data)
 
             val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
 
-            val result = mapFgDataToBytes(response.data)
-            val error = mapFgDataToError(response.error)
+            val result = mapToBytes(response.data)
+            val error = mapToError(response.error)
             if (error != null) {
                 return Result.failure(Exception(error))
             }
@@ -61,22 +61,14 @@ private class Bridge : FgBridge() {
         fun callDartMethod(method: Int, data: ByteArray?) {
             val request = FgRequest.ByValue()
             request.method = method
-            request.data = mapFgDataFromBytes(data)
+            request.data = mapFromBytes(data)
 
             bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
         }
 
-        private fun freeFgData(value: FgData) {
-            if (value.data != null) {
-                Native.free(Pointer.nativeValue(value.data))
-                value.data = null
-                value.size = 0
-            }
-        }
-
-        private fun mapFgDataFromBytes(from: ByteArray?): FgData.ByValue {
+        private fun mapFromBytes(from: ByteArray?): FgData.ByValue {
             val result = FgData.ByValue()
-            if (from != null) {
+            if (from?.isNotEmpty() == true) {
                 val memory = Pointer(Native.malloc(from.size.toLong()))
                 memory.write(0, from, 0, from.size)
                 result.data = memory
@@ -85,64 +77,62 @@ private class Bridge : FgBridge() {
             return result
         }
 
-        private fun mapFgDataToBytes(from: FgData): ByteArray? {
-            if (from.data == null) return null
-            val result = from.data!!.getByteArray(0, from.size)
-            freeFgData(from)
+        private fun mapToBytes(from: FgData): ByteArray? {
+            if (from.data == Pointer.NULL) return null
+            val result = from.data.getByteArray(0, from.size)
+            Native.free(Pointer.nativeValue(from.data))
             return result
         }
 
-        private fun mapFgDataFromString(from: String): FgData.ByValue {
+        private fun mapFromString(from: String): FgData.ByValue {
             val bytes = from.toByteArray(Charsets.UTF_8)
-            return mapFgDataFromBytes(bytes)
+            return mapFromBytes(bytes)
         }
 
-        private fun mapFgDataToString(from: FgData): String {
-            val bytes = mapFgDataToBytes(from) ?: return ""
+        private fun mapToString(from: FgData): String {
+            val bytes = mapToBytes(from) ?: return ""
             return String(bytes, StandardCharsets.UTF_8)
         }
 
-        private fun mapFgDataFromError(from: FgError): FgData.ByValue {
+        private fun mapFromError(from: String?): FgData.ByValue {
             if (from == null) return FgData.ByValue()
-            return mapFgDataFromString(from)
+            return mapFromString(from)
         }
 
-        private fun mapFgDataToError(from: FgData): FgError {
-            if (from.data == null) return null
-            return mapFgDataToString(from)
+        private fun mapToError(from: FgData): String? {
+            if (from.data == Pointer.NULL) return null
+            return mapToString(from)
         }
 
         private fun methodHandle(request: FgRequest.ByValue, response: FgResponse.ByReference) {
             val method = request.method
-            val data = mapFgDataToBytes(request.data)
+            val data = mapToBytes(request.data)
 
             if (delegate == null) {
-                response.error = mapFgDataFromError("init err: delegate is null")
+                response.error = mapFromError("init err: delegate is null")
                 return
             }
 
             try {
                 val result = delegate!!.methodHandle(method, data)
                 if (result.isSuccess) {
-                    response.data = mapFgDataFromBytes(result.getOrNull())
+                    response.data = mapFromBytes(result.getOrNull())
                 } else {
-                    response.error = mapFgDataFromError("${result.exceptionOrNull()?.message}")
+                    response.error = mapFromError("${result.exceptionOrNull()?.message}")
                 }
             } catch (e: Throwable) {
-                response.error = mapFgDataFromError("caught err: ${e.message}")
+                response.error = mapFromError("caught err: ${e.message}")
             }
         }
     }
 }
-
-private typealias FgError = String?
 
 @Structure.FieldOrder("data", "size")
 private open class FgData private constructor() : Structure() {
     class ByValue : FgData(), Structure.ByValue
 
     @JvmField
-    var data: Pointer? = null
+    var data: Pointer = Pointer.NULL
 
     @JvmField
     var size: Int = 0
