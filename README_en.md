@@ -62,11 +62,24 @@ my_ffi/
 
 ## 🔧 Configuration
 
-### Configure Android ProGuard Rules
+### Configure Android ProGuard Rules in the Main Project
 
-You need to add the following rules to the main project’s `android/app/proguard-rules.pro` file:
+1. Add the following rules to the `android/app/proguard-rules.pro` file:
+
 ```
 -keep class com.sun.jna.** {*;}
 -keep class * extends com.sun.jna.** {*;}
--keep interface * extends com.sun.jna.* {*;}
+-keep interface * extends com.sun.jna.** {*;}
 ```
+
+2. Modify the `android.buildTypes` section in the `android/app/build.gradle` file as follows:
+
+```
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+```
+

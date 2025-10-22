@@ -62,11 +62,21 @@ my_ffi/
 
 ## 🔧 配置
 
-### 配置 Android 混淆过滤
+### 在主项目工程中配置 Android ProGuard 规则
 
-需要在主项目工程的 `android/app/proguard-rules.pro` 文件中添加以下规则：
+1、`android/app/proguard-rules.pro` 文件中添加以下规则：
 ```
 -keep class com.sun.jna.** {*;}
 -keep class * extends com.sun.jna.** {*;}
--keep interface * extends com.sun.jna.* {*;}
+-keep interface * extends com.sun.jna.** {*;}
+```
+
+2、`android/app/build.gradle` 文件中的android.buildTypes节点修改成如下代码：
+```
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
 ```
