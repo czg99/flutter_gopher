@@ -57,13 +57,13 @@ if [ -d "lib" ]; then
     protoc --dart_out=$outPath --proto_path=$ProtoDir $ProtoDir/*.proto
 fi
 
-if [ -d "android" ]; then
-    outPath="android/src/main/java"
-    if [ ! -d $outPath ]; then
-        mkdir -p $outPath
-    fi
-    protoc --java_out=$outPath --proto_path=$ProtoDir $ProtoDir/*.proto
-fi
+# if [ -d "android" ]; then
+#     outPath="android/src/main/java"
+#     if [ ! -d $outPath ]; then
+#         mkdir -p $outPath
+#     fi
+#     protoc --java_out=$outPath --proto_path=$ProtoDir $ProtoDir/*.proto
+# fi
 
 if [ -d "darwin" ]; then
     outPath="darwin/Classes/protos"

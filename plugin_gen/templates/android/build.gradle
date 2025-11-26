@@ -13,6 +13,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.1.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+        classpath("com.google.protobuf:protobuf-gradle-plugin:0.9.5")
     }
 }
 
@@ -25,6 +26,7 @@ rootProject.allprojects {
 
 apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
+apply plugin: 'com.google.protobuf'
 
 android {
     if (project.android.hasProperty("namespace")) {
@@ -75,11 +77,32 @@ android {
     }
     
     sourceSets {
-        main.jniLibs.srcDirs = ['libs']
+        main {
+            jniLibs.srcDirs = ['libs']
+            proto.srcDirs = ['../protos/proto']
+        }
     }
     
     dependencies {
         implementation 'net.java.dev.jna:jna:5.17.0@aar'
-        implementation 'com.google.protobuf:protobuf-java:4.31.1'
+        implementation 'com.google.protobuf:protobuf-javalite:3.25.8'
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.8'
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                remove java
+            }
+            task.plugins {
+                java {
+                    option 'lite'
+                }
+            }
+        }
     }
 }
