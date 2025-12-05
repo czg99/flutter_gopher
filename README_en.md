@@ -70,6 +70,7 @@ my_ffi/
 -keep class com.sun.jna.** {*;}
 -keep class * extends com.sun.jna.** {*;}
 -keep interface * extends com.sun.jna.** {*;}
+-keep class * extends com.google.protobuf.** {*;}
 ```
 
 2. Modify the `android.buildTypes` section in the `android/app/build.gradle` file as follows:

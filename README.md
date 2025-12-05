@@ -69,6 +69,7 @@ my_ffi/
 -keep class com.sun.jna.** {*;}
 -keep class * extends com.sun.jna.** {*;}
 -keep interface * extends com.sun.jna.** {*;}
+-keep class * extends com.google.protobuf.** {*;}
 ```
 
 2、`android/app/build.gradle` 文件中的android.buildTypes节点修改成如下代码：
