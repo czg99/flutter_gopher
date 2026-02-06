@@ -44,21 +44,19 @@ class FgBridge {
 
 final _lib = FgLoader('{{.LibName}}');
 final void Function(ffi.Pointer<ffi.Void>, int) _fgInitDartApi = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Int64)>>('fg_init_dart_api_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Int64)>>('fg_init_dart_api_{{.ID}}')
     .asFunction();
 final _fgResponse Function(_fgRequest) _fgCallGoMethod = _lib
-    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>('fg_call_go_method_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>('fg_call_go_method_{{.ID}}')
     .asFunction();
 final void Function(int, _fgRequest) _fgCallGoMethodAsync = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>('fg_call_go_method_async_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>('fg_call_go_method_async_{{.ID}}')
     .asFunction();
 final _fgResponse Function(_fgRequest) _fgCallPlatformMethod = _lib
-    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>('fg_call_platform_method_{{.Timestamp}}')
+    .lookup<ffi.NativeFunction<_fgResponse Function(_fgRequest)>>('fg_call_platform_method_{{.ID}}')
     .asFunction();
 final void Function(int, _fgRequest) _fgCallPlatformMethodAsync = _lib
-    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>(
-      'fg_call_platform_method_async_{{.Timestamp}}',
-    )
+    .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, _fgRequest)>>('fg_call_platform_method_async_{{.ID}}')
     .asFunction();
 
 class _bridge {

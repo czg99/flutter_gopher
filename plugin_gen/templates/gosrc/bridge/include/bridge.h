@@ -33,13 +33,13 @@ static inline void call_fg_platform_method_handle(FgPlatformMethodHandle handle,
     #define DLLEXPORT __attribute__((visibility("default")))
 #endif
 
-extern DLLEXPORT void fg_init_dart_api_{{.Timestamp}}(void* api, int64_t port);
-extern DLLEXPORT void fg_init_platform_method_handle_{{.Timestamp}}(FgPlatformMethodHandle handle);
+extern DLLEXPORT void fg_init_dart_api_{{.ID}}(void* api, int64_t port);
+extern DLLEXPORT void fg_init_platform_method_handle_{{.ID}}(FgPlatformMethodHandle handle);
 
-extern DLLEXPORT void fg_call_dart_method_{{.Timestamp}}(FgRequest request);
-extern DLLEXPORT FgResponse fg_call_go_method_{{.Timestamp}}(FgRequest request);
-extern DLLEXPORT void fg_call_go_method_async_{{.Timestamp}}(int64_t port, FgRequest request);
-extern DLLEXPORT FgResponse fg_call_platform_method_{{.Timestamp}}(FgRequest request);
-extern DLLEXPORT void fg_call_platform_method_async_{{.Timestamp}}(int64_t port, FgRequest request);
+extern DLLEXPORT void fg_call_dart_method_{{.ID}}(FgRequest request);
+extern DLLEXPORT FgResponse fg_call_go_method_{{.ID}}(FgRequest request);
+extern DLLEXPORT void fg_call_go_method_async_{{.ID}}(int64_t port, FgRequest request);
+extern DLLEXPORT FgResponse fg_call_platform_method_{{.ID}}(FgRequest request);
+extern DLLEXPORT void fg_call_platform_method_async_{{.ID}}(int64_t port, FgRequest request);
 
 #endif

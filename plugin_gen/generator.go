@@ -42,14 +42,6 @@ func (g *PluginGenerator) Generate(destDir string) error {
 		}), err)
 	}
 
-	// 创建 .timestamp 文件
-	if err := g.CreateTimestampFile(destDir); err != nil {
-		return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
-			ID:    "plugingen.target.createtimestamp.error",
-			Other: "创建.timestamp文件失败: %w",
-		}), err)
-	}
-
 	// 遍历嵌入的模板文件
 	err := fs.WalkDir(templateFiles, "templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

@@ -1,12 +1,8 @@
 package models
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
+	"encoding/base32"
 	"strings"
-	"time"
 
 	"github.com/iancoleman/strcase"
 )
@@ -17,7 +13,7 @@ type ProjectNaming struct {
 	PluginClassName string // 原生插件类名（例如 "MyApiPlugin"）
 	LibClassName    string // 库的类名（例如 "MyApi"）
 	LibName         string // 用于导入的库名（例如 "myapi"）
-	Timestamp       int64  // 用于标识导出函数唯一性
+	ID              string // 用于标识导出函数唯一性
 }
 
 func NewProjectNaming(projectName string) ProjectNaming {
@@ -31,25 +27,6 @@ func NewProjectNaming(projectName string) ProjectNaming {
 		PluginClassName: camel + "Plugin",
 		LibClassName:    camel,
 		LibName:         strings.ToLower(camel),
-		Timestamp:       time.Now().UnixMilli(),
+		ID:              strings.ToLower(strings.TrimRight(base32.StdEncoding.EncodeToString([]byte(snake)), "=")),
 	}
-}
-
-// CreateTimestampFile 创建 .timestamp 文件
-func (p *ProjectNaming) CreateTimestampFile(destDir string) error {
-	timestampFile := filepath.Join(destDir, ".timestamp")
-	// 读取文件内容
-	content, _ := os.ReadFile(timestampFile)
-	if len(content) > 0 {
-		timestamp, _ := strconv.ParseInt(string(content), 10, 64)
-		if timestamp > 0 {
-			p.Timestamp = timestamp
-			return nil
-		}
-	}
-	// 创建文件
-	if err := os.WriteFile(timestampFile, fmt.Append(nil, p.Timestamp), 0644); err != nil {
-		return err
-	}
-	return nil
 }

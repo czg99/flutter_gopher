@@ -3,8 +3,8 @@
 
 #include "../../gosrc/bridge/include/bridge.h"
 
-extern void fg_bridge_binding_{{.Timestamp}}(void);
-extern void fg_ffi_binding_{{.Timestamp}}(void);
+extern void fg_bridge_binding_{{.ID}}(void);
+extern void fg_ffi_binding_{{.ID}}(void);
 
 @implementation FgBridge
 
@@ -17,9 +17,9 @@ void methodHandle(FgRequest request, FgResponse* response) {
 }
 
 + (void)initialize {
-    fg_bridge_binding_{{.Timestamp}}();
-    fg_ffi_binding_{{.Timestamp}}();
-    fg_init_platform_method_handle_{{.Timestamp}}(methodHandle);
+    fg_bridge_binding_{{.ID}}();
+    fg_ffi_binding_{{.ID}}();
+    fg_init_platform_method_handle_{{.ID}}(methodHandle);
 }
 
 + (void)setDelegate:(id<FgBridgeDelegate>)delegate {
@@ -97,7 +97,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
         .data = [self mapFromNSData:data],
     };
     
-    FgResponse response = fg_call_go_method_{{.Timestamp}}(request);
+    FgResponse response = fg_call_go_method_{{.ID}}(request);
     
     NSData* result = [self mapToNSData:response.data];
     FgError* err = [self mapToFgError:response.error];
@@ -114,7 +114,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
         .data = [self mapFromNSData:data],
     };
     
-    fg_call_dart_method_{{.Timestamp}}(request);
+    fg_call_dart_method_{{.ID}}(request);
 }
 
 @end

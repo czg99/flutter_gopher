@@ -24,7 +24,6 @@
 "plugingen.example.template.error" = "处理example模板文件失败: %w"
 "plugingen.example.writepubspec.error" = "写入example项目的pubspec.yaml文件失败: %w"
 "plugingen.target.createdir.error" = "创建目标目录失败: %w"
-"plugingen.target.createtimestamp.error" = "创建.timestamp文件失败: %w"
 "plugingen.target.template.error" = "处理模板文件失败: %w"
 "plugingen.template.createdir.error" = "创建目录 %s 失败: %w"
 "plugingen.template.execute.error" = "执行模板文件 %s 失败: %w"

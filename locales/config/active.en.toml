@@ -102,10 +102,6 @@ other = "Failed to write pubspec.yaml for example project: %w"
 hash = "sha1-3c417c968f076dd66e4914ef0a69f36a9fdc322f"
 other = "Failed to create target directory: %w"
 
-["plugingen.target.createtimestamp.error"]
-hash = "sha1-4f169e6a827aa7adf639db9b48bbcff887376a97"
-other = "Failed to create .timestamp file: %w"
-
 ["plugingen.target.template.error"]
 hash = "sha1-95c93af9b904eee0a4e99e0c986e5e375e0bd547"
 other = "Failed to process template file: %w"

@@ -40,7 +40,7 @@ private class Bridge : FgBridge() {
                     methodHandle(request, response)
                 }
             }
-            bridgeLib.fg_init_platform_method_handle_{{.Timestamp}}(methodHandle)
+            bridgeLib.fg_init_platform_method_handle_{{.ID}}(methodHandle)
         }
 
         fun callGoMethod(method: Int, data: ByteArray?): Result<ByteArray?> {
@@ -48,7 +48,7 @@ private class Bridge : FgBridge() {
             request.method = method
             request.data = mapFromBytes(data)
 
-            val response = bridgeLib.fg_call_go_method_{{.Timestamp}}(request)
+            val response = bridgeLib.fg_call_go_method_{{.ID}}(request)
 
             val result = mapToBytes(response.data)
             val error = mapToError(response.error)
@@ -63,7 +63,7 @@ private class Bridge : FgBridge() {
             request.method = method
             request.data = mapFromBytes(data)
 
-            bridgeLib.fg_call_dart_method_{{.Timestamp}}(request)
+            bridgeLib.fg_call_dart_method_{{.ID}}(request)
         }
 
         private fun mapFromBytes(from: ByteArray?): FgData.ByValue {
@@ -163,9 +163,9 @@ private open class FgResponse private constructor() : Structure() {
 }
 
 private interface BridgeLib : Library {
-    fun fg_init_platform_method_handle_{{.Timestamp}}(handle: FgPlatformMethodHandleCallback)
-    fun fg_call_dart_method_{{.Timestamp}}(request: FgRequest.ByValue)
-    fun fg_call_go_method_{{.Timestamp}}(request: FgRequest.ByValue): FgResponse.ByValue
+    fun fg_init_platform_method_handle_{{.ID}}(handle: FgPlatformMethodHandleCallback)
+    fun fg_call_dart_method_{{.ID}}(request: FgRequest.ByValue)
+    fun fg_call_go_method_{{.ID}}(request: FgRequest.ByValue): FgResponse.ByValue
 }
 
 private interface FgPlatformMethodHandleCallback : Callback {

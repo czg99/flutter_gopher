@@ -28,14 +28,14 @@ func callDartMethod(method int, data []byte) {
 		return
 	}
 	request := mapToFgRequest(method, data)
-	fg_call_dart_method_{{.Timestamp}}(request)
+	fg_call_dart_method_{{.ID}}(request)
 }
 
 var global_port = make(map[int64]struct{})
 var global_lock = sync.Mutex{}
 
-//export fg_init_dart_api_{{.Timestamp}}
-func fg_init_dart_api_{{.Timestamp}}(api unsafe.Pointer, port C.int64_t) {
+//export fg_init_dart_api_{{.ID}}
+func fg_init_dart_api_{{.ID}}(api unsafe.Pointer, port C.int64_t) {
 	godartapi.InitDartApi(api)
 	global_lock.Lock()
 	defer global_lock.Unlock()
@@ -44,13 +44,13 @@ func fg_init_dart_api_{{.Timestamp}}(api unsafe.Pointer, port C.int64_t) {
 
 var fgPlatformMethodHandle C.FgPlatformMethodHandle = nil
 
-//export fg_init_platform_method_handle_{{.Timestamp}}
-func fg_init_platform_method_handle_{{.Timestamp}}(handle C.FgPlatformMethodHandle) {
+//export fg_init_platform_method_handle_{{.ID}}
+func fg_init_platform_method_handle_{{.ID}}(handle C.FgPlatformMethodHandle) {
 	fgPlatformMethodHandle = handle
 }
 
-//export fg_call_dart_method_{{.Timestamp}}
-func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
+//export fg_call_dart_method_{{.ID}}
+func fg_call_dart_method_{{.ID}}(request C.FgRequest) {
 	if len(global_port) == 0 {
 		freeFgRequest(&request, true)
 		return
@@ -75,17 +75,17 @@ func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
 	}
 }
 
-//export fg_call_go_method_{{.Timestamp}}
-func fg_call_go_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
+//export fg_call_go_method_{{.ID}}
+func fg_call_go_method_{{.ID}}(request C.FgRequest) C.FgResponse {
 	method, data := mapFromFgRequest(request)
 	result, err := callGoMethod(method, data)
 	return mapToFgResponse(result, err)
 }
 
-//export fg_call_go_method_async_{{.Timestamp}}
-func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
+//export fg_call_go_method_async_{{.ID}}
+func fg_call_go_method_async_{{.ID}}(port C.int64_t, request C.FgRequest) {
 	go func() {
-		response := fg_call_go_method_{{.Timestamp}}(request)
+		response := fg_call_go_method_{{.ID}}(request)
 		ptr := cValueToPtr(response)
 		if suc := godartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
 			freeFgResponse(ptr, false)
@@ -93,8 +93,8 @@ func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest)
 	}()
 }
 
-//export fg_call_platform_method_{{.Timestamp}}
-func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
+//export fg_call_platform_method_{{.ID}}
+func fg_call_platform_method_{{.ID}}(request C.FgRequest) C.FgResponse {
 	response := C.FgResponse{}
 	if fgPlatformMethodHandle == nil {
 		freeFgRequest(&request, true)
@@ -106,10 +106,10 @@ func fg_call_platform_method_{{.Timestamp}}(request C.FgRequest) C.FgResponse {
 	return response
 }
 
-//export fg_call_platform_method_async_{{.Timestamp}}
-func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest) {
+//export fg_call_platform_method_async_{{.ID}}
+func fg_call_platform_method_async_{{.ID}}(port C.int64_t, request C.FgRequest) {
 	go func() {
-		response := fg_call_platform_method_{{.Timestamp}}(request)
+		response := fg_call_platform_method_{{.ID}}(request)
 		ptr := cValueToPtr(response)
 		if suc := godartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
 			freeFgResponse(ptr, false)
@@ -226,14 +226,14 @@ func cValueToPtr[T any](value T) *T {
 	return (*T)(data)
 }
 
-//export fg_bridge_binding_{{.Timestamp}}
-func fg_bridge_binding_{{.Timestamp}}() {
+//export fg_bridge_binding_{{.ID}}
+func fg_bridge_binding_{{.ID}}() {
 	var ptr uintptr
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_{{.Timestamp}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_async_{{.Timestamp}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.ID}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.ID}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.ID}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_{{.ID}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async_{{.ID}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_{{.ID}}))
+	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_async_{{.ID}}))
 }
