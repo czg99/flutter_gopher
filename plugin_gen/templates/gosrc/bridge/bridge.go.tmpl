@@ -225,15 +225,3 @@ func cValueToPtr[T any](value T) *T {
 	*(*T)(data) = value
 	return (*T)(data)
 }
-
-//export fg_bridge_binding_{{.ID}}
-func fg_bridge_binding_{{.ID}}() {
-	var ptr uintptr
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_dart_api_{{.ID}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_init_platform_method_handle_{{.ID}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_dart_method_{{.ID}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_{{.ID}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_go_method_async_{{.ID}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_{{.ID}}))
-	ptr ^= uintptr(unsafe.Pointer(C.fg_call_platform_method_async_{{.ID}}))
-}

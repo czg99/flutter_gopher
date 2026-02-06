@@ -42,4 +42,15 @@ extern DLLEXPORT void fg_call_go_method_async_{{.ID}}(int64_t port, FgRequest re
 extern DLLEXPORT FgResponse fg_call_platform_method_{{.ID}}(FgRequest request);
 extern DLLEXPORT void fg_call_platform_method_async_{{.ID}}(int64_t port, FgRequest request);
 
+static inline void fg_bridge_binding_{{.ID}}(void) {
+    uintptr_t ptr = 0;
+	ptr ^= (uintptr_t)fg_init_dart_api_{{.ID}}
+	ptr ^= (uintptr_t)fg_init_platform_method_handle_{{.ID}}
+	ptr ^= (uintptr_t)fg_call_dart_method_{{.ID}}
+	ptr ^= (uintptr_t)fg_call_go_method_{{.ID}}
+	ptr ^= (uintptr_t)fg_call_go_method_async_{{.ID}}
+	ptr ^= (uintptr_t)fg_call_platform_method_{{.ID}}
+	ptr ^= (uintptr_t)fg_call_platform_method_async_{{.ID}}
+}
+
 #endif

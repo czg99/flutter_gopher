@@ -48,7 +48,6 @@ class FgLoader {
   ///
   /// [symbolName] 是要查找的符号名称
   /// 返回指向该符号的指针
-  /// 如果找不到符号，则抛出 [FgError]
   Pointer<T> lookup<T extends NativeType>(String symbolName) {
     try {
       return _library.lookup<T>(symbolName);

@@ -4,7 +4,6 @@
 #include "../../gosrc/bridge/include/bridge.h"
 
 extern void fg_bridge_binding_{{.ID}}(void);
-extern void fg_ffi_binding_{{.ID}}(void);
 
 @implementation FgBridge
 
@@ -18,7 +17,6 @@ void methodHandle(FgRequest request, FgResponse* response) {
 
 + (void)initialize {
     fg_bridge_binding_{{.ID}}();
-    fg_ffi_binding_{{.ID}}();
     fg_init_platform_method_handle_{{.ID}}(methodHandle);
 }
 
