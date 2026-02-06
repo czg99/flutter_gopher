@@ -27,9 +27,6 @@ func main() {
 	createCmd.PersistentFlags().BoolP("help", "h", false, "")
 	createCmd.PersistentFlags().MarkHidden("help")
 
-	ffiCmd.PersistentFlags().BoolP("help", "h", false, "")
-	ffiCmd.PersistentFlags().MarkHidden("help")
-
 	rootCmd.Flags().BoolP("help", "h", false, locales.MustLocalizeMessage(&i18n.Message{
 		ID:    "fgo.main.help",
 		Other: "fgo的帮助",

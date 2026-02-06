@@ -116,8 +116,8 @@ func validateAndGeneratePlugin(projectName string) error {
 		}), err)
 	}
 
-	// 运行自身的ffi命令
-	ffiCmd.Run(nil, nil)
+	// 执行go mod tidy
+	generator.GoSrcTidy("gosrc")
 
 	if withExample {
 		fmt.Println()

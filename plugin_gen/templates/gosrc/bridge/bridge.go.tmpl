@@ -9,7 +9,8 @@ import (
 	"errors"
 	"sync"
 	"unsafe"
-	"{{.ProjectName}}/dartapi"
+	
+	godartapi "github.com/czg99/go-dart-api"
 )
 
 func callPlatformMethod(method int, data []byte) ([]byte, error) {
@@ -35,7 +36,7 @@ var global_lock = sync.Mutex{}
 
 //export fg_init_dart_api_{{.Timestamp}}
 func fg_init_dart_api_{{.Timestamp}}(api unsafe.Pointer, port C.int64_t) {
-	dartapi.InitDartApi(api)
+	godartapi.InitDartApi(api)
 	global_lock.Lock()
 	defer global_lock.Unlock()
 	global_port[int64(port)] = struct{}{}
@@ -66,7 +67,7 @@ func fg_call_dart_method_{{.Timestamp}}(request C.FgRequest) {
 			}
 		}
 		ptr := cValueToPtr(value)
-		if suc := dartapi.SendToDartPort(port, unsafe.Pointer(ptr)); !suc {
+		if suc := godartapi.SendToDartPort(port, unsafe.Pointer(ptr)); !suc {
 			freeFgRequest(ptr, false)
 			delete(global_port, port)
 		}
@@ -86,7 +87,7 @@ func fg_call_go_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRequest)
 	go func() {
 		response := fg_call_go_method_{{.Timestamp}}(request)
 		ptr := cValueToPtr(response)
-		if suc := dartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
+		if suc := godartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
 			freeFgResponse(ptr, false)
 		}
 	}()
@@ -110,7 +111,7 @@ func fg_call_platform_method_async_{{.Timestamp}}(port C.int64_t, request C.FgRe
 	go func() {
 		response := fg_call_platform_method_{{.Timestamp}}(request)
 		ptr := cValueToPtr(response)
-		if suc := dartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
+		if suc := godartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
 			freeFgResponse(ptr, false)
 		}
 	}()

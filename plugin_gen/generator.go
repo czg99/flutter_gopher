@@ -74,6 +74,15 @@ func (g *PluginGenerator) Generate(destDir string) error {
 	return nil
 }
 
+// GoSrcTidy 执行go mod tidy
+func (g *PluginGenerator) GoSrcTidy(destDir string) {
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = destDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
 // GeneratorFlutterExample 生成一个 example 应用
 func (g *PluginGenerator) GeneratorFlutterExample(destDir string) error {
 	// 创建 example 目录
