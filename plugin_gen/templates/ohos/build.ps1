@@ -70,7 +70,7 @@ if (-not $needCompile) {
 }
 
 $env:CGO_ENABLED = 1
-$env:GOOS = "linux"
+$env:GOOS = "android"
 
 $HOST_OS = "windows"
 $CC = Join-Path -Path $NDK_PATH -ChildPath "llvm\bin\clang.exe"
@@ -106,7 +106,7 @@ foreach ($arch in $archs) {
     
     $outputPath = Join-Path -Path $archDir -ChildPath $OUTPUT_FILE
 
-    & go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-shared -o "$outputPath"
+    & go build -C $GO_SRC -ldflags "-s -w -linkmode external -extldflags '-Wl,-soname,$OUTPUT_FILE'" -trimpath -buildmode=c-shared -o "$outputPath"
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Error: Go compilation failed for architecture $arch"
         exit 1

@@ -97,7 +97,7 @@ for ARCH in "${ARCHS[@]}"; do
     export CC="${CC} --target=${CC_TARGET} --sysroot=${NDK_PATH}/sysroot"
     export CXX="${CXX} --target=${CC_TARGET} --sysroot=${NDK_PATH}/sysroot"
     
-    go build -C ${GO_SRC} -ldflags "-s -w" -trimpath -buildmode=c-shared -o "${OUTPUT_DIR}/${ARCH}/${OUTPUT_FILE}"
+    go build -C ${GO_SRC} -ldflags "-s -w -linkmode external -extldflags '-Wl,-soname,${OUTPUT_FILE}'" -trimpath -buildmode=c-shared -o "${OUTPUT_DIR}/${ARCH}/${OUTPUT_FILE}"
 
     rm -rf "${OUTPUT_DIR}/${ARCH}/${OUTPUT_HEADER}"
     
