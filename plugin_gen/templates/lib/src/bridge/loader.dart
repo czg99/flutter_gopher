@@ -21,10 +21,10 @@ class FgLoader {
     }
 
     // 根据平台返回对应的库文件名
-    if (Platform.isAndroid || Platform.isLinux || Platform.isOhos) {
-      return 'lib$libName.so';
-    } else if (Platform.isWindows) {
+    if (Platform.isWindows) {
       return '$libName.dll';
+    } else if (Platform.isAndroid || Platform.isLinux || Platform.isOhos) {
+      return 'lib$libName.so';
     } else {
       throw StateError('Unsupported platform: ${Platform.operatingSystem}');
     }

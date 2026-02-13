@@ -28,27 +28,6 @@ A new Flutter project.
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
 
-  s.ios.script_phases = [
-    {
-      :name => 'Run Pre-Build Script',
-      :script => "sh '#{__dir__}/build_ios.sh'",
-      :execution_position => 'before_compile'
-    }
-  ]
-
-  s.osx.script_phases = [
-    {
-      :name => 'Run Pre-Build Script',
-      :script => "sh '#{__dir__}/build_macos_shared.sh'",
-      :execution_position => 'before_compile'
-    }
-  ]
-
-  s.prepare_command = <<-CMD
-    sh ./build_ios.sh
-    sh ./build_macos_shared.sh
-  CMD
-
   s.ios.vendored_frameworks = '{{.LibName}}.xcframework'
   s.osx.vendored_libraries = 'lib{{.LibName}}.dylib'
 end
