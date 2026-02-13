@@ -1,15 +1,15 @@
-# Receive parameters: NDK path and minimum API version
+# Receive parameters: OHOS NDK home path and minimum API version
 param(
     [Parameter(Mandatory=$true)]
-    [string]$NDK_PATH
+    [string]$OHOS_NDK_HOME
 )
 
-Write-Host "NDK_PATH: $NDK_PATH"
+Write-Host "OHOS_NDK_HOME: $OHOS_NDK_HOME"
 
 Set-Location -Path $PSScriptRoot
 
-if ([string]::IsNullOrEmpty($NDK_PATH)) {
-    Write-Error "Error: Please provide NDK path as the first parameter"
+if ([string]::IsNullOrEmpty($OHOS_NDK_HOME)) {
+    Write-Error "Error: Please provide OHOS NDK home path as the first parameter"
     exit 1
 }
 
@@ -72,9 +72,8 @@ if (-not $needCompile) {
 $env:CGO_ENABLED = 1
 $env:GOOS = "android"
 
-$HOST_OS = "windows"
-$CC = Join-Path -Path $NDK_PATH -ChildPath "llvm\bin\clang.exe"
-$CXX = Join-Path -Path $NDK_PATH -ChildPath "llvm\bin\clang++.exe"
+$CC = Join-Path -Path $OHOS_NDK_HOME -ChildPath "native\llvm\bin\clang.exe"
+$CXX = Join-Path -Path $OHOS_NDK_HOME -ChildPath "native\llvm\bin\clang++.exe"
 
 $archs = @("arm64-v8a", "armeabi-v7a", "x86_64")
 foreach ($arch in $archs) {
@@ -101,12 +100,15 @@ foreach ($arch in $archs) {
         New-Item -Path $archDir -ItemType Directory | Out-Null
     }
     
-    $env:CC = "$CC --target=$CC_TARGET --sysroot=$NDK_PATH/sysroot"
-    $env:CXX = "$CXX --target=$CC_TARGET --sysroot=$NDK_PATH/sysroot"
+    $env:CC = "$CC --target=$CC_TARGET --sysroot=$OHOS_NDK_HOME/native/sysroot"
+    $env:CXX = "$CXX --target=$CC_TARGET --sysroot=$OHOS_NDK_HOME/native/sysroot"
+
+    $env:CGO_CFLAGS = "-I${PWD}/log-adaptor/include"
+    $env:CGO_LDFLAGS = "-L${PWD}/log-adaptor/dist/${arch}"
     
     $outputPath = Join-Path -Path $archDir -ChildPath $OUTPUT_FILE
 
-    & go build -C $GO_SRC -ldflags "-s -w -linkmode external -extldflags '-Wl,-soname,$OUTPUT_FILE'" -trimpath -buildmode=c-shared -o "$outputPath"
+    & go build -C $GO_SRC -ldflags "-s -w -extldflags '-Wl,-soname,$OUTPUT_FILE'" -trimpath -buildmode=c-shared -o "$outputPath"
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Error: Go compilation failed for architecture $arch"
         exit 1

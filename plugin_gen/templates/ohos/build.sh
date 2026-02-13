@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-# Receive parameters: NDK path
-NDK_PATH=$1
+# Receive parameters: OHOS NDK home path
+OHOS_NDK_HOME=$1
 
-if [ -z "$NDK_PATH" ]; then
-    echo "Error: Please provide NDK path as the first parameter"
+if [ -z "$OHOS_NDK_HOME" ]; then
+    echo "Error: Please provide OHOS NDK home path as the first parameter"
     exit 1
 fi
 
@@ -14,7 +14,7 @@ if ! command -v go &> /dev/null; then
     exit 1
 fi
 
-echo "NDK_PATH: ${NDK_PATH}"
+echo "OHOS_NDK_HOME: ${OHOS_NDK_HOME}"
 
 cd $(dirname $0)
 
@@ -38,7 +38,7 @@ check_source_changes() {
     if [ -z "${NEWEST_FILE}" ]; then
         return 0
     fi
-
+    
     NEWEST_TIMESTAMP=$(echo ${NEWEST_FILE} | cut -d' ' -f1 | cut -d'.' -f1)
     if [ "${NEWEST_TIMESTAMP}" -gt "${LAST_BUILD_TIME}" ]; then
         return 0
@@ -64,17 +64,10 @@ if ! check_source_changes; then
 fi
 
 export CGO_ENABLED=1
-export GOOS=linux
+export GOOS=android
 
-HOST_OS="linux"
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    HOST_OS="darwin"
-elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
-    HOST_OS="windows"
-fi
-
-CC="${NDK_PATH}/llvm/bin/clang"
-CXX="${NDK_PATH}/llvm/bin/clang++"
+CC="${OHOS_NDK_HOME}/native/llvm/bin/clang"
+CXX="${OHOS_NDK_HOME}/native/llvm/bin/clang++"
 
 ARCHS=("arm64-v8a" "armeabi-v7a" "x86_64")
 for ARCH in "${ARCHS[@]}"; do
@@ -83,22 +76,27 @@ for ARCH in "${ARCHS[@]}"; do
     if [ "$ARCH" == "arm64-v8a" ]; then
         export GOARCH=arm64
         CC_TARGET="aarch64-linux-ohos"
-    elif [ "$ARCH" == "armeabi-v7a" ]; then
+        elif [ "$ARCH" == "armeabi-v7a" ]; then
         export GOARCH=arm
         export GOARM=7
         CC_TARGET="armv7-linux-ohos"
-    elif [ "$ARCH" == "x86_64" ]; then
+        elif [ "$ARCH" == "x86_64" ]; then
         export GOARCH=amd64
         CC_TARGET="x86_64-linux-ohos"
     fi
     
     mkdir -p "${OUTPUT_DIR}/${ARCH}"
     
-    export CC="${CC} --target=${CC_TARGET} --sysroot=${NDK_PATH}/sysroot"
-    export CXX="${CXX} --target=${CC_TARGET} --sysroot=${NDK_PATH}/sysroot"
+    export CC="${CC} --target=${CC_TARGET} --sysroot=${OHOS_NDK_HOME}/native/sysroot"
+    export CXX="${CXX} --target=${CC_TARGET} --sysroot=${OHOS_NDK_HOME}/native/sysroot"
     
-    go build -C ${GO_SRC} -ldflags "-s -w -linkmode external -extldflags '-Wl,-soname,${OUTPUT_FILE}'" -trimpath -buildmode=c-shared -o "${OUTPUT_DIR}/${ARCH}/${OUTPUT_FILE}"
+    export CGO_CFLAGS="-I${PWD}/log-adaptor/include"
+    export CGO_LDFLAGS="-L${PWD}/log-adaptor/dist/${ARCH}"
 
+    cp -f ${PWD}/log-adaptor/dist/${ARCH}/* ${OUTPUT_DIR}/${ARCH}
+    
+    go build -C ${GO_SRC} -ldflags "-s -w -extldflags '-Wl,-soname,${OUTPUT_FILE}'" -trimpath -buildmode=c-shared -o "${OUTPUT_DIR}/${ARCH}/${OUTPUT_FILE}"
+    
     rm -rf "${OUTPUT_DIR}/${ARCH}/${OUTPUT_HEADER}"
     
     if [ $? -ne 0 ]; then
