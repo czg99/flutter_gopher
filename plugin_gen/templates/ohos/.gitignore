@@ -6,5 +6,5 @@
 /build
 /.cxx
 /.test
-**/BuildProfile.ets
-**/oh-package-lock.json5
+/BuildProfile.ets
+/oh-package-lock.json5

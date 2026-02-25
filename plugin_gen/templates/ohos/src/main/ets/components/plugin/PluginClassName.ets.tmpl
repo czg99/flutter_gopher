@@ -1,0 +1,21 @@
+import {
+  FlutterPlugin,
+  FlutterPluginBinding,
+} from '@ohos/flutter_ohos';
+
+/** {{.PluginClassName}} **/
+export default class {{.PluginClassName}} implements FlutterPlugin {
+
+  constructor() {
+  }
+
+  getUniqueClassName(): string {
+    return "{{.PluginClassName}}"
+  }
+
+  onAttachedToEngine(binding: FlutterPluginBinding): void {
+  }
+
+  onDetachedFromEngine(binding: FlutterPluginBinding): void {
+  }
+}
