@@ -1,0 +1,5 @@
+{
+  "name": "lib{{.LibName}}.so",
+  "types": "./Index.d.ts",
+  "version": "1.0.0"
+}

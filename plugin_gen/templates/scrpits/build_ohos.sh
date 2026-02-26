@@ -27,7 +27,7 @@ GO_SRC="gosrc"
 mkdir -p "${OUTPUT_DIR}"
 
 export CGO_ENABLED=1
-export GOOS=android
+export GOOS=openharmony
 
 CC="${OHOS_NDK_HOME}/native/llvm/bin/clang"
 CXX="${OHOS_NDK_HOME}/native/llvm/bin/clang++"
@@ -52,11 +52,6 @@ for ARCH in "${ARCHS[@]}"; do
 
 	export CC="${CC} --target=${CC_TARGET} --sysroot=${OHOS_NDK_HOME}/native/sysroot"
 	export CXX="${CXX} --target=${CC_TARGET} --sysroot=${OHOS_NDK_HOME}/native/sysroot"
-
-	export CGO_CFLAGS="-I${PWD}/log-adaptor/include"
-	export CGO_LDFLAGS="-L${PWD}/log-adaptor/dist/${ARCH}"
-
-	cp -f ${PWD}/log-adaptor/dist/${ARCH}/* ${OUTPUT_DIR}/${ARCH}
 
 	go build -C $GO_SRC -ldflags "-s -w -extldflags '-Wl,-soname,${OUTPUT_FILE}'" -trimpath -buildmode=c-shared -o "${OUTPUT_DIR}/${ARCH}/${OUTPUT_FILE}"
 

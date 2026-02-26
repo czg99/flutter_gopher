@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fgPlatformMethodHandle = (C.FgPlatformMethodHandle)(C.fg_platform_method_handle)
+	C.fg_init_platform_method_handle_{{.ID}}((C.FgPlatformMethodHandle)(C.fg_platform_method_handle))
 	plb.CallGoMethod = callGoMethod
 	plb.CallDartMethod = callDartMethod
 	plb.InitMethodHandle = initPlatformMethodHandle
