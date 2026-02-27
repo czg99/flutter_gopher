@@ -15,7 +15,7 @@ import (
 
 func callPlatformMethod(method int, data []byte) ([]byte, error) {
 	request := mapToFgRequest(method, data)
-	response := C.fg_call_platform_method(request)
+	response := C.fg_call_platform_method_{{.ID}}(request)
 	return mapFromFgResponse(response)
 }
 
@@ -82,9 +82,11 @@ func fg_call_go_method_async_{{.ID}}(port C.int64_t, request C.FgRequest) {
 	}()
 }
 
-//export fg_call_platform_method_{{.ID}}
-func fg_call_platform_method_{{.ID}}(request C.FgRequest) C.FgResponse {
-	return C.fg_call_platform_method(request)
+var fgPlatformMethodHandle C.FgPlatformMethodHandle = nil
+
+//export fg_init_platform_method_handle_{{.ID}}
+func fg_init_platform_method_handle_{{.ID}}(handle C.FgPlatformMethodHandle) {
+	fgPlatformMethodHandle = handle
 }
 
 //export fg_call_platform_method_async_{{.ID}}

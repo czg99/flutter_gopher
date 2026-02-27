@@ -4,6 +4,14 @@
 static napi_ref g_platformCallbackRef = NULL;
 static napi_env g_env = NULL;
 
+static void free_fgdata(FgData *data) {
+    if (data->data != NULL) {
+        free(data->data);
+        data->data = NULL;
+    }
+    data->size = 0;
+}
+
 /*************** JS -> FgData ***************/
 static FgData js_to_fgdata(napi_env env, napi_value jsData) {
     FgData data = {};
@@ -76,10 +84,14 @@ static napi_value napi_init_platform_method_handle(napi_env env, napi_callback_i
         return NULL;
     }
 
-    napi_valuetype valueType;
-    napi_typeof(env, args[0], &valueType);
-    if (valueType != napi_function) {
-        return NULL;
+    napi_value value = args[0];
+
+    if (value != NULL) {
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, value, &valueType);
+        if (valueType != napi_function) {
+            return NULL;
+        }
     }
 
     if (g_platformCallbackRef != NULL) {
@@ -87,8 +99,10 @@ static napi_value napi_init_platform_method_handle(napi_env env, napi_callback_i
         g_platformCallbackRef = NULL;
     }
 
-    napi_create_reference(env, args[0], 1, &g_platformCallbackRef);
-
+    if (value != NULL) {
+        napi_create_reference(env, value, 1, &g_platformCallbackRef);
+    }
+    
     g_env = env;
     return NULL;
 }
@@ -139,7 +153,7 @@ static napi_module {{.LibName}}Module = {
     .reserved = { 0 },
 };
 
-DLLEXPORT void napi_onLoad()
+DLLEXPORT static void napi_onLoad()
 {    
     napi_module_register(&{{.LibName}}Module);
 }
@@ -151,7 +165,7 @@ DLLEXPORT void napi_onLoad()
 
 static FgResponse fg_call_platform_method(FgRequest request) {
     FgResponse resp = {};
-    if (g_platformCallbackRef == nullptr || g_env == nullptr) {
+    if (g_platformCallbackRef == NULL || g_env == NULL) {
         return resp;
     }
 
@@ -177,7 +191,7 @@ static FgResponse fg_call_platform_method(FgRequest request) {
     napi_value result = NULL;
     napi_call_function(g_env, global, callback, 1, &jsRequest, &result);
 
-    if (result != nullptr) {
+    if (result != NULL) {
         napi_value jsData = NULL;
         napi_value jsError = NULL;
 

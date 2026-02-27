@@ -1,0 +1,19 @@
+//go:build !openharmony
+package bridge
+
+/*
+#include "include/bridge.h"
+*/
+import "C"
+
+//export fg_call_platform_method_{{.ID}}
+func fg_call_platform_method_{{.ID}}(request C.FgRequest) C.FgResponse {
+	response := C.FgResponse{}
+	if fgPlatformMethodHandle == nil {
+		freeFgRequest(&request, true)
+		return response
+	}
+
+	C.call_fg_platform_method_handle(fgPlatformMethodHandle, request, &response)
+	return response
+}

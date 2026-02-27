@@ -31,40 +31,22 @@ typedef void (*FgPlatformMethodHandle)(FgRequest, FgResponse*);
 #endif
 
 extern DLLEXPORT void fg_init_dart_api_{{.ID}}(void* api, int64_t port);
-
 extern DLLEXPORT void fg_call_dart_method_{{.ID}}(FgRequest request);
+
 extern DLLEXPORT FgResponse fg_call_go_method_{{.ID}}(FgRequest request);
 extern DLLEXPORT void fg_call_go_method_async_{{.ID}}(int64_t port, FgRequest request);
+
+extern DLLEXPORT void fg_init_platform_method_handle_{{.ID}}(FgPlatformMethodHandle handle);
 extern DLLEXPORT FgResponse fg_call_platform_method_{{.ID}}(FgRequest request);
 extern DLLEXPORT void fg_call_platform_method_async_{{.ID}}(int64_t port, FgRequest request);
 
-static FgPlatformMethodHandle g_platformHandle = NULL;
-DLLEXPORT static void fg_init_platform_method_handle_nv4xizltoq(FgPlatformMethodHandle handle) {
-    g_platformHandle = handle; 
-}
-
-static void free_fgdata(FgData *data) {
-    if (data->data != NULL) {
-        free(data->data);
-        data->data = NULL;
-    }
-    data->size = 0;
-}
-
-static FgResponse fg_call_platform_method(FgRequest request) {
-    FgResponse resp = {};
-    if (g_platformHandle != NULL) {
-        g_platformHandle(request, &resp);
-    } else {
-        free_fgdata(&request.data);
-    }
-    return resp;
+static inline void call_fg_platform_method_handle(FgPlatformMethodHandle handle, FgRequest request, FgResponse* response) {
+	handle(request, response);
 }
 
 static inline void fg_bridge_binding_{{.ID}}(void) {
     uintptr_t ptr = 0;
 	ptr ^= (uintptr_t)fg_init_dart_api_{{.ID}};
-	ptr ^= (uintptr_t)fg_init_platform_method_handle_{{.ID}};
 	ptr ^= (uintptr_t)fg_call_dart_method_{{.ID}};
 	ptr ^= (uintptr_t)fg_call_go_method_{{.ID}};
 	ptr ^= (uintptr_t)fg_call_go_method_async_{{.ID}};
