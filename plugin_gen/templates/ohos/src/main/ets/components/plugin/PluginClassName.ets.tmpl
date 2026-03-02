@@ -16,6 +16,12 @@ export default class {{.PluginClassName}} implements FlutterPlugin {
   }
 
   onAttachedToEngine(binding: FlutterPluginBinding): void {
+    {{.LibName}}.initPlatformMethodHandle((request) => {
+      return {
+        data: request.data,
+        error: undefined,
+      };
+    });
   }
 
   onDetachedFromEngine(binding: FlutterPluginBinding): void {

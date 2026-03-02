@@ -38,13 +38,14 @@ static napi_value fgdata_to_js(napi_env env, FgData data) {
     napi_value arraybuffer = NULL;
     void *buffer = NULL;
 
-    if (data.size <= 0) {
+    if (data.data == NULL) {
         napi_create_arraybuffer(env, 0, &buffer, &arraybuffer);
         return arraybuffer;
     }
 
     napi_create_arraybuffer(env, data.size, &buffer, &arraybuffer);
     memcpy(buffer, data.data, data.size);
+    free_fgdata(&data);
     return arraybuffer;
 }
 
@@ -115,11 +116,7 @@ static napi_value napi_call_go_method(napi_env env, napi_callback_info info) {
     FgRequest req = js_to_fgrequest(env, args[0]);
     FgResponse resp = fg_call_go_method_{{.ID}}(req);
 
-    napi_value result = fgresponse_to_js(env, resp);
-
-    free_fgdata(&resp.data);
-    free_fgdata(&resp.error);
-    return result;
+    return fgresponse_to_js(env, resp);
 }
 
 static napi_value napi_call_dart_method(napi_env env, napi_callback_info info) {
@@ -153,17 +150,12 @@ static napi_module {{.LibName}}Module = {
     .reserved = { 0 },
 };
 
-DLLEXPORT static void napi_onLoad()
-{    
+__attribute__((constructor)) static void RegisterModule(void)
+{
     napi_module_register(&{{.LibName}}Module);
 }
 
-// __attribute__((constructor)) void RegisterModule(void)
-// {
-//     napi_module_register(&{{.LibName}}Module);
-// }
-
-static FgResponse fg_call_platform_method(FgRequest request) {
+__attribute__((noinline)) static FgResponse fg_call_platform_method(FgRequest request) {
     FgResponse resp = {};
     if (g_platformCallbackRef == NULL || g_env == NULL) {
         return resp;
@@ -174,9 +166,6 @@ static FgResponse fg_call_platform_method(FgRequest request) {
 
     napi_value callback = NULL;
     napi_get_reference_value(g_env, g_platformCallbackRef, &callback);
-
-    napi_value global = NULL;
-    napi_get_global(g_env, &global);
 
     napi_value jsRequest = NULL;
     napi_create_object(g_env, &jsRequest);
@@ -189,7 +178,7 @@ static FgResponse fg_call_platform_method(FgRequest request) {
     napi_set_named_property(g_env, jsRequest, "data", data);
 
     napi_value result = NULL;
-    napi_call_function(g_env, global, callback, 1, &jsRequest, &result);
+    napi_call_function(g_env, NULL, callback, 1, &jsRequest, &result);
 
     if (result != NULL) {
         napi_value jsData = NULL;
