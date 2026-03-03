@@ -89,17 +89,6 @@ func fg_init_platform_method_handle_{{.ID}}(handle C.FgPlatformMethodHandle) {
 	fgPlatformMethodHandle = handle
 }
 
-//export fg_call_platform_method_async_{{.ID}}
-func fg_call_platform_method_async_{{.ID}}(port C.int64_t, request C.FgRequest) {
-	go func() {
-		response := fg_call_platform_method_{{.ID}}(request)
-		ptr := cValueToPtr(response)
-		if suc := godartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
-			freeFgResponse(ptr, false)
-		}
-	}()
-}
-
 func mapFromFgRequest(from C.FgRequest) (int, []byte) {
 	method := int(from.method)
 	data := mapToBytes(from.data)
