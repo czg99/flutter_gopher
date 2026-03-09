@@ -8,7 +8,7 @@ Flutter Gopher 用于快速创建基于 Golang 的 Flutter 插件，并生成了
 
 - 🔄 创建完整的 Flutter 插件项目结构
 - 🚀 提供无缝的 Flutter、Go、Platform 互操作性
-- 💻 支持多平台（iOS、Android、Windows、macOS、Linux）
+- 💻 支持多平台（iOS、Android、HarmonyOS、Windows、macOS、Linux）
 
 ## 🛠️ 安装
 
@@ -50,6 +50,7 @@ fgo create my_ffi --example
 my_ffi/
 ├── android/          # Android 平台代码
 ├── darwin/           # iOS 和 macOS 平台代码
+├── ohos/             # HarmonyOS 平台代码
 ├── linux/            # Linux 平台代码
 ├── windows/          # Windows 平台代码
 ├── lib/              # Dart 代码

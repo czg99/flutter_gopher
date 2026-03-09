@@ -8,7 +8,7 @@ Flutter Gopher is used to quickly create Golang-based Flutter plugins and genera
 
 - 🔄 Create complete Flutter plugin project structure
 - 🚀 Provide seamless interoperability between Flutter, Go, and Platform
-- 💻 Support multiple platforms (iOS, Android, Windows, macOS, Linux)
+- 💻 Support multiple platforms (iOS, Android, HarmonyOS, Windows, macOS, Linux)
 
 ## 🛠️ Installation
 
@@ -50,6 +50,7 @@ The plugin project structure generated using the `create` command is as follows:
 my_ffi/
 ├── android/          # Android platform code
 ├── darwin/           # iOS and macOS platform code
+├── ohos/             # HarmonyOS platform code
 ├── linux/            # Linux platform code
 ├── windows/          # Windows platform code
 ├── lib/              # Dart code
