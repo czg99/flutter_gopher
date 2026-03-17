@@ -187,7 +187,7 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 	relPath = strings.ReplaceAll(relPath, "PluginClassName", g.PluginClassName)
 	relPath = strings.ReplaceAll(relPath, "ProjectName", g.ProjectName)
 	relPath = strings.ReplaceAll(relPath, "LibName", g.LibName)
-	relPath = strings.TrimSuffix(relPath, ".tmpl")
+	relPath = strings.TrimSuffix(relPath, ".gtpl")
 	relPath = filepath.FromSlash(relPath)
 
 	log.Println(locales.MustLocalizeMessage(&i18n.Message{
@@ -206,8 +206,8 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 
 	// 处理包含模板变量的文件
 	if bytes.Contains(content, []byte("{{.")) {
-		var tmpl *template.Template
-		tmpl, err = template.New(relPath).Parse(string(content))
+		var tpl *template.Template
+		tpl, err = template.New(relPath).Parse(string(content))
 		if err != nil {
 			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
 				ID:    "plugingen.template.parse.error",
@@ -216,7 +216,7 @@ func (g *PluginGenerator) processTemplateFile(templatePath, destDir string, isDi
 		}
 
 		buffer := bytes.NewBuffer(nil)
-		if err = tmpl.Execute(buffer, g); err != nil {
+		if err = tpl.Execute(buffer, g); err != nil {
 			return fmt.Errorf(locales.MustLocalizeMessage(&i18n.Message{
 				ID:    "plugingen.template.execute.error",
 				Other: "执行模板文件 %s 失败: %w",
