@@ -32,7 +32,7 @@ static FgData js_to_fgdata(napi_env env, napi_value jsData) {
 
     if (length > 0) {
         data.data = malloc(length);
-        data.size = (int)length;
+        data.size = (int32_t)length;
         memcpy(data.data, buffer, length);
     }
     return data;

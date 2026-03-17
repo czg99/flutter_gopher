@@ -127,12 +127,12 @@ class _bridge {
 
 final class _fgData extends ffi.Struct {
   external ffi.Pointer<ffi.Void> data;
-  @ffi.Int()
+  @ffi.Int32()
   external int size;
 }
 
 final class _fgRequest extends ffi.Struct {
-  @ffi.Int()
+  @ffi.Int32()
   external int method;
   external _fgData data;
 }

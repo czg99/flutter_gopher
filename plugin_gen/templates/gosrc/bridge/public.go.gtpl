@@ -5,10 +5,10 @@ func InitMethodHandle(handle MethodHandle) {
 	goMethodHandle = handle
 }
 
-func CallDartMethod(method int, data []byte) {
+func CallDartMethod(method int32, data []byte) {
 	callDartMethod(method, data)
 }
 
-func CallPlatformMethod(method int, data []byte) ([]byte, error) {
+func CallPlatformMethod(method int32, data []byte) ([]byte, error) {
 	return callPlatformMethod(method, data)
 }

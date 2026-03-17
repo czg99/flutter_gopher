@@ -13,13 +13,13 @@ import (
 	godartapi "github.com/czg99/go-dart-api"
 )
 
-func callPlatformMethod(method int, data []byte) ([]byte, error) {
+func callPlatformMethod(method int32, data []byte) ([]byte, error) {
 	request := mapToFgRequest(method, data)
 	response := C.fg_call_platform_method_{{.ID}}(request)
 	return mapFromFgResponse(response)
 }
 
-func callDartMethod(method int, data []byte) {
+func callDartMethod(method int32, data []byte) {
 	if len(global_port) == 0 {
 		return
 	}
@@ -89,15 +89,15 @@ func fg_init_platform_method_handle_{{.ID}}(handle C.FgPlatformMethodHandle) {
 	fgPlatformMethodHandle = handle
 }
 
-func mapFromFgRequest(from C.FgRequest) (int, []byte) {
-	method := int(from.method)
+func mapFromFgRequest(from C.FgRequest) (int32, []byte) {
+	method := int32(from.method)
 	data := mapToBytes(from.data)
 	return method, data
 }
 
-func mapToFgRequest(method int, data []byte) C.FgRequest {
+func mapToFgRequest(method int32, data []byte) C.FgRequest {
 	return C.FgRequest{
-		method: C.int(method),
+		method: C.int32_t(method),
 		data:   mapFromBytes(data),
 	}
 }
@@ -148,7 +148,7 @@ func mapFromBytes(from []byte) C.FgData {
 		return C.FgData{}
 	}
 	data := C.CBytes(from)
-	size := C.int(len(from))
+	size := C.int32_t(len(from))
 	return C.FgData{
 		data: data,
 		size: size,
@@ -160,7 +160,7 @@ func mapToBytes(from C.FgData) []byte {
 		return nil
 	}
 	defer C.free(from.data)
-	return C.GoBytes(unsafe.Pointer(from.data), C.int(from.size))
+	return C.GoBytes(unsafe.Pointer(from.data), C.int32_t(from.size))
 }
 
 func freeFgRequest(value *C.FgRequest, freeInnerOnly bool) {

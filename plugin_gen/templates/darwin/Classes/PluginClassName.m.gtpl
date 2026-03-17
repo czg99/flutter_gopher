@@ -12,7 +12,7 @@
 }
 
 // Implementation of FgBridgeDelegate
-- (NSData *)methodHandle:(int)method data:(NSData *)data error:(NSError**)error {
+- (NSData *)methodHandle:(int32_t)method data:(NSData *)data error:(NSError**)error {
     NSString *hexString = @"null";
     
     if (data != nil) {

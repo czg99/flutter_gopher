@@ -6,11 +6,11 @@ import (
 	"fmt"
 )
 
-type MethodHandle func(method int, data []byte) ([]byte, error)
+type MethodHandle func(method int32, data []byte) ([]byte, error)
 
 var goMethodHandle MethodHandle = nil
 
-func callGoMethod(method int, data []byte) (result []byte, err error) {
+func callGoMethod(method int32, data []byte) (result []byte, err error) {
 	if goMethodHandle == nil {
 		return nil, errors.New("init err: go method handle not init")
 	}

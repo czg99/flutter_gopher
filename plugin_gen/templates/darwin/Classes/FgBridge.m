@@ -31,7 +31,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
         void* data = malloc(dataLen);
         [from getBytes:data length:dataLen];
         result.data = data;
-        result.size = (int)dataLen;
+        result.size = (int32_t)dataLen;
     }
     return result;
 }
@@ -65,7 +65,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
 }
 
 + (void)methodHandle:(FgRequest)request response:(FgResponse*)response {
-    int method = request.method;
+    int32_t method = request.method;
     NSData* data = [self mapToNSData:request.data];
 
     if (globalDelegate == nil) {
@@ -89,7 +89,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     response->data = [self mapFromNSData:result];
 }
 
-+ (NSData*)callGoMethod:(int)method data:(NSData*)data error:(NSError**)error {    
++ (NSData*)callGoMethod:(int32_t)method data:(NSData*)data error:(NSError**)error {    
     FgRequest request = {
         .method = method,
         .data = [self mapFromNSData:data],
@@ -106,7 +106,7 @@ void methodHandle(FgRequest request, FgResponse* response) {
     return result;
 }
 
-+ (void)callDartMethod:(int)method data:(NSData*)data {    
++ (void)callDartMethod:(int32_t)method data:(NSData*)data {    
     FgRequest request = {
         .method = method,
         .data = [self mapFromNSData:data],

@@ -8,11 +8,11 @@
 
 typedef struct {
 	void* data;
-	int size;
+	int32_t size;
 } FgData;
 
 typedef struct {
-	int method;
+	int32_t method;
 	FgData data;
 } FgRequest;
 
