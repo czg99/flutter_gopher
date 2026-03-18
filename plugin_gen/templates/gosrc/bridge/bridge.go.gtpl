@@ -9,7 +9,9 @@ import (
 	"errors"
 	"sync"
 	"unsafe"
-	
+
+	utils "{{.ProjectName}}/bridge/utils"
+
 	godartapi "github.com/czg99/go-dart-api"
 )
 
@@ -55,7 +57,7 @@ func fg_call_dart_method_{{.ID}}(request C.FgRequest) {
 				data: copyFgData(request.data),
 			}
 		}
-		ptr := cValueToPtr(value)
+		ptr := utils.CValueToPtr(value)
 		if suc := godartapi.SendToDartPort(port, unsafe.Pointer(ptr)); !suc {
 			freeFgRequest(ptr, false)
 			delete(global_port, port)
@@ -75,7 +77,7 @@ func fg_call_go_method_{{.ID}}(request C.FgRequest) C.FgResponse {
 func fg_call_go_method_async_{{.ID}}(port C.int64_t, request C.FgRequest) {
 	go func() {
 		response := fg_call_go_method_{{.ID}}(request)
-		ptr := cValueToPtr(response)
+		ptr := utils.CValueToPtr(response)
 		if suc := godartapi.SendToDartPort(int64(port), unsafe.Pointer(ptr)); !suc {
 			freeFgResponse(ptr, false)
 		}
@@ -189,11 +191,4 @@ func copyFgData(src C.FgData) C.FgData {
 		data: dstData,
 		size: src.size,
 	}
-}
-
-func cValueToPtr[T any](value T) *T {
-	size := unsafe.Sizeof(value)
-	data := C.malloc(C.size_t(size))
-	*(*T)(data) = value
-	return (*T)(data)
 }

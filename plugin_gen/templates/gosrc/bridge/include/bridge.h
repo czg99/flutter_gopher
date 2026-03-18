@@ -21,7 +21,6 @@ typedef struct {
 	FgData error;
 } FgResponse;
 
-
 typedef void (*FgPlatformMethodHandle)(FgRequest, FgResponse*);
 
 #ifdef _WIN32
@@ -42,6 +41,24 @@ extern DLLEXPORT void fg_call_platform_method_async_{{.ID}}(int64_t port, FgRequ
 
 static inline void call_fg_platform_method_handle(FgPlatformMethodHandle handle, FgRequest request, FgResponse* response) {
 	handle(request, response);
+}
+
+static void free_fgdata(FgData* data) {
+    if (data->data != NULL) {
+        free(data->data);
+        data->data = NULL;
+    }
+    data->size = 0;
+}
+
+static void free_fgrequest(FgRequest* request) {
+	request->method = 0;
+    free_fgdata(&request->data);
+}
+
+static void free_fgresponse(FgResponse* response) {
+    free_fgdata(&response->data);
+    free_fgdata(&response->error);
 }
 
 static inline void fg_bridge_binding_{{.ID}}(void) {

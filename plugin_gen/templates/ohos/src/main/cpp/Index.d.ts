@@ -9,5 +9,6 @@ interface FgResponse {
 }
 
 export const callGoMethod: (request: FgRequest) => FgResponse;
-export const callDartMethod: (request: FgRequest) => FgResponse;
+export const callGoMethodAsync: (request: FgRequest) => Promise<FgResponse>;
+export const callDartMethod: (request: FgRequest) => void;
 export const initPlatformMethodHandle:(callback: (request: FgRequest) => FgResponse) => void;
