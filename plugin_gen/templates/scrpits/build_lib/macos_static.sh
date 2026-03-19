@@ -1,14 +1,16 @@
 #!/bin/bash
 
+set -e
+
+cd $(dirname $0)/../../
+
 if ! command -v go &>/dev/null; then
 	echo "Error: Go compiler not found. Please install Go."
 	exit 1
 fi
 
-cd $(dirname $0)/../
-
-OUTPUT_NAME="{{.LibName}}"
-OUTPUT_FILE="lib${OUTPUT_NAME}.dylib"
+OUTPUT_NAME="{{.LibName}}MacOS"
+OUTPUT_FILE="lib${OUTPUT_NAME}.a"
 OUTPUT_DIR="${PWD}/darwin"
 GO_SRC="gosrc"
 MIN_VERSION=10.11
@@ -38,7 +40,7 @@ for ARCH in "amd64:x86_64" "arm64:arm64"; do
 
 	LIB_FILES="$LIB_FILES \"$OUTPUT_FILE_TMP\""
 
-	go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-shared -o "$OUTPUT_FILE_TMP"
+	go build -C $GO_SRC -ldflags "-s -w" -trimpath -buildmode=c-archive -o "${OUTPUT_FILE_TMP}"
 
 	if [ $? -ne 0 ]; then
 		echo "Error: Go compilation failed, error code: $?"
@@ -49,14 +51,20 @@ for ARCH in "amd64:x86_64" "arm64:arm64"; do
 	fi
 done
 
-rm -rf "${OUTPUT_DIR}/${OUTPUT_FILE}"
-
 echo "Merging all architecture library files..."
 lipo -create $LIB_FILES -output "${OUTPUT_DIR}/${OUTPUT_FILE}"
-
-install_name_tool -id @rpath/${OUTPUT_FILE} "${OUTPUT_DIR}/${OUTPUT_FILE}"
 
 rm -rf "${OUTPUT_DIR}/macos-arm64"
 rm -rf "${OUTPUT_DIR}/macos-x86_64"
 
-echo "Created "${OUTPUT_DIR}/${OUTPUT_FILE}""
+echo "Creating XCFramework..."
+
+rm -rf "${OUTPUT_DIR}/${OUTPUT_NAME}.xcframework"
+
+xcodebuild -create-xcframework \
+	-library "${OUTPUT_DIR}/${OUTPUT_FILE}" \
+	-output "${OUTPUT_DIR}/${OUTPUT_NAME}.xcframework"
+
+rm -rf "${OUTPUT_DIR}/${OUTPUT_FILE}"
+
+echo "Created ${OUTPUT_DIR}/${OUTPUT_NAME}.xcframework"

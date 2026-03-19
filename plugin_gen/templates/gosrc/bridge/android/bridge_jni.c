@@ -18,7 +18,7 @@ static jbyteArray fgdata_to_jni(JNIEnv* env, FgData data) {
     if (!data.data || data.size <= 0) return NULL;
     jbyteArray array = (*env)->NewByteArray(env, data.size);
     (*env)->SetByteArrayRegion(env, array, 0, data.size, (jbyte*)data.data);
-    free(data.data); 
+    free(data.data);
     return array;
 }
 

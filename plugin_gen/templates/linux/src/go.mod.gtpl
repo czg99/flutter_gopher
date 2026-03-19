@@ -1,5 +1,3 @@
 module platform_linux
 
 go 1.23.0
-
-replace protos => ../../protos

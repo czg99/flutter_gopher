@@ -1,5 +1,8 @@
 #!/bin/bash
+
 set -e
+
+cd $(dirname $0)/../../
 
 # Receive parameters: Android NDK home path and minimum API version
 ANDROID_NDK_HOME=$1
@@ -20,8 +23,6 @@ if ! command -v go &>/dev/null; then
 fi
 
 echo "ANDROID_NDK_HOME: ${ANDROID_NDK_HOME}"
-
-cd $(dirname $0)/../
 
 OUTPUT_NAME="{{.LibName}}"
 OUTPUT_FILE="lib${OUTPUT_NAME}.so"

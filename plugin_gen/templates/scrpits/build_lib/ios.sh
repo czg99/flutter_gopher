@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cd $(dirname $0)/../
+set -e
+
+cd $(dirname $0)/../../
 
 if ! command -v go &>/dev/null; then
 	echo "Error: Go compiler not found. Please install Go."

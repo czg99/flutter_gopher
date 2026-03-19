@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+cd $(dirname $0)/../../
+
 if ! command -v go &>/dev/null; then
 	echo "Error: Go compiler not found. Please install Go."
 	exit 1
@@ -10,30 +14,28 @@ if ! command -v zig &>/dev/null; then
 	exit 1
 fi
 
-cd $(dirname $0)/../
-
 OUTPUT_NAME="{{.LibName}}"
-OUTPUT_FILE="${OUTPUT_NAME}.dll"
-OUTPUT_DIR="${PWD}/windows"
+OUTPUT_FILE="lib${OUTPUT_NAME}.so"
+OUTPUT_DIR="${PWD}/linux"
 GO_SRC="gosrc"
 
 mkdir -p "$OUTPUT_DIR"
 
 echo "Detecting system architecture..."
 GOARCH="amd64"
-ZIG_TARGET="x86_64-windows-gnu"
+ZIG_TARGET="x86_64-linux-gnu"
 
 # Detecting ARM architecture
 if [[ $(uname -m) == *"arm"* ]] || [[ $(uname -m) == *"aarch64"* ]]; then
 	GOARCH="arm64"
-	ZIG_TARGET="aarch64-windows-gnu"
+	ZIG_TARGET="aarch64-linux-gnu"
 	echo "ARM architecture detected"
 else
 	echo "x86_64 architecture detected"
 fi
 
 export CGO_ENABLED=1
-export GOOS="windows"
+export GOOS="linux"
 export GOARCH="$GOARCH"
 
 export CC="zig cc -target $ZIG_TARGET"

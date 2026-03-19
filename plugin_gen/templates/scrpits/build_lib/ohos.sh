@@ -1,5 +1,8 @@
 #!/bin/bash
+
 set -e
+
+cd $(dirname $0)/../../
 
 # Receive parameters: OHOS NDK home path
 OHOS_NDK_HOME=$1
@@ -15,8 +18,6 @@ if ! command -v go &>/dev/null; then
 fi
 
 echo "OHOS_NDK_HOME: ${OHOS_NDK_HOME}"
-
-cd $(dirname $0)/../
 
 OUTPUT_NAME="{{.LibName}}"
 OUTPUT_FILE="lib${OUTPUT_NAME}.so"
