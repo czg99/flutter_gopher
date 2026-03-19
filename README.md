@@ -67,9 +67,6 @@ my_ffi/
 
 1、`android/app/proguard-rules.pro` 文件中添加以下规则：
 ```
--keep class com.sun.jna.** {*;}
--keep class * extends com.sun.jna.** {*;}
--keep interface * extends com.sun.jna.** {*;}
 -keep class * extends com.google.protobuf.** {*;}
 ```
 

@@ -14,6 +14,9 @@ type ProjectNaming struct {
 	LibClassName    string // 库的类名（例如 "MyApi"）
 	LibName         string // 用于导入的库名（例如 "myapi"）
 	ID              string // 用于标识导出函数唯一性
+
+	JavaPackagePath string
+	JniPackagePath  string
 }
 
 func NewProjectNaming(projectName string) ProjectNaming {
@@ -28,5 +31,8 @@ func NewProjectNaming(projectName string) ProjectNaming {
 		LibClassName:    camel,
 		LibName:         strings.ToLower(camel),
 		ID:              strings.ToLower(strings.TrimRight(base32.StdEncoding.EncodeToString([]byte(snake)), "=")),
+
+		JavaPackagePath: strings.ReplaceAll(pkgName, ".", "/"),
+		JniPackagePath:  strings.ReplaceAll(strings.ReplaceAll(pkgName, "_", "_1"), ".", "_"),
 	}
 }
