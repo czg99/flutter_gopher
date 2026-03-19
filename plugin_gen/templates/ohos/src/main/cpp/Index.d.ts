@@ -1,14 +1,14 @@
 interface FgRequest {
   method: number;
-  data: ArrayBuffer;
+  data: ArrayBuffer | undefined;
 }
 
 interface FgResponse {
-  data: ArrayBuffer;
-  error: ArrayBuffer;
+  data: ArrayBuffer | undefined;
+  error: ArrayBuffer | undefined;
 }
 
 export const callGoMethod: (request: FgRequest) => FgResponse;
 export const callGoMethodAsync: (request: FgRequest) => Promise<FgResponse>;
 export const callDartMethod: (request: FgRequest) => void;
-export const initPlatformMethodHandle:(callback: (request: FgRequest) => FgResponse) => void;
+export const initPlatformMethodHandle:(callback: (request: FgRequest) => Promise<FgResponse>) => void;
