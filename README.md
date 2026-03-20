@@ -55,9 +55,8 @@ my_ffi/
 ├── windows/          # Windows 平台代码
 ├── lib/              # Dart 代码
 ├── gosrc/            # Go 代码
-├── protos/           # Protobuf 代码
-│   ├── proto/        # Protobuf 定义文件
-│   ├── gen_protos.sh # 生成 Protobuf 代码的脚本
+├── protos/           # Protobuf 定义文件
+├── scripts/          # 脚本文件（编译动态库，生成Protobuf代码）
 └── example/          # 示例 Flutter 应用（如果使用 --example 选项）
 ```
 

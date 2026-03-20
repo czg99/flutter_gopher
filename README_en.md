@@ -55,9 +55,8 @@ my_ffi/
 ├── windows/          # Windows platform code
 ├── lib/              # Dart code
 ├── gosrc/            # Go code
-├── protos/           # Protobuf code
-│   ├── proto/        # Protobuf definition files
-│   ├── gen_protos.sh # Script to generate Protobuf code
+├── protos/           # Protobuf definition files
+├── scripts/          # Script files (compile dynamic libraries, generate protobuf code)
 └── example/          # Example Flutter application (if using the --example option)
 ```
 
@@ -68,9 +67,6 @@ my_ffi/
 1. Add the following rules to the `android/app/proguard-rules.pro` file:
 
 ```
--keep class com.sun.jna.** {*;}
--keep class * extends com.sun.jna.** {*;}
--keep interface * extends com.sun.jna.** {*;}
 -keep class * extends com.google.protobuf.** {*;}
 ```
 
