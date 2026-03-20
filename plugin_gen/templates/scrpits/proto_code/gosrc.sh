@@ -17,7 +17,7 @@ fi
 
 ProtoDir="protos"
 
-outPath="gosrc/protos"
+outPath="gosrc"
 if [ ! -d $outPath ]; then
 	mkdir -p $outPath
 fi

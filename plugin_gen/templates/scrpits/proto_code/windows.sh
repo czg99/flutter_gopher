@@ -17,7 +17,7 @@ fi
 
 ProtoDir="protos"
 
-outPath="windows/src/protos"
+outPath="windows/src"
 if [ ! -d $outPath ]; then
 	mkdir -p $outPath
 fi

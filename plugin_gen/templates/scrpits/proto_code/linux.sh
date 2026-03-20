@@ -17,7 +17,7 @@ fi
 
 ProtoDir="protos"
 
-outPath="linux/src/protos"
+outPath="linux/src"
 if [ ! -d $outPath ]; then
 	mkdir -p $outPath
 fi
