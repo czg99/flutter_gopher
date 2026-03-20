@@ -11,7 +11,7 @@ fi
 
 ProtoDir="protos"
 
-outPath="ios/Classes/protos"
+outPath="darwin/Classes/protos"
 if [ ! -d $outPath ]; then
 	mkdir -p $outPath
 fi
